@@ -1,17 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card } from "./ui/card";
-import { useConnectionStore } from "../stores/connectionStore";
-import { invoke } from "@tauri-apps/api/core";
-
-interface KeyValue {
-  key: string;
-  type: string;
-  value: string;
-  ttl?: number | null;
-}
 
 export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const getActiveConnection = useConnectionStore((state) => state.getActiveConnection());
