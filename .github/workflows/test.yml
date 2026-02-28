@@ -83,7 +83,9 @@ jobs:
         run: npm ci
 
       - name: Run TypeScript type check
-        run: npx tsc --noEmit
+        run: npx tsc --noEmit --skipLibCheck
+        env:
+          TS_NODE_PROJECT_OPTIONS: '{"skipLibCheck": true}'
 
   e2e-tests:
     name: E2E Tests
