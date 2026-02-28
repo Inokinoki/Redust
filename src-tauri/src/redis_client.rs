@@ -876,3 +876,159 @@ impl RedisManager {
 
         Ok(None)
     }
+
+    // Time Series methods
+    pub async fn create_time_series(
+        &mut self,
+        key: &str,
+        retention_ms: Option<i64>,
+    ) -> Result<String> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let mut cmd = redis::cmd("TS.CREATE").arg(key);
+        if let Some(retention) = retention_ms {
+            cmd.arg("RETENTION").arg(retention);
+        }
+
+        let result: String = cmd.query_async(&mut conn).await?;
+        Ok(result)
+    }
+
+    pub async fn add_time_series_data(
+        &mut self,
+        key: &str,
+        timestamp: i64,
+        value: f64,
+    ) -> Result<()> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        redis::cmd("TS.ADD")
+            .arg(key)
+            .arg("*")
+            .arg(timestamp)
+            .arg("*")
+            .arg(value)
+            .query_async::<_, ()>(&mut conn)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn get_time_series_range(
+        &mut self,
+        key: &str,
+        from_ts: Option<i64>,
+        to_ts: Option<i64>,
+        count: Option<usize>,
+    ) -> Result<Vec<(i64, f64)>> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let mut cmd = redis::cmd("TS.RANGE").arg(key);
+        if let Some(from) = from_ts {
+            cmd.arg("-").arg(from);
+        }
+        if let Some(to) = to_ts {
+            cmd.arg("+").arg(to);
+        }
+        if let Some(cnt) = count {
+            cmd.arg("COUNT").arg(cnt);
+        }
+
+        let results: Vec<(i64, f64)> = cmd.query_async(&mut conn).await?;
+        Ok(results)
+    }
+
+    // Streams methods
+    pub async fn xadd(
+        &mut self,
+        key: &str,
+        stream_id: &str,
+        field: &str,
+        value: &str,
+    ) -> Result<String> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let id: String = redis::cmd("XADD")
+            .arg(key)
+            .arg(&stream_id)
+            .arg(&field)
+            .arg(&value)
+            .query_async(&mut conn).await?;
+        Ok(id)
+    }
+
+    pub async fn xrange(
+        &mut self,
+        key: &str,
+        stream_id: &str,
+        start: &str,
+        end: &str,
+        count: Option<usize>,
+    ) -> Result<Vec<(String, String, String)>> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let mut cmd = redis::cmd("XRANGE").arg(key).arg(&stream_id);
+        if let Some(cnt) = count {
+            cmd.arg("COUNT").arg(cnt);
+        }
+        
+        let results: Vec<(String, String, String)> = redis::cmd("XRANGE")
+            .arg(key)
+            .arg(&stream_id)
+            .arg(start)
+            .arg(end)
+            .query_async(&mut conn).await?;
+        Ok(results)
+    }
+
+    pub async fn xreadgroup(
+        &mut self,
+        key: &str,
+        group: &str,
+        consumer: &str,
+        count: Option<usize>,
+    ) -> Result<Vec<(String, String, String)>> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let mut cmd = redis::cmd("XREADGROUP").arg(key).arg(&group).arg(&consumer);
+        if let Some(cnt) = count {
+            cmd.arg("COUNT").arg(cnt);
+ }
+
+        let results: Vec<(String, String, String)> = cmd.query_async(&mut conn).await?;
+        Ok(results)
+    }
+
+    pub async fn get_stream_info(&mut self, key: &str) -> Result<String> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let info: String = redis::cmd("XINFO").arg(key).query_async(&mut conn).await?;
+        Ok(info)
+    }
