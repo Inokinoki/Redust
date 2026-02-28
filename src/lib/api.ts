@@ -1,6 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { ConnectionConfig, KeyInfo } from "../types";
 
+export type { ConnectionConfig, KeyInfo };
+
+// Connection commands
+
 // Connection commands
 export async function testConnection(config: ConnectionConfig): Promise<string> {
   return await invoke("test_connection", { config });

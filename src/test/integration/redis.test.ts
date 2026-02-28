@@ -1,29 +1,26 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
 
-// Mock the Tauri invoke function
+// Mock Tauri invoke function
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(),
 }));
 
 describe("Redis Integration Tests", () => {
+  const mockConfig = {
+    id: "1",
+    name: "Test Connection",
+    host: "localhost",
+    port: 6379,
+    tls: false,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   describe("Connection Operations", () => {
     it("should test connection", async () => {
-      const mockConfig = {
-        id: "1",
-        name: "Test Connection",
-        host: "localhost",
-        port: 6379,
-      };
-
       (invoke as any).mockResolvedValue("7.0.0");
 
       const version = await invoke("testConnection", { config: mockConfig });
@@ -34,13 +31,6 @@ describe("Redis Integration Tests", () => {
 
   describe("String Operations", () => {
     it("should set and get string value", async () => {
-      const mockConfig = {
-        id: "1",
-        name: "Test Connection",
-        host: "localhost",
-        port: 6379,
-      };
-
       (invoke as any).mockResolvedValueOnce(undefined).mockResolvedValueOnce("test-value");
 
       await invoke("setValue", {
@@ -58,13 +48,6 @@ describe("Redis Integration Tests", () => {
     });
 
     it("should delete string key", async () => {
-      const mockConfig = {
-        id: "1",
-        name: "Test Connection",
-        host: "localhost",
-        port: 6379,
-      };
-
       (invoke as any).mockResolvedValue(1);
 
       const deleted = await invoke("deleteKey", {
@@ -78,13 +61,6 @@ describe("Redis Integration Tests", () => {
 
   describe("Hash Operations", () => {
     it("should set and get hash field", async () => {
-      const mockConfig = {
-        id: "1",
-        name: "Test Connection",
-        host: "localhost",
-        port: 6379,
-      };
-
       (invoke as any).mockResolvedValueOnce(1).mockResolvedValueOnce("field-value");
 
       await invoke("hset", {
@@ -104,13 +80,6 @@ describe("Redis Integration Tests", () => {
     });
 
     it("should get all hash fields", async () => {
-      const mockConfig = {
-        id: "1",
-        name: "Test Connection",
-        host: "localhost",
-        port: 6379,
-      };
-
       (invoke as any).mockResolvedValue({
         name: "John",
         age: "30",
@@ -132,13 +101,6 @@ describe("Redis Integration Tests", () => {
 
   describe("List Operations", () => {
     it("should push and get list elements", async () => {
-      const mockConfig = {
-        id: "1",
-        name: "Test Connection",
-        host: "localhost",
-        port: 6379,
-      };
-
       (invoke as any).mockResolvedValueOnce(1).mockResolvedValueOnce(["item1", "item2"]);
 
       await invoke("rpush", {
@@ -158,13 +120,6 @@ describe("Redis Integration Tests", () => {
     });
 
     it("should get list length", async () => {
-      const mockConfig = {
-        id: "1",
-        name: "Test Connection",
-        host: "localhost",
-        port: 6379,
-      };
-
       (invoke as any).mockResolvedValue(3);
 
       const length = await invoke("llen", {
@@ -178,13 +133,6 @@ describe("Redis Integration Tests", () => {
 
   describe("Set Operations", () => {
     it("should add and check set member", async () => {
-      const mockConfig = {
-        id: "1",
-        name: "Test Connection",
-        host: "localhost",
-        port: 6379,
-      };
-
       (invoke as any).mockResolvedValueOnce(1).mockResolvedValueOnce(true);
 
       await invoke("sadd", {
@@ -203,13 +151,6 @@ describe("Redis Integration Tests", () => {
     });
 
     it("should get all set members", async () => {
-      const mockConfig = {
-        id: "1",
-        name: "Test Connection",
-        host: "localhost",
-        port: 6379,
-      };
-
       (invoke as any).mockResolvedValue(["member1", "member2", "member3"]);
 
       const members = await invoke("smembers", {
@@ -223,14 +164,7 @@ describe("Redis Integration Tests", () => {
 
   describe("Sorted Set Operations", () => {
     it("should add and get sorted set member", async () => {
-      const mockConfig = {
-        id: "1",
-        name: "Test Connection",
-        host: "localhost",
-        port: 6379,
-      };
-
-      (invoke as any).mockResolvedValueOnce(1).mockResolvedValueOnce([["member1", "100"]]);
+      (invoke as any).mockResolvedValueOnce(1).mockResolvedValueOnce(["member1", "100"]);
 
       await invoke("zadd", {
         config: mockConfig,

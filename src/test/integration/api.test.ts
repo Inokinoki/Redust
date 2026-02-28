@@ -1,14 +1,9 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { invoke } from "@tauri-apps/api/core";
-import {
-  testConnection,
-  getKeys,
-  getString,
-  setString,
-  type ConnectionConfig,
-} from "../../lib/api";
+import { testConnection, getKeys, getString, setString } from "../../lib/api";
+import type { ConnectionConfig } from "../../lib/api";
 
-// Mock the Tauri invoke function
+// Mock Tauri invoke function
 vi.mock("@tauri-apps/api/core", () => ({
   invoke: vi.fn(),
 }));
@@ -19,6 +14,7 @@ describe("API Functions", () => {
     name: "Test Connection",
     host: "localhost",
     port: 6379,
+    tls: false,
   };
 
   beforeEach(() => {

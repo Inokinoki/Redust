@@ -5,7 +5,13 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { VirtualList } from "./VirtualList";
 
-export function KeyBrowser({ onKeyClick, onRightClick }: { onKeyClick?: (key: string, type: string) => void; onRightClick?: (key: string, type: string) => void }) {
+export function KeyBrowser({
+  onKeyClick,
+  onRightClick,
+}: {
+  onKeyClick?: (key: string, type: string) => void;
+  onRightClick?: (key: string, type: string) => void;
+}) {
   const activeConnection = useConnectionStore((state) => state.getActiveConnection());
   const { keys, searchPattern, isLoading, setKeys, setSearchPattern, setIsLoading } = useKeyStore();
   const [debouncedPattern, setDebouncedPattern] = useState(searchPattern);
@@ -47,6 +53,19 @@ export function KeyBrowser({ onKeyClick, onRightClick }: { onKeyClick?: (key: st
       }}
       className="cursor-pointer border-b border-zinc-800 transition-colors hover:bg-zinc-900"
     >
+      <td className="px-4 py-2 font-mono text-sm">{keyInfo.key}</td>
+      <td className="px-4 py-2 text-sm">
+        <span className="inline-flex items-center rounded-full bg-red-900/50 px-2 py-1 text-xs font-medium text-red-400">
+          {keyInfo.type.toUpperCase()}
+        </span>
+      </td>
+      <td className="px-4 py-2 text-sm text-zinc-400">
+        {keyInfo.ttl === -1 ? "Persistent" : keyInfo.ttl}
+      </td>
+      <td className="px-4 py-2 text-right text-sm text-zinc-400">
+        {keyInfo.size !== undefined ? keyInfo.size.toLocaleString() : "-"}
+      </td>
+    </tr>
   );
 
   if (!activeConnection) {

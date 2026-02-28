@@ -35,8 +35,8 @@ export function useEfficientUpdates<T>(
 
   useEffect(() => {
     refreshData();
-    const interval = setInterval(refreshData, interval);
-    return () => clearInterval(interval);
+    const timer = setInterval(refreshData, interval);
+    return () => clearInterval(timer);
   }, [interval]);
 
   return [data, isLoading, refreshData];

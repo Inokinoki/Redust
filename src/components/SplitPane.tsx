@@ -9,21 +9,6 @@ export function SplitPane() {
 
   if (splitMode === "none") return null;
 
-  const handleSetLeft = (key: string, type: string) => {
-    setLeftKey({ key, type });
-  };
-
-  const handleSetRight = (key: string, type: string) => {
-    setRightKey({ key, type });
-  };
-
-  const handleCloseLeft = () => setLeftKey(null);
-  const handleCloseRight = () => setRightKey(null);
-
-  const handleCloseAll = () => {
-    resetSplit();
-  };
-
   const isHorizontal = splitMode === "horizontal";
 
   return (
@@ -46,7 +31,7 @@ export function SplitPane() {
             >
               Vertical
             </Button>
-            <Button onClick={handleCloseAll} variant="ghost" size="sm">
+            <Button onClick={resetSplit} variant="ghost" size="sm">
               ✕
             </Button>
           </div>
@@ -58,7 +43,7 @@ export function SplitPane() {
               <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-2">
                 <h3 className="font-medium text-zinc-300">Left Pane</h3>
                 {leftKey && (
-                  <Button onClick={handleCloseLeft} variant="ghost" size="sm">
+                  <Button onClick={() => setLeftKey(null)} variant="ghost" size="sm">
                     ✕
                   </Button>
                 )}
@@ -69,7 +54,7 @@ export function SplitPane() {
                     isOpen={true}
                     key={leftKey.key}
                     keyType={leftKey.type}
-                    onClose={handleCloseLeft}
+                    onClose={() => setLeftKey(null)}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-zinc-500">
@@ -89,7 +74,7 @@ export function SplitPane() {
               <div className="flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-2">
                 <h3 className="font-medium text-zinc-300">Right Pane</h3>
                 {rightKey && (
-                  <Button onClick={handleCloseRight} variant="ghost" size="sm">
+                  <Button onClick={() => setRightKey(null)} variant="ghost" size="sm">
                     ✕
                   </Button>
                 )}
@@ -100,7 +85,7 @@ export function SplitPane() {
                     isOpen={true}
                     key={rightKey.key}
                     keyType={rightKey.type}
-                    onClose={handleCloseRight}
+                    onClose={() => setRightKey(null)}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-zinc-500">
@@ -117,11 +102,14 @@ export function SplitPane() {
 }
 
 export function SplitButton() {
-  const { splitMode, setSplitMode, resetSplit } = useSplitPaneStore();
+  const { splitMode, resetSplit } = useSplitPaneStore();
 
   if (splitMode === "none") {
     return (
-      <Button variant="outline" onClick={() => setSplitMode("horizontal")}>
+      <Button
+        variant="outline"
+        onClick={() => useSplitPaneStore.getState().setSplitMode("horizontal")}
+      >
         Split View
       </Button>
     );

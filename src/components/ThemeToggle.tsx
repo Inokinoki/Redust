@@ -1,7 +1,7 @@
 import { useThemeStore } from "../stores/themeStore";
 
 export function ThemeToggle() {
-  const { theme, setTheme, toggleTheme } = useThemeStore();
+  const { theme, toggleTheme } = useThemeStore();
 
   const themes = [
     { value: "dark" as const, label: "Dark", icon: "🌙" },

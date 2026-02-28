@@ -15,6 +15,3 @@ export { CommandPalette, Command } from "./CommandPalette";
 export { VirtualList } from "./VirtualList";
 export { SplitPane, SplitButton } from "./SplitPane";
 export { ThemeToggle } from "./ThemeToggle";
-export { VirtualList } from "./VirtualList";
-export { SplitPane, SplitButton } from "./SplitPane";
-export { VirtualList } from "./VirtualList";

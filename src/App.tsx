@@ -18,24 +18,6 @@ import { useSplitPaneStore } from "./stores/splitPaneStore";
 import { Command } from "./stores/commandPaletteStore";
 import { Button } from "./components/ui/button";
 import "./index.css";
-import { ConnectionList } from "./components/ConnectionList";
-import { KeyBrowser } from "./components/KeyBrowser";
-import { ValueEditor } from "./components/ValueEditor";
-import { VectorSearch } from "./components/VectorSearch";
-import { EmbeddingCache } from "./components/EmbeddingCache";
-import { LLMConversation } from "./components/LLMConversation";
-import { MonitoringDashboard } from "./components/MonitoringDashboard";
-import { ClusterTopology } from "./components/ClusterTopology";
-import { PubSubMonitor } from "./components/PubSubMonitor";
-import { ImportExport } from "./components/ImportExport";
-import { LuaScriptEditor } from "./components/LuaScriptEditor";
-import { CommandPalette } from "./components/CommandPalette";
-import { SplitPane, SplitButton } from "./components/SplitPane";
-import { useCommandPalette } from "./stores/commandPaletteStore";
-import { useSplitPaneStore } from "./stores/splitPaneStore";
-import { Command } from "./stores/commandPaletteStore";
-import { Button } from "./components/ui/button";
-import "./index.css";
 
 function App() {
   const [showVectorSearch, setShowVectorSearch] = useState(false);
@@ -300,6 +282,7 @@ function App() {
                 </kbd>
               </Button>
             </div>
+          </div>
         </div>
       </header>
 

@@ -1,7 +1,11 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useConnectionStore } from "../stores/connectionStore";
 import type { ConnectionConfig } from "../types";
 
+// Mock Tauri invoke function
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn(),
+}));
 describe("ConnectionStore", () => {
   beforeEach(() => {
     // Reset store before each test
@@ -22,6 +26,7 @@ describe("ConnectionStore", () => {
       name: "Test Connection",
       host: "localhost",
       port: 6379,
+      tls: false,
     };
 
     useConnectionStore.getState().addConnection(testConnection);
@@ -37,6 +42,7 @@ describe("ConnectionStore", () => {
       name: "Test Connection",
       host: "localhost",
       port: 6379,
+      tls: false,
     };
 
     useConnectionStore.getState().addConnection(testConnection);
@@ -55,6 +61,7 @@ describe("ConnectionStore", () => {
       name: "Test Connection",
       host: "localhost",
       port: 6379,
+      tls: false,
     };
 
     useConnectionStore.getState().addConnection(testConnection);
@@ -70,6 +77,7 @@ describe("ConnectionStore", () => {
       name: "Test Connection",
       host: "localhost",
       port: 6379,
+      tls: false,
     };
 
     useConnectionStore.getState().addConnection(testConnection);
@@ -85,6 +93,7 @@ describe("ConnectionStore", () => {
       name: "Test Connection",
       host: "localhost",
       port: 6379,
+      tls: false,
     };
 
     useConnectionStore.getState().addConnection(testConnection);
@@ -100,6 +109,7 @@ describe("ConnectionStore", () => {
       name: "Test Connection",
       host: "localhost",
       port: 6379,
+      tls: false,
     };
 
     useConnectionStore.getState().addConnection(testConnection);
