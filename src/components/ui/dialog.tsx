@@ -1,12 +1,11 @@
 import * as React from "react";
-import { cn } from "../../lib/utils";
+
 export interface DialogProps {
   open?: boolean;
-  onOpenChange?: (open: boolean) => void;
   children: React.ReactNode;
 }
 
-export function Dialog({ open, onOpenChange, children }: DialogProps) {
+export function Dialog({ open, children }: DialogProps) {
   if (!open) return null;
 
   return (

@@ -18,9 +18,7 @@ import {
   listRange,
   setMembers,
   zsetRange,
-  type SortedSetMember,
 } from "../lib/api";
-
 interface ValueEditorProps {
   isOpen: boolean;
   onClose: () => void;
@@ -105,7 +103,7 @@ export function ValueEditor({ isOpen, onClose, key, keyType }: ValueEditorProps)
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen}>
       <DialogHeader>
         <DialogTitle>Edit Value</DialogTitle>
       </DialogHeader>

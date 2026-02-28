@@ -3,8 +3,6 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useConnectionStore } from "../stores";
 import { deleteKey } from "../lib/api";
-import type { KeyInfo } from "../types";
-
 interface ConsoleOutput {
   type: "command" | "output" | "error";
   text: string;

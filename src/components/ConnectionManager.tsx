@@ -18,7 +18,7 @@ interface ConnectionManagerProps {
 }
 
 export function ConnectionManager({ isOpen, onClose }: ConnectionManagerProps) {
-  const { addConnection, connections } = useConnectionStore();
+  const { addConnection } = useConnectionStore();
   const [name, setName] = useState("");
   const [host, setHost] = useState("localhost");
   const [port, setPort] = useState(6379);
@@ -55,7 +55,7 @@ export function ConnectionManager({ isOpen, onClose }: ConnectionManagerProps) {
   if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen}>
       <DialogHeader>
         <DialogTitle>Add Redis Connection</DialogTitle>
       </DialogHeader>

@@ -4,7 +4,11 @@ import { getKeys } from "../lib/api";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 
-export function KeyBrowser() {
+export function KeyBrowser({
+  onKeyClick,
+}: {
+  onKeyClick?: (key: string, type: string) => void;
+}) {
   const activeConnection = useConnectionStore((state) => state.getActiveConnection());
   const { keys, searchPattern, isLoading, setKeys, setSearchPattern, setIsLoading } =
     useKeyStore();
@@ -88,22 +92,23 @@ export function KeyBrowser() {
               </tr>
             </thead>
             <tbody>
-              {keys.map((key) => (
+              {keys.map((keyInfo) => (
                 <tr
-                  key={key.key}
+                  key={keyInfo.key}
+                  onClick={() => onKeyClick?.(keyInfo.key, keyInfo.type)}
                   className="border-b border-zinc-800 hover:bg-zinc-900 transition-colors cursor-pointer"
                 >
-                  <td className="px-4 py-2 text-sm font-mono">{key.key}</td>
+                  <td className="px-4 py-2 text-sm font-mono">{keyInfo.key}</td>
                   <td className="px-4 py-2 text-sm">
                     <span className="inline-flex items-center rounded-full bg-red-900/50 px-2 py-1 text-xs font-medium text-red-400">
-                      {key.type.toUpperCase()}
+                      {keyInfo.type.toUpperCase()}
                     </span>
                   </td>
                   <td className="px-4 py-2 text-sm text-zinc-400">
-                    {key.ttl === -1 ? "Persistent" : key.ttl}
+                    {keyInfo.ttl === -1 ? "Persistent" : keyInfo.ttl}
                   </td>
                   <td className="px-4 py-2 text-sm text-right text-zinc-400">
-                    {key.size !== undefined ? key.size.toLocaleString() : "-"}
+                    {keyInfo.size !== undefined ? keyInfo.size.toLocaleString() : "-"}
                   </td>
                 </tr>
               ))}
