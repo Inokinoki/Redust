@@ -11,7 +11,28 @@ import { PubSubMonitor } from "./components/PubSubMonitor";
 import { ImportExport } from "./components/ImportExport";
 import { LuaScriptEditor } from "./components/LuaScriptEditor";
 import { CommandPalette } from "./components/CommandPalette";
+import { SplitPane, SplitButton } from "./components/SplitPane";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { useCommandPalette } from "./stores/commandPaletteStore";
+import { useSplitPaneStore } from "./stores/splitPaneStore";
+import { Command } from "./stores/commandPaletteStore";
+import { Button } from "./components/ui/button";
+import "./index.css";
+import { ConnectionList } from "./components/ConnectionList";
+import { KeyBrowser } from "./components/KeyBrowser";
+import { ValueEditor } from "./components/ValueEditor";
+import { VectorSearch } from "./components/VectorSearch";
+import { EmbeddingCache } from "./components/EmbeddingCache";
+import { LLMConversation } from "./components/LLMConversation";
+import { MonitoringDashboard } from "./components/MonitoringDashboard";
+import { ClusterTopology } from "./components/ClusterTopology";
+import { PubSubMonitor } from "./components/PubSubMonitor";
+import { ImportExport } from "./components/ImportExport";
+import { LuaScriptEditor } from "./components/LuaScriptEditor";
+import { CommandPalette } from "./components/CommandPalette";
+import { SplitPane, SplitButton } from "./components/SplitPane";
+import { useCommandPalette } from "./stores/commandPaletteStore";
+import { useSplitPaneStore } from "./stores/splitPaneStore";
 import { Command } from "./stores/commandPaletteStore";
 import { Button } from "./components/ui/button";
 import "./index.css";
@@ -31,9 +52,26 @@ function App() {
   } | null>(null);
 
   const { isOpen, open, close } = useCommandPalette();
+  const { splitMode, setLeftKey, setRightKey } = useSplitPaneStore();
 
   const handleKeyClick = (key: string, type: string) => {
-    setSelectedKey({ key, type });
+    if (splitMode === "none") {
+      setSelectedKey({ key, type });
+    } else {
+      // In split mode, open in first available pane
+      if (!useSplitPaneStore.getState().leftKey) {
+        setLeftKey({ key, type });
+      } else if (!useSplitPaneStore.getState().rightKey) {
+        setRightKey({ key, type });
+      } else {
+        // Both panes full, open in normal editor
+        setSelectedKey({ key, type });
+      }
+    }
+  };
+
+  const handleRightClick = (key: string, type: string) => {
+    setRightKey({ key, type });
   };
 
   const commands: Command[] = [
@@ -110,6 +148,15 @@ function App() {
       action: () => setShowLuaEditor(true),
     },
     {
+      id: "split-view",
+      label: "Split View",
+      description: "Open split pane for key comparison",
+      icon: "⚡",
+      shortcut: "Cmd+Shift+S",
+      category: "Navigation",
+      action: () => useSplitPaneStore.getState().setSplitMode("horizontal"),
+    },
+    {
       id: "focus-search",
       label: "Focus Key Search",
       description: "Jump to key search bar",
@@ -140,6 +187,17 @@ function App() {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         open();
+      }
+
+      // Split View: Cmd/Ctrl + Shift + S
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "S") {
+        e.preventDefault();
+        const currentMode = useSplitPaneStore.getState().splitMode;
+        if (currentMode === "none") {
+          useSplitPaneStore.getState().setSplitMode("horizontal");
+        } else {
+          useSplitPaneStore.getState().resetSplit();
+        }
       }
 
       // Vector Search: Cmd/Ctrl + Shift + V
@@ -209,36 +267,39 @@ function App() {
             <span className="text-sm text-zinc-400">v0.1.0</span>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowVectorSearch(true)}>
-              🔍 Vector Search
-            </Button>
-            <Button variant="outline" onClick={() => setShowEmbeddingCache(true)}>
-              📦 Embedding Cache
-            </Button>
-            <Button variant="outline" onClick={() => setShowLLMChat(true)}>
-              🤖 AI Chat (RAG)
-            </Button>
-            <Button variant="outline" onClick={() => setShowMonitoring(true)}>
-              📊 Monitoring
-            </Button>
-            <Button variant="outline" onClick={() => setShowCluster(true)}>
-              🔗 Cluster
-            </Button>
-            <Button variant="outline" onClick={() => setShowPubSub(true)}>
-              📡 Pub/Sub
-            </Button>
-            <Button variant="outline" onClick={() => setShowImportExport(true)}>
-              📥 Import/Export
-            </Button>
-            <Button variant="outline" onClick={() => setShowLuaEditor(true)}>
-              📝 Lua Editor
-            </Button>
-            <Button variant="ghost" onClick={open}>
-              <kbd className="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-400">
-                ⌘K
-              </kbd>
-            </Button>
-          </div>
+            <ThemeToggle />
+            <div className="ml-4 flex gap-2">
+              <Button variant="outline" onClick={() => setShowVectorSearch(true)}>
+                🔍 Vector Search
+              </Button>
+              <Button variant="outline" onClick={() => setShowEmbeddingCache(true)}>
+                📦 Embedding Cache
+              </Button>
+              <Button variant="outline" onClick={() => setShowLLMChat(true)}>
+                🤖 AI Chat (RAG)
+              </Button>
+              <Button variant="outline" onClick={() => setShowMonitoring(true)}>
+                📊 Monitoring
+              </Button>
+              <Button variant="outline" onClick={() => setShowCluster(true)}>
+                🔗 Cluster
+              </Button>
+              <Button variant="outline" onClick={() => setShowPubSub(true)}>
+                📡 Pub/Sub
+              </Button>
+              <Button variant="outline" onClick={() => setShowImportExport(true)}>
+                📥 Import/Export
+              </Button>
+              <Button variant="outline" onClick={() => setShowLuaEditor(true)}>
+                📝 Lua Editor
+              </Button>
+              <SplitButton />
+              <Button variant="ghost" onClick={open}>
+                <kbd className="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-400">
+                  ⌘K
+                </kbd>
+              </Button>
+            </div>
         </div>
       </header>
 
@@ -248,7 +309,7 @@ function App() {
             <ConnectionList />
           </div>
           <div className="lg:col-span-2">
-            <KeyBrowser onKeyClick={handleKeyClick} />
+            <KeyBrowser onKeyClick={handleKeyClick} onRightClick={handleRightClick} />
           </div>
         </div>
       </main>
@@ -270,6 +331,8 @@ function App() {
       <LuaScriptEditor isOpen={showLuaEditor} onClose={() => setShowLuaEditor(false)} />
 
       <CommandPalette isOpen={isOpen} onClose={close} commands={commands} />
+
+      <SplitPane />
 
       {selectedKey && (
         <ValueEditor
