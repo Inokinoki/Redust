@@ -233,6 +233,7 @@ describe("API Error Handling", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (invoke as any).mockRejectedValue(new Error("Config cannot be null"));
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await expect(testConnection(null as any)).rejects.toThrow("Config cannot be null");
     });
 
