@@ -4,21 +4,25 @@ declare namespace TauriAPI {
     extensions: string[];
   }
 
-  export function open(options: TauriAPI.DialogOptions): Promise<string | null>;
-  export function save(options: TaurIFileOptions): Promise<void>;
+  export interface DialogOptions {
+    multiple?: boolean;
+    filters?: FileFilter[];
+    defaultPath?: string;
+  }
+
+  export function open(options: DialogOptions): Promise<string | null>;
+  export function save(options: TauriFileOptions): Promise<void>;
 }
 
 export namespace TauriFS {
-  export function writeTextFile(filePath: string, contents: string, options?: TauriIFileOptions): Promise<void>;
-  export function readTextFile(filePath: string, options?: TauriIFileOptions): Promise<string>;
+  export function writeTextFile(
+    filePath: string,
+    contents: string,
+    options?: TauriFileOptions
+  ): Promise<void>;
+  export function readTextFile(filePath: string, options?: TauriFileOptions): Promise<string>;
 }
 
-interface TauriIFileOptions {
+interface TauriFileOptions {
   dir?: string;
-}
-
-interface TauriAPI.DialogOptions {
-  multiple?: boolean;
-  filters?: TauriAPI.FileFilter[];
-  defaultPath?: string;
 }

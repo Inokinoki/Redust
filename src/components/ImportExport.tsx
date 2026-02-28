@@ -5,7 +5,9 @@ import { Label } from "./ui/label";
 import { Card } from "./ui/card";
 import { useConnectionStore } from "../stores/connectionStore";
 import { invoke } from "@tauri-apps/api/core";
+// @ts-ignore - Tauri plugin types
 import { save, open } from "@tauri-apps/plugin-dialog";
+// @ts-ignore - Tauri plugin types
 import { writeTextFile, readTextFile } from "@tauri-apps/plugin-fs";
 
 interface KeyValue {
