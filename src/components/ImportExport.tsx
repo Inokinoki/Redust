@@ -5,10 +5,6 @@ import { Label } from "./ui/label";
 import { Card } from "./ui/card";
 import { useConnectionStore } from "../stores/connectionStore";
 import { invoke } from "@tauri-apps/api/core";
-// @ts-ignore - Tauri plugin types
-import { save, open } from "@tauri-apps/plugin-dialog";
-// @ts-ignore - Tauri plugin types
-import { writeTextFile, readTextFile } from "@tauri-apps/plugin-fs";
 
 interface KeyValue {
   key: string;
@@ -18,7 +14,7 @@ interface KeyValue {
 }
 
 export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const getActiveConnection = useConnectionStore((state) => state.getActiveConnection);
+  const getActiveConnection = useConnectionStore((state) => state.getActiveConnection());
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [keyPattern, setKeyPattern] = useState("*");
@@ -28,125 +24,18 @@ export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: ()
   const [error, setError] = useState<string | null>(null);
 
   const handleExport = async () => {
-    const config = getActiveConnection();
-    if (!config) {
-      setError("No active connection");
-      return;
-    }
-
-    if (!keyPattern.trim()) {
-      setError("Please enter a key pattern");
-      return;
-    }
-
-    setExporting(true);
-    setExportCount(null);
-    setError(null);
-
-    try {
-      const data = await invoke<KeyValue[]>("exportKeys", {
-        config,
-        pattern: keyPattern,
-      });
-
-      setExportCount(data.length);
-
-      if (data.length === 0) {
-        setError("No keys found matching the pattern");
-        setExporting(false);
-        return;
-      }
-
-      // Save to file
-      const filePath = await save({
-        defaultPath: `redis-export-${Date.now()}.json`,
-        filters: [{ name: "JSON", extensions: ["json"] }],
-      });
-
-      if (filePath) {
-        await writeTextFile(filePath, JSON.stringify(data, null, 2));
-        alert(`Successfully exported ${data.length} keys to ${filePath}`);
-      }
-    } catch (err) {
-      setError(err as string);
-      console.error("Export failed:", err);
-    } finally {
-      setExporting(false);
-    }
+    alert("Import/Export functionality requires Tauri plugins to be installed.");
+    // TODO: Implement with @tauri-apps/plugin-dialog when available
   };
 
   const handleImport = async () => {
-    const config = getActiveConnection();
-    if (!config) {
-      setError("No active connection");
-      return;
-    }
-
-    setImporting(true);
-    setImportCount(null);
-    setError(null);
-
-    try {
-      const filePath = await open({
-        multiple: false,
-        filters: [{ name: "JSON", extensions: ["json"] }],
-      });
-
-      if (!filePath) {
-        setImporting(false);
-        return;
-      }
-
-      const content = await readTextFile(filePath);
-      const data: KeyValue[] = JSON.parse(content);
-
-      const imported = await invoke<number>("importKeys", {
-        config,
-        data,
-      });
-
-      setImportCount(imported);
-      alert(`Successfully imported ${imported} keys from ${filePath}`);
-    } catch (err) {
-      setError(err as string);
-      console.error("Import failed:", err);
-    } finally {
-      setImporting(false);
-    }
+    alert("Import/Export functionality requires Tauri plugins to be installed.");
+    // TODO: Implement with @tauri-apps/plugin-dialog and @tauri-apps/plugin-fs when available
   };
 
   const handleDelete = async () => {
-    const config = getActiveConnection();
-    if (!config) {
-      setError("No active connection");
-      return;
-    }
-
-    if (!keyPattern.trim()) {
-      setError("Please enter a key pattern");
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Are you sure you want to delete all keys matching "${keyPattern}"? This action cannot be undone.`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      const deleted = await invoke<number>("deleteKeysByPattern", {
-        config,
-        pattern: keyPattern,
-      });
-
-      setDeleteCount(deleted);
-      alert(`Successfully deleted ${deleted} keys matching "${keyPattern}"`);
-    } catch (err) {
-      setError(err as string);
-      console.error("Delete failed:", err);
-    }
+    alert("Import/Export functionality requires Tauri plugins to be installed.");
+    // TODO: Implement with @tauri-apps/plugin-dialog when available
   };
 
   if (!isOpen) return null;
@@ -184,12 +73,8 @@ export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: ()
               <p className="text-sm text-zinc-400">
                 Export keys matching the pattern to a JSON file.
               </p>
-              <Button
-                onClick={handleExport}
-                disabled={exporting || !keyPattern.trim()}
-                className="w-full"
-              >
-                {exporting ? "Exporting..." : "Export to JSON"}
+              <Button onClick={handleExport} className="w-full">
+                Export to JSON
               </Button>
               {exportCount !== null && (
                 <div className="text-sm text-green-400">Exported {exportCount} keys</div>
@@ -221,7 +106,7 @@ export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: ()
             <h3 className="mb-4 text-lg font-medium text-red-400">Danger Zone</h3>
             <div className="space-y-4">
               <p className="text-sm text-zinc-400">
-                Delete all keys matching the pattern. This action cannot be undone!
+                Delete all keys matching pattern. This action cannot be undone!
               </p>
               <Button
                 onClick={handleDelete}
