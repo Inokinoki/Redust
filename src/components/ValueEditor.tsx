@@ -2,13 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import {
-  Dialog,
-  DialogHeader,
-  DialogTitle,
-  DialogContent,
-  DialogFooter,
-} from "./ui/dialog";
+import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "./ui/dialog";
 import { useConnectionStore } from "../stores";
 import {
   getString,
@@ -40,28 +34,34 @@ export function ValueEditor({ isOpen, onClose, key, keyType }: ValueEditorProps)
       setLoading(true);
       try {
         switch (keyType) {
-          case "string":
+          case "string": {
             const strVal = await getString(activeConnection, key);
             setValue(strVal || "");
             break;
-          case "hash":
+          }
+          case "hash": {
             const hashVal = await hashGetAll(activeConnection, key);
             setValue(JSON.stringify(hashVal, null, 2));
             break;
-          case "list":
+          }
+          case "list": {
             const listVal = await listRange(activeConnection, key, 0, -1);
             setValue(JSON.stringify(listVal, null, 2));
             break;
-          case "set":
+          }
+          case "set": {
             const setVal = await setMembers(activeConnection, key);
             setValue(JSON.stringify(setVal, null, 2));
             break;
-          case "zset":
+          }
+          case "zset": {
             const zsetVal = await zsetRange(activeConnection, key, 0, -1, true);
             setValue(JSON.stringify(zsetVal, null, 2));
             break;
-          default:
+          }
+          default: {
             setValue("");
+          }
         }
       } catch (error) {
         console.error("Failed to load value:", error);
@@ -140,7 +140,7 @@ export function ValueEditor({ isOpen, onClose, key, keyType }: ValueEditorProps)
           <div className="space-y-2">
             <Label>Value</Label>
             <textarea
-              className="flex h-64 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
+              className="flex h-64 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
               value={value}
               onChange={(e) => setValue(e.target.value)}
               disabled={loading}

@@ -1,5 +1,4 @@
-import { ReactNode } from "react";
-import { useSplitPaneStore, SplitMode } from "../stores/splitPaneStore";
+import { useSplitPaneStore } from "../stores/splitPaneStore";
 import { Button } from "./ui/button";
 import { ValueEditor } from "./ValueEditor";
 
