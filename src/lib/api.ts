@@ -46,3 +46,262 @@ export async function setString(
 ): Promise<boolean> {
   return await invoke("set_string", { config, key, value, ttl });
 }
+
+// Hash commands
+export async function hashGet(
+  config: ConnectionConfig,
+  key: string,
+  field: string
+): Promise<string | null> {
+  return await invoke("hash_get", { config, key, field });
+}
+
+export async function hashGetAll(
+  config: ConnectionConfig,
+  key: string
+): Promise<Record<string, string>> {
+  return await invoke("hash_get_all", { config, key });
+}
+
+export async function hashSet(
+  config: ConnectionConfig,
+  key: string,
+  field: string,
+  value: string
+): Promise<boolean> {
+  return await invoke("hash_set", { config, key, field, value });
+}
+
+export async function hashDelete(
+  config: ConnectionConfig,
+  key: string,
+  field: string
+): Promise<boolean> {
+  return await invoke("hash_delete", { config, key, field });
+}
+
+export async function hashExists(
+  config: ConnectionConfig,
+  key: string,
+  field: string
+): Promise<boolean> {
+  return await invoke("hash_exists", { config, key, field });
+}
+
+export async function hashLen(
+  config: ConnectionConfig,
+  key: string
+): Promise<number> {
+  return await invoke("hash_len", { config, key });
+}
+
+export async function hashKeys(
+  config: ConnectionConfig,
+  key: string
+): Promise<string[]> {
+  return await invoke("hash_keys", { config, key });
+}
+
+export async function hashValues(
+  config: ConnectionConfig,
+  key: string
+): Promise<string[]> {
+  return await invoke("hash_values", { config, key });
+}
+
+// List commands
+export async function listLen(
+  config: ConnectionConfig,
+  key: string
+): Promise<number> {
+  return await invoke("list_len", { config, key });
+}
+
+export async function listRange(
+  config: ConnectionConfig,
+  key: string,
+  start: number,
+  stop: number
+): Promise<string[]> {
+  return await invoke("list_range", { config, key, start, stop });
+}
+
+export async function listPush(
+  config: ConnectionConfig,
+  key: string,
+  values: string[],
+  left: boolean
+): Promise<number> {
+  return await invoke("list_push", { config, key, values, left });
+}
+
+export async function listPop(
+  config: ConnectionConfig,
+  key: string,
+  left: boolean
+): Promise<string | null> {
+  return await invoke("list_pop", { config, key, left });
+}
+
+export async function listIndex(
+  config: ConnectionConfig,
+  key: string,
+  index: number
+): Promise<string | null> {
+  return await invoke("list_index", { config, key, index });
+}
+
+export async function listRemove(
+  config: ConnectionConfig,
+  key: string,
+  count: number,
+  value: string
+): Promise<number> {
+  return await invoke("list_remove", { config, key, count, value });
+}
+
+export async function listTrim(
+  config: ConnectionConfig,
+  key: string,
+  start: number,
+  stop: number
+): Promise<boolean> {
+  return await invoke("list_trim", { config, key, start, stop });
+}
+
+// Set commands
+export async function setAdd(
+  config: ConnectionConfig,
+  key: string,
+  members: string[]
+): Promise<number> {
+  return await invoke("set_add", { config, key, members });
+}
+
+export async function setMembers(
+  config: ConnectionConfig,
+  key: string
+): Promise<string[]> {
+  return await invoke("set_members", { config, key });
+}
+
+export async function setRemove(
+  config: ConnectionConfig,
+  key: string,
+  members: string[]
+): Promise<number> {
+  return await invoke("set_remove", { config, key, members });
+}
+
+export async function setCard(
+  config: ConnectionConfig,
+  key: string
+): Promise<number> {
+  return await invoke("set_card", { config, key });
+}
+
+export async function setIsMember(
+  config: ConnectionConfig,
+  key: string,
+  member: string
+): Promise<boolean> {
+  return await invoke("set_is_member", { config, key, member });
+}
+
+export async function setPop(
+  config: ConnectionConfig,
+  key: string
+): Promise<string | null> {
+  return await invoke("set_pop", { config, key });
+}
+
+export async function setRandomMember(
+  config: ConnectionConfig,
+  key: string
+): Promise<string | null> {
+  return await invoke("set_random_member", { config, key });
+}
+
+// Sorted Set commands
+export interface SortedSetMember {
+  member: string;
+  score: number;
+}
+
+export async function zsetAdd(
+  config: ConnectionConfig,
+  key: string,
+  members: SortedSetMember[]
+): Promise<number> {
+  return await invoke("zset_add", { config, key, members });
+}
+
+export async function zsetRange(
+  config: ConnectionConfig,
+  key: string,
+  start: number,
+  stop: number,
+  withScores: boolean
+): Promise<SortedSetMember[]> {
+  return await invoke("zset_range", { config, key, start, stop, withScores });
+}
+
+export async function zsetRangeByScore(
+  config: ConnectionConfig,
+  key: string,
+  min: number,
+  max: number,
+  withScores: boolean
+): Promise<SortedSetMember[]> {
+  return await invoke("zset_range_by_score", { config, key, min, max, withScores });
+}
+
+export async function zsetRem(
+  config: ConnectionConfig,
+  key: string,
+  members: string[]
+): Promise<number> {
+  return await invoke("zset_rem", { config, key, members });
+}
+
+export async function zsetCard(
+  config: ConnectionConfig,
+  key: string
+): Promise<number> {
+  return await invoke("zset_card", { config, key });
+}
+
+export async function zsetScore(
+  config: ConnectionConfig,
+  key: string,
+  member: string
+): Promise<number | null> {
+  return await invoke("zset_score", { config, key, member });
+}
+
+export async function zsetRank(
+  config: ConnectionConfig,
+  key: string,
+  member: string,
+  reverse: boolean
+): Promise<number | null> {
+  return await invoke("zset_rank", { config, key, member, reverse });
+}
+
+export async function zsetCount(
+  config: ConnectionConfig,
+  key: string,
+  min: number,
+  max: number
+): Promise<number> {
+  return await invoke("zset_count", { config, key, min, max });
+}
+
+export async function zsetRemRangeByScore(
+  config: ConnectionConfig,
+  key: string,
+  min: number,
+  max: number
+): Promise<number> {
+  return await invoke("zset_rem_range_by_score", { config, key, min, max });
+}

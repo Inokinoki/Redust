@@ -1,36 +1,42 @@
 import { useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { ConnectionManager } from "./components/ConnectionManager";
+import { ConnectionList } from "./components/ConnectionList";
+import { KeyBrowser } from "./components/KeyBrowser";
+import { Button } from "./components/ui/button";
+import "./index.css";
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/greeting
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  const [showConnectionManager, setShowConnectionManager] = useState(false);
 
   return (
-    <div className="container">
-      <h1>Welcome to Redust!</h1>
-      <p className="text-center">
-        Next-Gen Redis GUI Client
-      </p>
+    <div className="min-h-screen bg-zinc-950 text-zinc-50">
+      <header className="border-b border-zinc-800 bg-zinc-950">
+        <div className="container mx-auto flex h-16 items-center justify-between px-4">
+          <div className="flex items-center space-x-2">
+            <h1 className="text-2xl font-bold text-red-500">Redust</h1>
+            <span className="text-sm text-zinc-400">v0.1.0</span>
+          </div>
+          <Button onClick={() => setShowConnectionManager(true)}>
+            + Add Connection
+          </Button>
+        </div>
+      </header>
 
-      <div className="row">
-        <input
-          type="text"
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="button" onClick={() => greet()}>
-          Greet
-        </button>
-      </div>
+      <main className="container mx-auto flex h-[calc(100vh-4rem)] px-4 py-6">
+        <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-1">
+            <ConnectionList />
+          </div>
+          <div className="lg:col-span-2">
+            <KeyBrowser />
+          </div>
+        </div>
+      </main>
 
-      <p>{greetMsg}</p>
+      <ConnectionManager
+        isOpen={showConnectionManager}
+        onClose={() => setShowConnectionManager(false)}
+      />
     </div>
   );
 }
