@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -6,26 +5,19 @@ import { Label } from "./ui/label";
 import { Card } from "./ui/card";
 
 export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const getActiveConnection = useConnectionStore((state) => state.getActiveConnection());
-  const [importing, setImporting] = useState(false);
-  const [exporting, setExporting] = useState(false);
   const [keyPattern, setKeyPattern] = useState("*");
-  const [exportCount, setExportCount] = useState<number | null>(null);
-  const [importCount, setImportCount] = useState<number | null>(null);
-  const [deleteCount, setDeleteCount] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleExport = async () => {
+  const handleExport = () => {
     alert("Import/Export functionality requires Tauri plugins to be installed.");
     // TODO: Implement with @tauri-apps/plugin-dialog when available
   };
 
-  const handleImport = async () => {
+  const handleImport = () => {
     alert("Import/Export functionality requires Tauri plugins to be installed.");
     // TODO: Implement with @tauri-apps/plugin-dialog and @tauri-apps/plugin-fs when available
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     alert("Import/Export functionality requires Tauri plugins to be installed.");
     // TODO: Implement with @tauri-apps/plugin-dialog when available
   };
@@ -36,12 +28,6 @@ export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: ()
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="relative z-50 w-full max-w-4xl rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl">
         <h2 className="mb-4 text-xl font-semibold">Import / Export</h2>
-
-        {error && (
-          <div className="mb-4 rounded-lg border border-red-800 bg-red-950 p-4 text-red-400">
-            {error}
-          </div>
-        )}
 
         <div className="mb-6 space-y-4">
           <div>
@@ -68,9 +54,6 @@ export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: ()
               <Button onClick={handleExport} className="w-full">
                 Export to JSON
               </Button>
-              {exportCount !== null && (
-                <div className="text-sm text-green-400">Exported {exportCount} keys</div>
-              )}
             </div>
           </Card>
 
@@ -80,17 +63,9 @@ export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: ()
               <p className="text-sm text-zinc-400">
                 Import keys from a JSON file that was exported from Redis.
               </p>
-              <Button
-                onClick={handleImport}
-                disabled={importing}
-                variant="outline"
-                className="w-full"
-              >
-                {importing ? "Importing..." : "Import from JSON"}
+              <Button onClick={handleImport} variant="outline" className="w-full">
+                Import from JSON
               </Button>
-              {importCount !== null && (
-                <div className="text-sm text-green-400">Imported {importCount} keys</div>
-              )}
             </div>
           </Card>
 
@@ -108,9 +83,6 @@ export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: ()
               >
                 Delete Keys
               </Button>
-              {deleteCount !== null && (
-                <div className="text-sm text-red-400">Deleted {deleteCount} keys</div>
-              )}
             </div>
           </Card>
         </div>
