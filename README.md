@@ -127,13 +127,12 @@ npm run tauri build
 
 ## 📊 Status
 
-- [ ] Project initialization
+- [x] Project initialization
 - [ ] Core Redis operations
 - [ ] Vector search integration
 - [ ] LLM conversation UI
 - [ ] Performance optimization
 - [ ] v1.0 release
-
 ---
 
 ## 🤝 Contributing
