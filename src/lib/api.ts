@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { ConnectionConfig, KeyInfo } from "../types";
 
+// Connection commands
 export async function testConnection(config: ConnectionConfig): Promise<string> {
   return await invoke("test_connection", { config });
 }
@@ -9,6 +10,7 @@ export async function getRedisInfo(config: ConnectionConfig): Promise<string> {
   return await invoke("get_redis_info", { config });
 }
 
+// Key commands
 export async function getKeys(
   config: ConnectionConfig,
   pattern?: string,
@@ -17,24 +19,16 @@ export async function getKeys(
   return await invoke("get_keys", { config, pattern, count });
 }
 
-export async function getKey(
-  config: ConnectionConfig,
-  key: string
-): Promise<KeyInfo> {
+export async function getKey(config: ConnectionConfig, key: string): Promise<KeyInfo> {
   return await invoke("get_key", { config, key });
 }
 
-export async function deleteKey(
-  config: ConnectionConfig,
-  key: string
-): Promise<boolean> {
+export async function deleteKey(config: ConnectionConfig, key: string): Promise<boolean> {
   return await invoke("delete_key", { config, key });
 }
 
-export async function getString(
-  config: ConnectionConfig,
-  key: string
-): Promise<string | null> {
+// String commands
+export async function getString(config: ConnectionConfig, key: string): Promise<string | null> {
   return await invoke("get_string", { config, key });
 }
 
@@ -88,32 +82,20 @@ export async function hashExists(
   return await invoke("hash_exists", { config, key, field });
 }
 
-export async function hashLen(
-  config: ConnectionConfig,
-  key: string
-): Promise<number> {
+export async function hashLen(config: ConnectionConfig, key: string): Promise<number> {
   return await invoke("hash_len", { config, key });
 }
 
-export async function hashKeys(
-  config: ConnectionConfig,
-  key: string
-): Promise<string[]> {
+export async function hashKeys(config: ConnectionConfig, key: string): Promise<string[]> {
   return await invoke("hash_keys", { config, key });
 }
 
-export async function hashValues(
-  config: ConnectionConfig,
-  key: string
-): Promise<string[]> {
+export async function hashValues(config: ConnectionConfig, key: string): Promise<string[]> {
   return await invoke("hash_values", { config, key });
 }
 
 // List commands
-export async function listLen(
-  config: ConnectionConfig,
-  key: string
-): Promise<number> {
+export async function listLen(config: ConnectionConfig, key: string): Promise<number> {
   return await invoke("list_len", { config, key });
 }
 
@@ -178,10 +160,7 @@ export async function setAdd(
   return await invoke("set_add", { config, key, members });
 }
 
-export async function setMembers(
-  config: ConnectionConfig,
-  key: string
-): Promise<string[]> {
+export async function setMembers(config: ConnectionConfig, key: string): Promise<string[]> {
   return await invoke("set_members", { config, key });
 }
 
@@ -193,10 +172,7 @@ export async function setRemove(
   return await invoke("set_remove", { config, key, members });
 }
 
-export async function setCard(
-  config: ConnectionConfig,
-  key: string
-): Promise<number> {
+export async function setCard(config: ConnectionConfig, key: string): Promise<number> {
   return await invoke("set_card", { config, key });
 }
 
@@ -208,10 +184,7 @@ export async function setIsMember(
   return await invoke("set_is_member", { config, key, member });
 }
 
-export async function setPop(
-  config: ConnectionConfig,
-  key: string
-): Promise<string | null> {
+export async function setPop(config: ConnectionConfig, key: string): Promise<string | null> {
   return await invoke("set_pop", { config, key });
 }
 
@@ -264,10 +237,7 @@ export async function zsetRem(
   return await invoke("zset_rem", { config, key, members });
 }
 
-export async function zsetCard(
-  config: ConnectionConfig,
-  key: string
-): Promise<number> {
+export async function zsetCard(config: ConnectionConfig, key: string): Promise<number> {
   return await invoke("zset_card", { config, key });
 }
 
@@ -304,4 +274,79 @@ export async function zsetRemRangeByScore(
   max: number
 ): Promise<number> {
   return await invoke("zset_rem_range_by_score", { config, key, min, max });
+}
+
+// Search and Vector commands
+export interface SearchIndexField {
+  name: string;
+  fieldType: string;
+  sortable: boolean;
+}
+
+export async function createIndex(
+  config: ConnectionConfig,
+  request: {
+    indexName: string;
+    prefix: string;
+    fields: SearchIndexField[];
+  }
+): Promise<string> {
+  return await invoke("create_index", { config, request });
+}
+
+export async function searchIndex(
+  config: ConnectionConfig,
+  indexName: string,
+  query: string,
+  limit?: number
+): Promise<Array<{ key: string; score: number }>> {
+  return await invoke("search_index", { config, indexName, query, limit });
+}
+
+export async function dropIndex(config: ConnectionConfig, indexName: string): Promise<boolean> {
+  return await invoke("drop_index", { config, indexName });
+}
+
+export async function getIndexInfo(config: ConnectionConfig, indexName: string): Promise<string> {
+  return await invoke("get_index_info", { config, indexName });
+}
+
+export interface VectorSearchRequest {
+  key: string;
+  queryVector: number[];
+  topK: number;
+}
+
+export async function vectorSearch(
+  config: ConnectionConfig,
+  request: VectorSearchRequest
+): Promise<Array<{ member: string; score: number }>> {
+  return await invoke("vector_search", { config, request });
+}
+
+export interface EmbeddingCacheItem {
+  key: string;
+  text: string;
+  embedding: number[];
+  metadata?: string;
+}
+
+export async function uploadEmbeddings(
+  config: ConnectionConfig,
+  request: {
+    indexName: string;
+    embeddings: EmbeddingCacheItem[];
+  }
+): Promise<number> {
+  return await invoke("upload_embeddings", { config, request });
+}
+
+export async function getCachedEmbedding(
+  config: ConnectionConfig,
+  key: string
+): Promise<{
+  text: string;
+  embedding: number[];
+} | null> {
+  return await invoke("get_cached_embedding", { config, key });
 }

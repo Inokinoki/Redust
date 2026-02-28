@@ -56,8 +56,14 @@ fn main() {
             zset_rank,
             zset_count,
             zset_rem_range_by_score,
-            // Add more commands as we implement features
-        ])
+            // Search and Vector commands
+            create_index,
+            search_index,
+            drop_index,
+            get_index_info,
+            vector_search,
+            upload_embeddings,
+            get_cached_embedding,
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

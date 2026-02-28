@@ -2,11 +2,16 @@ import { useState } from "react";
 import { ConnectionList } from "./components/ConnectionList";
 import { KeyBrowser } from "./components/KeyBrowser";
 import { ValueEditor } from "./components/ValueEditor";
+import { VectorSearch } from "./components/VectorSearch";
+import { EmbeddingCache } from "./components/EmbeddingCache";
+import { LLMConversation } from "./components/LLMConversation";
 import { Button } from "./components/ui/button";
 import "./index.css";
 
 function App() {
-  const [showConnectionManager, setShowConnectionManager] = useState(false);
+  const [showVectorSearch, setShowVectorSearch] = useState(false);
+  const [showEmbeddingCache, setShowEmbeddingCache] = useState(false);
+  const [showLLMChat, setShowLLMChat] = useState(false);
   const [selectedKey, setSelectedKey] = useState<{
     key: string;
     type: string;
@@ -24,9 +29,17 @@ function App() {
             <h1 className="text-2xl font-bold text-red-500">Redust</h1>
             <span className="text-sm text-zinc-400">v0.1.0</span>
           </div>
-          <Button onClick={() => setShowConnectionManager(true)}>
-            + Add Connection
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowVectorSearch(true)}>
+              🔍 Vector Search
+            </Button>
+            <Button variant="outline" onClick={() => setShowEmbeddingCache(true)}>
+              📦 Embedding Cache
+            </Button>
+            <Button variant="outline" onClick={() => setShowLLMChat(true)}>
+              🤖 AI Chat (RAG)
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -41,24 +54,11 @@ function App() {
         </div>
       </main>
 
-      {showConnectionManager && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="relative z-50 w-full max-w-lg rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl">
-            <h2 className="text-lg font-semibold mb-4">Add Redis Connection</h2>
-            <div className="text-center py-4">
-              <p className="text-zinc-400">Connection Manager UI</p>
-              <p className="text-sm text-zinc-500 mt-2">
-                Connection form will be implemented in next iteration.
-              </p>
-            </div>
-            <div className="mt-4 flex justify-end">
-              <Button onClick={() => setShowConnectionManager(false)}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <VectorSearch isOpen={showVectorSearch} onClose={() => setShowVectorSearch(false)} />
+
+      <EmbeddingCache isOpen={showEmbeddingCache} onClose={() => setShowEmbeddingCache(false)} />
+
+      <LLMConversation isOpen={showLLMChat} onClose={() => setShowLLMChat(false)} />
 
       {selectedKey && (
         <ValueEditor

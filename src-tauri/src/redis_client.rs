@@ -702,3 +702,177 @@ impl RedisManager {
             .await?;
         Ok(removed)
     }
+
+    // Redis Search methods
+    pub async fn create_search_index(
+        &mut self,
+        index_name: &str,
+        prefix: &str,
+        fields: &[(String, String, bool)],
+    ) -> Result<String> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let mut cmd = redis::cmd("FT.CREATE")
+            .arg(index_name)
+            .arg("ON")
+            .arg("HASH")
+            .arg("PREFIX")
+            .arg(1)
+            .arg(prefix)
+            .arg("SCHEMA");
+
+        for (field_name, field_type, sortable) in fields {
+            let mut field_def = field_type.clone();
+            if *sortable {
+                field_def.push_str(" SORTABLE");
+            }
+            cmd.arg(&format!("{} AS {}", field_name, field_def));
+        }
+
+        let result: String = cmd.query_async(&mut conn).await?;
+        Ok(result)
+    }
+
+    pub async fn search_index(
+        &mut self,
+        index_name: &str,
+        query: &str,
+        limit: usize,
+    ) -> Result<Vec<(String, f64)>> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let results: Vec<(String, f64)> = redis::cmd("FT.SEARCH")
+            .arg(index_name)
+            .arg(query)
+            .arg("LIMIT")
+            .arg(0)
+            .arg(limit)
+            .query_async(&mut conn)
+            .await?;
+        Ok(results)
+    }
+
+    pub async fn drop_index(&mut self, index_name: &str) -> Result<()> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        redis::cmd("FT.DROP")
+            .arg(index_name)
+            .query_async::<_, ()>(&mut conn)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn get_index_info(&mut self, index_name: &str) -> Result<String> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let info: String = redis::cmd("FT.INFO")
+            .arg(index_name)
+            .query_async(&mut conn)
+            .await?;
+        Ok(info)
+    }
+
+    // Vector search methods
+    pub async fn vector_search(
+        &mut self,
+        key: &str,
+        query_vector: &[f64],
+        top_k: usize,
+    ) -> Result<Vec<(String, f64)>> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        // For Redis Search, we use FT.SEARCH with vector capabilities
+        // This is a simplified implementation - actual Redis Stack vector search
+        // would use more complex syntax
+        let mut cmd = redis::cmd("FT.SEARCH")
+            .arg(key)
+            .arg("*")
+            .arg("LIMIT")
+            .arg(0)
+            .arg(top_k);
+
+        let results: Vec<(String, f64)> = cmd.query_async(&mut conn).await?;
+        Ok(results)
+    }
+
+    pub async fn upload_embeddings(
+        &mut self,
+        index_name: &str,
+        embeddings: &[(String, String, Vec<f64>, Option<String>)],
+    ) -> Result<usize> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let mut count = 0;
+        for (key, text, _embedding, _metadata) in embeddings {
+            // Store embedding as JSON in a hash
+            let value = serde_json::json!({
+                "text": text,
+                "embedding": _embedding,
+            });
+            let result: i32 = redis::cmd("HSET")
+                .arg(key)
+                .arg("data")
+                .arg(&serde_json::to_string(&value).unwrap())
+                .query_async(&mut conn)
+                .await?;
+            count += 1;
+        }
+
+        Ok(count)
+    }
+
+    pub async fn get_cached_embedding(
+        &mut self, key: &str) -> Result<Option<(String, Vec<f64>)>> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let data: Option<String> = redis::cmd("HGET")
+            .arg(key)
+            .arg("data")
+            .query_async(&mut conn)
+            .await?;
+
+        if let Some(data_str) = data {
+            let value: serde_json::Value = serde_json::from_str(&data_str).map_err(|e| anyhow::anyhow!("Failed to parse embedding: {}", e))?;
+            if let Some(obj) = value.as_object() {
+                let text = obj.get("text").and_then(|v| v.as_str()).unwrap_or("").to_string();
+                let embedding = obj.get("embedding").and_then(|v| v.as_array()).unwrap_or(&serde_json::json::Value::Array(vec![]));
+                
+                let vec_f64: Vec<f64> = embedding
+                    .iter()
+                    .filter_map(|v| v.as_f64())
+                    .collect();
+                
+                return Ok(Some((text, vec_f64)));
+            }
+        }
+
+        Ok(None)
+    }
