@@ -43,7 +43,7 @@ export function KeyBrowser({
     loadKeys();
   }, [activeConnection, debouncedPattern]);
 
-  const renderKeyRow = (keyInfo: any, index: number) => (
+  const renderKeyRow = (keyInfo: any) => (
     <tr
       key={keyInfo.key}
       onClick={() => onKeyClick?.(keyInfo.key, keyInfo.type)}

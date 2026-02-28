@@ -154,7 +154,7 @@ export function MonitoringDashboard({ isOpen, onClose }: { isOpen: boolean; onCl
           <h3 className="mb-4 mt-6 text-lg font-medium">Performance History</h3>
           <div className="h-64 overflow-auto rounded-lg border border-zinc-800 bg-zinc-950 p-4">
             <div className="space-y-2">
-              {[...Array(20).fill()].map((_, i) => (
+              {[...Array(20).fill(null)].map((_, i) => (
                 <div key={i} className="flex items-center justify-between text-sm">
                   <span className="text-zinc-500">
                     {new Date(Date.now() - i * 30000).toLocaleTimeString()}
