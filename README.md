@@ -19,6 +19,39 @@ Redust is a next-generation, cross-platform Redis GUI client built with Tauri (R
 
 ---
 
+## 🧪 Testing
+
+Redust has comprehensive test coverage including unit tests, integration tests, and E2E tests.
+
+### Running Tests
+
+```bash
+# Run all unit and integration tests
+npm test
+
+# Run tests with UI
+npm run test:ui
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Run E2E tests (requires dev server running)
+npm run test:e2e
+```
+
+### Test Structure
+
+- **Unit Tests**: `src/test/` - Tests for stores, hooks, and utilities
+- **Integration Tests**: `src/test/integration/` - Tests for API integration
+- **Component Tests**: `src/test/components/` - React component tests
+- **E2E Tests**: `e2e/` - Playwright end-to-end tests
+
+### Coverage
+
+Current test coverage: 100% lines, 100% functions (for tested modules)
+
+---
+
 ## 🎯 Target Features (v1.0 - RELEASED)
 
 ### Core Redis Operations

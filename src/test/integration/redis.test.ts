@@ -180,7 +180,7 @@ describe("Redis Integration Tests", () => {
         stop: -1,
       });
 
-      expect(members).toContainEqual(["member1", "100"]);
+      expect(members).toEqual(["member1", "100"]);
     });
   });
 });
