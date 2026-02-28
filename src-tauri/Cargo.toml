@@ -1,0 +1,26 @@
+[package]
+name = "redust"
+version = "0.1.0"
+description = "Next-Gen Redis GUI Client"
+authors = ["Redust Team"]
+license = "AGPL-3.0"
+repository = "https://github.com/your-org/redust"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0", features = ["macos-private-api"] }
+tauri-plugin-shell = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1.36", features = ["full"] }
+redis = { version = "0.24", features = ["tokio-comp", "connection-manager", "aio", "tls", "cluster"] }
+thiserror = "1.0"
+anyhow = "1.0"
+
+[dev-dependencies]
+cargo-watch = "8.5"

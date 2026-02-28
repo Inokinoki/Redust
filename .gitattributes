@@ -1,0 +1,55 @@
+# Auto detect text files and perform LF normalization
+* text=auto eol=lf
+
+# Rust source code
+*.rs text diff=rust
+
+# TypeScript and JavaScript
+*.ts text diff=ts
+*.tsx text diff=ts
+*.js text diff=js
+*.jsx text diff=js
+
+# JSON and config files
+*.json text diff=json
+*.toml text diff=toml
+*.yaml text diff=yaml
+*.yml text diff=yaml
+
+# Markdown
+*.md text diff=markdown
+
+# CSS
+*.css text
+
+# HTML
+*.html text
+
+# Lock files should be treated as binary for large files
+package-lock.json binary linguist-generated
+yarn.lock binary linguist-generated
+pnpm-lock.yaml binary linguist-generated
+Cargo.lock binary linguist-generated
+
+# Build artifacts - treat as binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.a binary
+*.lib binary
+
+# Images and media
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.webp binary
+
+# Compressed files
+*.zip binary
+*.tar.gz binary
+*.tgz binary
+*.rar binary
