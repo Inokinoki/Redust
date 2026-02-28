@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useConnectionStore, useKeyStore } from "../stores";
 import { getKeys } from "../lib/api";
+import type { KeyInfo } from "../types";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { VirtualList } from "./VirtualList";
@@ -41,9 +42,9 @@ export function KeyBrowser({
     };
 
     loadKeys();
-  }, [activeConnection, debouncedPattern]);
+  }, [activeConnection, debouncedPattern, setIsLoading, setKeys]);
 
-  const renderKeyRow = (keyInfo: any) => (
+  const renderKeyRow = (keyInfo: KeyInfo) => (
     <tr
       key={keyInfo.key}
       onClick={() => onKeyClick?.(keyInfo.key, keyInfo.type)}

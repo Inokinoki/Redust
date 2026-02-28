@@ -37,7 +37,7 @@ export function useEfficientUpdates<T>(
     refreshData();
     const timer = setInterval(refreshData, interval);
     return () => clearInterval(timer);
-  }, [interval]);
+  }, [interval, refreshData]);
 
   return [data, isLoading, refreshData];
 }

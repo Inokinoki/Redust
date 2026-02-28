@@ -86,7 +86,7 @@ export function PubSubMonitor({ isOpen, onClose }: { isOpen: boolean; onClose: (
     if (isOpen) {
       loadChannels();
     }
-  }, [isOpen]);
+  }, [isOpen, loadChannels]);
 
   useEffect(() => {
     if (messagesEndRef.current) {

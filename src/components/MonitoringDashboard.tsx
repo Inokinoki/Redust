@@ -74,7 +74,7 @@ export function MonitoringDashboard({ isOpen, onClose }: { isOpen: boolean; onCl
       const interval = setInterval(refreshData, 2000);
       return () => clearInterval(interval);
     }
-  }, [isOpen]);
+  }, [isOpen, refreshData]);
 
   if (!isOpen) return null;
 

@@ -110,7 +110,8 @@ describe("ThemeStore", () => {
   });
 
   it("should save theme to localStorage", () => {
-    (window.localStorage.getItem as any).mockClear();
+    (window.localStorage.getItem as any // eslint-disable-next-line @typescript-eslint/no-explicit-any
+.mockClear();
     useThemeStore.getState().setTheme("light");
     expect(window.localStorage.setItem).toHaveBeenCalledWith("redust-theme", "light");
   });
@@ -128,7 +129,8 @@ describe("ThemeStore", () => {
   });
 
   it("should set effective theme based on system preference (dark)", () => {
-    (window.matchMedia as any).mockReturnValue({
+    (window.matchMedia as any // eslint-disable-next-line @typescript-eslint/no-explicit-any
+.mockReturnValue({
       matches: true,
       media: "",
       onchange: null,
@@ -145,7 +147,8 @@ describe("ThemeStore", () => {
   });
 
   it("should set effective theme based on system preference (light)", () => {
-    (window.matchMedia as any).mockReturnValue({
+    (window.matchMedia as any // eslint-disable-next-line @typescript-eslint/no-explicit-any
+.mockReturnValue({
       matches: false,
       media: "",
       onchange: null,
@@ -163,8 +166,10 @@ describe("ThemeStore", () => {
 
   it("should add effective theme class to document", () => {
     useThemeStore.getState().setTheme("light");
-    const addCalls = (document.documentElement.classList.add as any).mock.calls;
-    const removeCalls = (document.documentElement.classList.remove as any).mock.calls;
+    const addCalls = (document.documentElement.classList.add as any // eslint-disable-next-line @typescript-eslint/no-explicit-any
+.mock.calls;
+    const removeCalls = (document.documentElement.classList.remove as any // eslint-disable-next-line @typescript-eslint/no-explicit-any
+.mock.calls;
 
     const hasAddedLight = addCalls.some((call: any[]) => call.includes("light"));
     const hasRemovedDark = removeCalls.some((call: any[]) => call.includes("dark"));
@@ -175,13 +180,15 @@ describe("ThemeStore", () => {
 
   it("should remove previous theme class when changing themes", () => {
     useThemeStore.getState().setTheme("dark");
-    const removeCalls = (document.documentElement.classList.remove as any).mock.calls;
+    const removeCalls = (document.documentElement.classList.remove as any // eslint-disable-next-line @typescript-eslint/no-explicit-any
+.mock.calls;
 
     const hasRemovedLight = removeCalls.some((call: any[]) => call.includes("light"));
     expect(hasRemovedLight).toBe(true);
 
     useThemeStore.getState().setTheme("system");
-    const removeCalls2 = (document.documentElement.classList.remove as any).mock.calls;
+    const removeCalls2 = (document.documentElement.classList.remove as any // eslint-disable-next-line @typescript-eslint/no-explicit-any
+.mock.calls;
     const hasRemovedDark2 = removeCalls2.some((call: any[]) => call.includes("dark"));
     expect(hasRemovedDark2).toBe(true);
   });

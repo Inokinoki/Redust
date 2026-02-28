@@ -50,7 +50,7 @@ export function ClusterTopology({ isOpen, onClose }: { isOpen: boolean; onClose:
     if (isOpen) {
       loadClusterInfo();
     }
-  }, [isOpen]);
+  }, [isOpen, loadClusterInfo]);
 
   if (!isOpen) return null;
 

@@ -21,7 +21,8 @@ describe("Redis Integration Tests", () => {
 
   describe("Connection Operations", () => {
     it("should test connection", async () => {
-      (invoke as any).mockResolvedValue("7.0.0");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+(invoke as any).mockResolvedValue("7.0.0");
 
       const version = await invoke("testConnection", { config: mockConfig });
       expect(version).toBe("7.0.0");
@@ -31,7 +32,8 @@ describe("Redis Integration Tests", () => {
 
   describe("String Operations", () => {
     it("should set and get string value", async () => {
-      (invoke as any).mockResolvedValueOnce(undefined).mockResolvedValueOnce("test-value");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+(invoke as any).mockResolvedValueOnce(undefined).mockResolvedValueOnce("test-value");
 
       await invoke("setValue", {
         config: mockConfig,
@@ -48,7 +50,8 @@ describe("Redis Integration Tests", () => {
     });
 
     it("should delete string key", async () => {
-      (invoke as any).mockResolvedValue(1);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+(invoke as any).mockResolvedValue(1);
 
       const deleted = await invoke("deleteKey", {
         config: mockConfig,
@@ -61,7 +64,8 @@ describe("Redis Integration Tests", () => {
 
   describe("Hash Operations", () => {
     it("should set and get hash field", async () => {
-      (invoke as any).mockResolvedValueOnce(1).mockResolvedValueOnce("field-value");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+(invoke as any).mockResolvedValueOnce(1).mockResolvedValueOnce("field-value");
 
       await invoke("hset", {
         config: mockConfig,
@@ -80,7 +84,8 @@ describe("Redis Integration Tests", () => {
     });
 
     it("should get all hash fields", async () => {
-      (invoke as any).mockResolvedValue({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+(invoke as any).mockResolvedValue({
         name: "John",
         age: "30",
         email: "john@example.com",
@@ -101,7 +106,8 @@ describe("Redis Integration Tests", () => {
 
   describe("List Operations", () => {
     it("should push and get list elements", async () => {
-      (invoke as any).mockResolvedValueOnce(1).mockResolvedValueOnce(["item1", "item2"]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+(invoke as any).mockResolvedValueOnce(1).mockResolvedValueOnce(["item1", "item2"]);
 
       await invoke("rpush", {
         config: mockConfig,
@@ -120,7 +126,8 @@ describe("Redis Integration Tests", () => {
     });
 
     it("should get list length", async () => {
-      (invoke as any).mockResolvedValue(3);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+(invoke as any).mockResolvedValue(3);
 
       const length = await invoke("llen", {
         config: mockConfig,
@@ -133,7 +140,8 @@ describe("Redis Integration Tests", () => {
 
   describe("Set Operations", () => {
     it("should add and check set member", async () => {
-      (invoke as any).mockResolvedValueOnce(1).mockResolvedValueOnce(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+(invoke as any).mockResolvedValueOnce(1).mockResolvedValueOnce(true);
 
       await invoke("sadd", {
         config: mockConfig,
@@ -151,7 +159,8 @@ describe("Redis Integration Tests", () => {
     });
 
     it("should get all set members", async () => {
-      (invoke as any).mockResolvedValue(["member1", "member2", "member3"]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+(invoke as any).mockResolvedValue(["member1", "member2", "member3"]);
 
       const members = await invoke("smembers", {
         config: mockConfig,
@@ -164,7 +173,8 @@ describe("Redis Integration Tests", () => {
 
   describe("Sorted Set Operations", () => {
     it("should add and get sorted set member", async () => {
-      (invoke as any).mockResolvedValueOnce(1).mockResolvedValueOnce(["member1", "100"]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+(invoke as any).mockResolvedValueOnce(1).mockResolvedValueOnce(["member1", "100"]);
 
       await invoke("zadd", {
         config: mockConfig,

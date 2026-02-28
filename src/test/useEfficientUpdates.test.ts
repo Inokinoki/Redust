@@ -272,7 +272,7 @@ describe("useEfficientUpdates", () => {
 
     try {
       await updateFn.mock.results[0].value;
-    } catch (e) {} // eslint-disable-next-line no-empty
+    } catch (e) {}
 
     expect(console.error).toHaveBeenCalled();
     expect(result.current[1]).toBe(false);

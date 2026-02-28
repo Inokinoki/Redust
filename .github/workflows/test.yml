@@ -110,8 +110,27 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Start preview server in background
+        run: |
+          mkdir -p logs
+          npm run preview > logs/preview.log 2>&1 &
+          PREVIEW_PID=$!
+          echo "Preview server started with PID: $PREVIEW_PID"
+          echo "Waiting for server to be ready..."
+          sleep 15
+
       - name: Run E2E tests
         run: npm run test:e2e
+        env:
+          CI: true
+
+      - name: Stop preview server
+        if: always()
+        run: |
+          if [ -f logs/preview.log ]; then
+            echo "Preview server logs:"
+            cat logs/preview.log
+          fi
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
