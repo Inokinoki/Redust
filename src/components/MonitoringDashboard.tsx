@@ -1,11 +1,8 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 import { Card, CardContent } from "./ui/card";
 import { useConnectionStore } from "../stores/connectionStore";
-import type { ConnectionConfig } from "../types";
 
 interface MonitoringData {
   cpu: number;

@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent } from "./ui/card";
 
@@ -115,7 +114,7 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
                       <div className="bg-zinc-900/50 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                         {category}
                       </div>
-                      {categoryCommands.map((command, idx) => (
+                      {categoryCommands.map((command) => (
                         <button
                           key={command.id}
                           onClick={() => {

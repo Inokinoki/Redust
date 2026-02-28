@@ -2,8 +2,7 @@ import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Card, CardContent } from "./ui/card";
+import { Card } from "./ui/card";
 import { useConnectionStore } from "../stores/connectionStore";
 
 interface ScriptExecutionResult {
@@ -20,7 +19,6 @@ export function LuaScriptEditor({ isOpen, onClose }: { isOpen: boolean; onClose:
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [savedScripts, setSavedScripts] = useState<Record<string, string>>({});
-  const [selectedScript, setSelectedScript] = useState<string | null>(null);
 
   const exampleScripts = [
     {
@@ -68,7 +66,6 @@ return deleted`,
     setScript(example.script);
     setKeys(example.keys);
     setArgs(example.args);
-    setSelectedScript(null);
   };
 
   const handleSaveScript = () => {
@@ -88,7 +85,6 @@ return deleted`,
     const savedScript = savedScripts[name];
     if (savedScript) {
       setScript(savedScript);
-      setSelectedScript(name);
     }
   };
 
@@ -134,7 +130,6 @@ return deleted`,
     setKeys("");
     setArgs("");
     setOutput("");
-    setSelectedScript(null);
   };
 
   if (!isOpen) return null;
