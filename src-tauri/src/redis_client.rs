@@ -1,4 +1,8 @@
 use crate::commands::ConnectionConfig;
+use crate::commands::vector::{
+    CreateVectorIndexRequest, VectorSearchRequest, VectorSearchResult, EmbeddingCacheItem,
+    VectorIndexInfo, IndexFieldInfo, ClusterVisualization, ClusterPoint,
+};
 use anyhow::{Context, Result};
 use redis::AsyncCommands;
 use redis::aio::{ConnectionManager, MultiplexedConnection};
@@ -788,37 +792,96 @@ impl RedisManager {
         Ok(info)
     }
 
-    // Vector search methods
-    pub async fn vector_search(
+    pub async fn create_vector_index(
         &mut self,
-        key: &str,
-        query_vector: &[f64],
-        top_k: usize,
-    ) -> Result<Vec<(String, f64)>> {
+        request: &CreateVectorIndexRequest,
+    ) -> Result<String> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
             .await
             .context("Failed to get connection")?;
 
-        // For Redis Search, we use FT.SEARCH with vector capabilities
-        // This is a simplified implementation - actual Redis Stack vector search
-        // would use more complex syntax
-        let mut cmd = redis::cmd("FT.SEARCH")
-            .arg(key)
-            .arg("*")
-            .arg("LIMIT")
-            .arg(0)
-            .arg(top_k);
+        let mut cmd = redis::cmd("FT.CREATE")
+            .arg(&request.index_name)
+            .arg("ON")
+            .arg("HASH")
+            .arg("PREFIX")
+            .arg(1)
+            .arg(&request.prefix)
+            .arg("SCHEMA");
 
-        let results: Vec<(String, f64)> = cmd.query_async(&mut conn).await?;
+        let field = &request.vector_field;
+        cmd.arg(&field.name)
+            .arg("VECTOR")
+            .arg(&field.algorithm)
+            .arg(6)
+            .arg("TYPE")
+            .arg("FLOAT32")
+            .arg("DIM")
+            .arg(field.dimensions)
+            .arg("DISTANCE_METRIC")
+            .arg(&field.distance_metric);
+
+        if field.algorithm == "HNSW" {
+            cmd.arg("INITIAL_CAP").arg(field.initial_cap.unwrap_or(1000));
+            cmd.arg("M").arg(field.m.unwrap_or(16));
+            cmd.arg("EF_CONSTRUCTION").arg(field.ef_construction.unwrap_or(200));
+            cmd.arg("EF_RUNTIME").arg(field.ef_runtime.unwrap_or(10));
+        } else {
+            cmd.arg("INITIAL_CAP").arg(field.initial_cap.unwrap_or(1000));
+        }
+
+        let result: String = cmd.query_async(&mut conn).await?;
+        Ok(result)
+    }
+
+    pub async fn vector_search(
+        &mut self,
+        request: &VectorSearchRequest,
+    ) -> Result<Vec<VectorSearchResult>> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let vector_bytes: Vec<u8> = request.query_vector
+            .iter()
+            .flat_map(|f| f.to_le_bytes())
+            .collect();
+
+        let top_k = request.top_k.unwrap_or(10);
+        let query = format!(
+            "*=>[KNN {} @{} $BLOB]",
+            top_k, request.vector_field
+        );
+
+        let mut cmd = redis::cmd("FT.SEARCH")
+            .arg(&request.index_name)
+            .arg(&query)
+            .arg("PARAMS")
+            .arg(2)
+            .arg("BLOB")
+            .arg(&vector_bytes);
+
+        if let Some(ref fields) = request.return_fields {
+            cmd.arg("RETURN").arg(fields.len());
+            for field in fields {
+                cmd.arg(field);
+            }
+        }
+
+        let result: redis::Value = cmd.query_async(&mut conn).await?;
+        
+        let results = parse_vector_search_result(&result, request.return_fields.as_ref());
         Ok(results)
     }
 
     pub async fn upload_embeddings(
         &mut self,
         index_name: &str,
-        embeddings: &[(String, String, Vec<f64>, Option<String>)],
+        embeddings: &[EmbeddingCacheItem],
     ) -> Result<usize> {
         let client = self.get_client().await?;
         let mut conn = client
@@ -827,18 +890,34 @@ impl RedisManager {
             .context("Failed to get connection")?;
 
         let mut count = 0;
-        for (key, text, _embedding, _metadata) in embeddings {
-            // Store embedding as JSON in a hash
-            let value = serde_json::json!({
-                "text": text,
-                "embedding": _embedding,
-            });
-            let result: i32 = redis::cmd("HSET")
-                .arg(key)
-                .arg("data")
-                .arg(&serde_json::to_string(&value).unwrap())
-                .query_async(&mut conn)
+        for item in embeddings {
+            let vector_bytes: Vec<u8> = item.embedding
+                .iter()
+                .flat_map(|f| (*f as f32).to_le_bytes())
+                .collect();
+
+            let metadata_str = item.metadata
+                .as_ref()
+                .map(|m| serde_json::to_string(m).unwrap_or_default());
+
+            redis::cmd("HSET")
+                .arg(&item.key)
+                .arg("embedding")
+                .arg(&vector_bytes)
+                .arg("text")
+                .arg(&item.text)
+                .query_async::<_, i32>(&mut conn)
                 .await?;
+
+            if let Some(ref meta) = metadata_str {
+                redis::cmd("HSET")
+                    .arg(&item.key)
+                    .arg("metadata")
+                    .arg(meta)
+                    .query_async::<_, i32>(&mut conn)
+                    .await?;
+            }
+
             count += 1;
         }
 
@@ -846,35 +925,298 @@ impl RedisManager {
     }
 
     pub async fn get_cached_embedding(
-        &mut self, key: &str) -> Result<Option<(String, Vec<f64>)>> {
+        &mut self,
+        key: &str,
+    ) -> Result<Option<EmbeddingCacheItem>> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
             .await
             .context("Failed to get connection")?;
 
-        let data: Option<String> = redis::cmd("HGET")
+        let data: std::collections::HashMap<String, redis::Value> = redis::cmd("HGETALL")
             .arg(key)
-            .arg("data")
             .query_async(&mut conn)
             .await?;
 
-        if let Some(data_str) = data {
-            let value: serde_json::Value = serde_json::from_str(&data_str).map_err(|e| anyhow::anyhow!("Failed to parse embedding: {}", e))?;
-            if let Some(obj) = value.as_object() {
-                let text = obj.get("text").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                let embedding = obj.get("embedding").and_then(|v| v.as_array()).unwrap_or(&serde_json::json::Value::Array(vec![]));
-                
-                let vec_f64: Vec<f64> = embedding
-                    .iter()
-                    .filter_map(|v| v.as_f64())
-                    .collect();
-                
-                return Ok(Some((text, vec_f64)));
+        if data.is_empty() {
+            return Ok(None);
+        }
+
+        let text = data.get("text")
+            .and_then(|v| {
+                if let redis::Value::BulkString(s) = v {
+                    String::from_utf8_lossy(s).to_string().into()
+                } else {
+                    None
+                }
+            })
+            .unwrap_or_default();
+
+        let embedding = data.get("embedding")
+            .and_then(|v| {
+                if let redis::Value::BulkString(bytes) = v {
+                    let vec: Vec<f64> = bytes
+                        .chunks_exact(4)
+                        .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]) as f64)
+                        .collect();
+                    Some(vec)
+                } else {
+                    None
+                }
+            })
+            .unwrap_or_default();
+
+        let metadata = data.get("metadata")
+            .and_then(|v| {
+                if let redis::Value::BulkString(s) = v {
+                    serde_json::from_slice(s).ok()
+                } else {
+                    None
+                }
+            });
+
+        Ok(Some(EmbeddingCacheItem {
+            key: key.to_string(),
+            text,
+            embedding,
+            metadata,
+        }))
+    }
+
+    pub async fn list_vector_indexes(&mut self) -> Result<Vec<String>> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let result: Vec<redis::Value> = redis::cmd("FT._LIST")
+            .query_async(&mut conn)
+            .await?;
+
+        let mut indexes = Vec::new();
+        for val in result {
+            if let redis::Value::BulkString(s) = val {
+                indexes.push(String::from_utf8_lossy(&s).to_string());
             }
         }
 
-        Ok(None)
+        Ok(indexes)
+    }
+
+    pub async fn get_vector_index_info(
+        &mut self,
+        index_name: &str,
+    ) -> Result<VectorIndexInfo> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let result: Vec<redis::Value> = redis::cmd("FT.INFO")
+            .arg(index_name)
+            .query_async(&mut conn)
+            .await?;
+
+        let mut index_info = VectorIndexInfo {
+            index_name: index_name.to_string(),
+            index_status: "unknown".to_string(),
+            schema_fields: Vec::new(),
+            num_docs: 0,
+            vector_field: None,
+            vector_dimensions: None,
+        };
+
+        let mut i = 0;
+        while i + 1 < result.len() {
+            let key = &result[i];
+            let value = &result[i + 1];
+
+            if let redis::Value::BulkString(k) = key {
+                let key_str = String::from_utf8_lossy(k);
+                match key_str.as_ref() {
+                    "index_status" => {
+                        if let redis::Value::BulkString(v) = value {
+                            index_info.index_status = String::from_utf8_lossy(v).to_string();
+                        }
+                    }
+                    "num_docs" => {
+                        if let redis::Value::Int(v) = value {
+                            index_info.num_docs = *v as usize;
+                        }
+                    }
+                    "schema" => {
+                        if let redis::Value::Array(fields) = value {
+                            for field in fields {
+                                if let redis::Value::Array(field_info) = field {
+                                    let mut name = String::new();
+                                    let mut field_type = String::new();
+                                    let mut sortable = false;
+                                    let mut is_vector = false;
+                                    let mut dimensions = None;
+
+                                    for chunk in field_info.chunks(2) {
+                                        if chunk.len() == 2 {
+                                            if let (redis::Value::BulkString(k), redis::Value::BulkString(v)) = (&chunk[0], &chunk[1]) {
+                                                let k_str = String::from_utf8_lossy(k);
+                                                match k_str.as_ref() {
+                                                    "name" => name = String::from_utf8_lossy(v).to_string(),
+                                                    "type" => {
+                                                        field_type = String::from_utf8_lossy(v).to_string();
+                                                        is_vector = field_type == "VECTOR";
+                                                    }
+                                                    "sortable" => sortable = String::from_utf8_lossy(v) == "1",
+                                                    _ => {}
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if is_vector {
+                                        index_info.vector_field = Some(name.clone());
+                                        for chunk in field_info.chunks(2) {
+                                            if let (redis::Value::BulkString(k), redis::Value::Int(v)) = (&chunk[0], &chunk[1]) {
+                                                if String::from_utf8_lossy(k) == "dim" {
+                                                    dimensions = Some(*v as usize);
+                                                }
+                                            }
+                                        }
+                                        index_info.vector_dimensions = dimensions;
+                                    }
+
+                                    index_info.schema_fields.push(IndexFieldInfo {
+                                        name,
+                                        field_type,
+                                        sortable,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            i += 2;
+        }
+
+        Ok(index_info)
+    }
+
+    pub async fn delete_vector_index(&mut self, index_name: &str) -> Result<bool> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        redis::cmd("FT.DROPINDEX")
+            .arg(index_name)
+            .arg("DD")
+            .query_async::<_, ()>(&mut conn)
+            .await?;
+        Ok(true)
+    }
+
+    pub async fn get_embedding_clusters(
+        &mut self,
+        index_name: &str,
+        vector_field: &str,
+        num_clusters: usize,
+        sample_size: Option<usize>,
+    ) -> Result<ClusterVisualization> {
+        let client = self.get_client().await?;
+        let mut conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .context("Failed to get connection")?;
+
+        let limit = sample_size.unwrap_or(1000);
+        
+        let result: redis::Value = redis::cmd("FT.SEARCH")
+            .arg(index_name)
+            .arg("*")
+            .arg("LIMIT")
+            .arg(0)
+            .arg(limit)
+            .arg("RETURN")
+            .arg(3)
+            .arg(vector_field)
+            .arg("__key")
+            .arg("text")
+            .query_async(&mut conn)
+            .await?;
+
+        let mut embeddings: Vec<(String, Vec<f64>, Option<String>)> = Vec::new();
+        
+        if let redis::Value::Array(results) = result {
+            let mut i = 0;
+            while i + 2 < results.len() {
+                let key = &results[i];
+                let fields = &results[i + 1];
+                
+                let key_str = if let redis::Value::BulkString(k) = key {
+                    String::from_utf8_lossy(k).to_string()
+                } else {
+                    i += 2;
+                    continue;
+                };
+
+                let mut embedding = Vec::new();
+                let mut text = None;
+
+                if let redis::Value::Array(field_pairs) = fields {
+                    for chunk in field_pairs.chunks(2) {
+                        if chunk.len() == 2 {
+                            if let (redis::Value::BulkString(k), redis::Value::BulkString(v)) = (&chunk[0], &chunk[1]) {
+                                match String::from_utf8_lossy(k).as_ref() {
+                                    "embedding" | vector_field => {
+                                        embedding = v.chunks_exact(4)
+                                            .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]) as f64)
+                                            .collect();
+                                    }
+                                    "text" => {
+                                        text = Some(String::from_utf8_lossy(v).to_string());
+                                    }
+                                    _ => {}
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if !embedding.is_empty() {
+                    embeddings.push((key_str, embedding, text));
+                }
+                
+                i += 2;
+            }
+        }
+
+        let points = compute_clusters(&embeddings, num_clusters);
+        
+        let mut centroids: Vec<(f64, f64)> = vec![(0.0, 0.0); num_clusters];
+        let mut counts: Vec<usize> = vec![0; num_clusters];
+        
+        for point in &points {
+            centroids[point.cluster_id].0 += point.x;
+            centroids[point.cluster_id].1 += point.y;
+            counts[point.cluster_id] += 1;
+        }
+        
+        for i in 0..num_clusters {
+            if counts[i] > 0 {
+                centroids[i].0 /= counts[i] as f64;
+                centroids[i].1 /= counts[i] as f64;
+            }
+        }
+
+        Ok(ClusterVisualization {
+            points,
+            num_clusters,
+            cluster_centroids: centroids,
+        })
     }
 
     // Time Series methods
@@ -1032,3 +1374,202 @@ impl RedisManager {
         let info: String = redis::cmd("XINFO").arg(key).query_async(&mut conn).await?;
         Ok(info)
     }
+}
+
+fn parse_vector_search_result(
+    result: &redis::Value,
+    return_fields: Option<&Vec<String>>,
+) -> Vec<VectorSearchResult> {
+    let mut results = Vec::new();
+
+    if let redis::Value::Array(data) = result {
+        if data.is_empty() {
+            return results;
+        }
+
+        let mut i = 0;
+        while i + 2 < data.len() {
+            let total = &data[i];
+            if let redis::Value::Int(_) = total {
+                i += 1;
+                continue;
+            }
+
+            let key_val = &data[i];
+            let fields_val = &data[i + 1];
+
+            let key = if let redis::Value::BulkString(k) = key_val {
+                String::from_utf8_lossy(k).to_string()
+            } else {
+                i += 2;
+                continue;
+            };
+
+            let mut score = 0.0;
+            let mut fields = None;
+
+            if let redis::Value::Array(field_pairs) = fields_val {
+                let mut field_map = serde_json::Map::new();
+                
+                for chunk in field_pairs.chunks(2) {
+                    if chunk.len() == 2 {
+                        let field_name = if let redis::Value::BulkString(n) = &chunk[0] {
+                            String::from_utf8_lossy(n).to_string()
+                        } else {
+                            continue;
+                        };
+
+                        let field_value = match &chunk[1] {
+                            redis::Value::BulkString(v) => {
+                                let s = String::from_utf8_lossy(v);
+                                if field_name == "__embedding_score" || field_name == "embedding_score" {
+                                    if let Ok(s) = s.parse::<f64>() {
+                                        score = s;
+                                    }
+                                }
+                                serde_json::Value::String(s.to_string())
+                            }
+                            redis::Value::Int(v) => serde_json::Value::Number((*v).into()),
+                            redis::Value::Double(v) => {
+                                if let Some(n) = serde_json::Number::from_f64(*v) {
+                                    serde_json::Value::Number(n)
+                                } else {
+                                    serde_json::Value::Null
+                                }
+                            }
+                            _ => serde_json::Value::Null,
+                        };
+
+                        if return_fields.is_none() || return_fields.unwrap().contains(&field_name) {
+                            field_map.insert(field_name, field_value);
+                        }
+                    }
+                }
+
+                if !field_map.is_empty() {
+                    fields = Some(serde_json::Value::Object(field_map));
+                }
+            }
+
+            results.push(VectorSearchResult {
+                key,
+                score,
+                fields,
+            });
+
+            i += 2;
+        }
+    }
+
+    results
+}
+
+fn compute_clusters(
+    embeddings: &[(String, Vec<f64>, Option<String>)],
+    num_clusters: usize,
+) -> Vec<ClusterPoint> {
+    if embeddings.is_empty() || num_clusters == 0 {
+        return Vec::new();
+    }
+
+    let dims = embeddings[0].1.len();
+    
+    let mut min_vals = vec![f64::MAX; dims];
+    let mut max_vals = vec![f64::MIN; dims];
+    
+    for (_, embedding, _) in embeddings {
+        for (i, &val) in embedding.iter().enumerate() {
+            min_vals[i] = min_vals[i].min(val);
+            max_vals[i] = max_vals[i].max(val);
+        }
+    }
+
+    let reduced: Vec<(String, (f64, f64), Option<String>)> = embeddings
+        .iter()
+        .map(|(key, embedding, text)| {
+            let x = if dims > 0 {
+                embedding.iter().take(dims / 2).sum::<f64>() / (dims / 2).max(1) as f64
+            } else {
+                0.0
+            };
+            let y = if dims > 1 {
+                embedding.iter().skip(dims / 2).take(dims / 2).sum::<f64>() / (dims / 2).max(1) as f64
+            } else {
+                0.0
+            };
+            (key.clone(), (x, y), text.clone())
+        })
+        .collect();
+
+    let mut centroids: Vec<(f64, f64)> = reduced
+        .iter()
+        .take(num_clusters)
+        .map(|(_, coords, _)| *coords)
+        .collect();
+
+    while centroids.len() < num_clusters {
+        centroids.push((0.0, 0.0));
+    }
+
+    let mut assignments: Vec<usize> = vec![0; reduced.len()];
+    
+    for _ in 0..10 {
+        for (i, (_, coords, _)) in reduced.iter().enumerate() {
+            let mut min_dist = f64::MAX;
+            let mut best_cluster = 0;
+            
+            for (j, centroid) in centroids.iter().enumerate() {
+                let dist = (coords.0 - centroid.0).powi(2) + (coords.1 - centroid.1).powi(2);
+                if dist < min_dist {
+                    min_dist = dist;
+                    best_cluster = j;
+                }
+            }
+            assignments[i] = best_cluster;
+        }
+
+        let mut new_centroids: Vec<(f64, f64)> = vec![(0.0, 0.0); num_clusters];
+        let mut counts: Vec<usize> = vec![0; num_clusters];
+        
+        for (i, (_, coords, _)) in reduced.iter().enumerate() {
+            new_centroids[assignments[i]].0 += coords.0;
+            new_centroids[assignments[i]].1 += coords.1;
+            counts[assignments[i]] += 1;
+        }
+        
+        for i in 0..num_clusters {
+            if counts[i] > 0 {
+                centroids[i] = (new_centroids[i].0 / counts[i] as f64, new_centroids[i].1 / counts[i] as f64);
+            }
+        }
+    }
+
+    let mut min_x = f64::MAX;
+    let mut max_x = f64::MIN;
+    let mut min_y = f64::MAX;
+    let mut max_y = f64::MIN;
+    
+    for (_, coords, _) in &reduced {
+        min_x = min_x.min(coords.0);
+        max_x = max_x.max(coords.0);
+        min_y = min_y.min(coords.1);
+        max_y = max_y.max(coords.1);
+    }
+
+    let range_x = (max_x - min_x).max(1.0);
+    let range_y = (max_y - min_y).max(1.0);
+
+    reduced
+        .iter()
+        .zip(assignments.iter())
+        .map(|((key, coords, text), &cluster_id)| {
+            ClusterPoint {
+                key: key.clone(),
+                x: (coords.0 - min_x) / range_x,
+                y: (coords.1 - min_y) / range_y,
+                cluster_id,
+                label: text.clone(),
+            }
+        })
+        .collect()
+}

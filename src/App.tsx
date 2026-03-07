@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { ConnectionManager } from "./components/ConnectionManager";
 import { ConnectionList } from "./components/ConnectionList";
 import { KeyBrowser } from "./components/KeyBrowser";
 import { ValueEditor } from "./components/ValueEditor";
 import { VectorSearch } from "./components/VectorSearch";
 import { EmbeddingCache } from "./components/EmbeddingCache";
+import { ClusterVisualization } from "./components/ClusterVisualization";
 import { LLMConversation } from "./components/LLMConversation";
 import { MonitoringDashboard } from "./components/MonitoringDashboard";
 import { ClusterTopology } from "./components/ClusterTopology";
@@ -22,12 +24,14 @@ import "./index.css";
 function App() {
   const [showVectorSearch, setShowVectorSearch] = useState(false);
   const [showEmbeddingCache, setShowEmbeddingCache] = useState(false);
+  const [showClusterVis, setShowClusterVis] = useState(false);
   const [showLLMChat, setShowLLMChat] = useState(false);
   const [showMonitoring, setShowMonitoring] = useState(false);
   const [showCluster, setShowCluster] = useState(false);
   const [showPubSub, setShowPubSub] = useState(false);
   const [showImportExport, setShowImportExport] = useState(false);
   const [showLuaEditor, setShowLuaEditor] = useState(false);
+  const [showConnectionManager, setShowConnectionManager] = useState(false);
   const [selectedKey, setSelectedKey] = useState<{
     key: string;
     type: string;
@@ -58,6 +62,15 @@ function App() {
 
   const commands: Command[] = [
     {
+      id: "add-connection",
+      label: "Add Connection",
+      description: "Add a new Redis connection",
+      icon: "➕",
+      shortcut: "Cmd+Shift+N",
+      category: "Connection",
+      action: () => setShowConnectionManager(true),
+    },
+    {
       id: "search-vectors",
       label: "Search Vectors",
       description: "Perform vector similarity search",
@@ -74,6 +87,15 @@ function App() {
       shortcut: "Cmd+Shift+E",
       category: "AI Features",
       action: () => setShowEmbeddingCache(true),
+    },
+    {
+      id: "cluster-visualization",
+      label: "Cluster Visualization",
+      description: "Visualize embedding clusters",
+      icon: "🎯",
+      shortcut: "Cmd+Shift+D",
+      category: "AI Features",
+      action: () => setShowClusterVis(true),
     },
     {
       id: "llm-chat",
@@ -165,6 +187,12 @@ function App() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Connection Manager: Cmd/Ctrl + Shift + N
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "N") {
+        e.preventDefault();
+        setShowConnectionManager(true);
+      }
+
       // Command Palette: Cmd/Ctrl + K
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
@@ -230,6 +258,12 @@ function App() {
         setShowLuaEditor(true);
       }
 
+      // Cluster Visualization: Cmd/Ctrl + Shift + D
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "D") {
+        e.preventDefault();
+        setShowClusterVis(true);
+      }
+
       // Close dialogs: Escape
       if (e.key === "Escape") {
         close();
@@ -250,12 +284,18 @@ function App() {
           </div>
           <div className="flex gap-2">
             <ThemeToggle />
+            <Button variant="outline" onClick={() => setShowConnectionManager(true)}>
+              + Add Connection
+            </Button>
             <div className="ml-4 flex gap-2">
               <Button variant="outline" onClick={() => setShowVectorSearch(true)}>
                 🔍 Vector Search
               </Button>
               <Button variant="outline" onClick={() => setShowEmbeddingCache(true)}>
                 📦 Embedding Cache
+              </Button>
+              <Button variant="outline" onClick={() => setShowClusterVis(true)}>
+                🎯 Clusters
               </Button>
               <Button variant="outline" onClick={() => setShowLLMChat(true)}>
                 🤖 AI Chat (RAG)
@@ -313,7 +353,14 @@ function App() {
 
       <LuaScriptEditor isOpen={showLuaEditor} onClose={() => setShowLuaEditor(false)} />
 
+      <ClusterVisualization isOpen={showClusterVis} onClose={() => setShowClusterVis(false)} />
+
       <CommandPalette isOpen={isOpen} onClose={close} commands={commands} />
+
+      <ConnectionManager
+        isOpen={showConnectionManager}
+        onClose={() => setShowConnectionManager(false)}
+      />
 
       <SplitPane />
 

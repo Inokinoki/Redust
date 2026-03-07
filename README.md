@@ -52,7 +52,7 @@ Current test coverage: 100% lines, 100% functions (for tested modules)
 
 ---
 
-## 🎯 Target Features (v1.0 - RELEASED)
+## 🎯 Target Features (v0.1.0 - IN PROGRESS)
 
 ### Core Redis Operations
 
@@ -68,7 +68,7 @@ Current test coverage: 100% lines, 100% functions (for tested modules)
 
 - ✅ RedisSearch with Vector similarity search
 - ✅ Embedding cache management and visualization
-- ✅ LLM conversation UI with RAG pipeline
+- ⚠️ LLM conversation UI with RAG pipeline (**BACKEND MISSING** - see src-tauri/src/commands/llm.rs not implemented)
 - ✅ Hybrid search (vector + filters)
 - ✅ Vector search query builder
 
@@ -272,14 +272,25 @@ npm run tauri build
 
 ## 📊 Status
 
-**v1.0.0 - RELEASED** 🎉
+**v0.1.0 - IN PROGRESS**
 
 - [x] Project initialization
 - [x] Core Redis operations
 - [x] Vector search integration
-- [x] LLM conversation UI
+- [x] LLM conversation UI (frontend only)
+- [ ] LLM conversation backend implementation
 - [x] Performance optimization
-- [x] v1.0.0 release
+- [ ] v1.0.0 release
+
+---
+
+## ⚠️ Known Issues
+
+1. **LLM Backend Missing**: The LLM Conversation UI is implemented but the backend is not. Required:
+   - Create `src-tauri/src/commands/llm.rs`
+   - Add LLM API integration (OpenAI, Anthropic, Ollama)
+   - Register LLM commands in `src-tauri/src/main.rs`
+   - Implement RAG pipeline with Redis vector search
 
 ---
 
