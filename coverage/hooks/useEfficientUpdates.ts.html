@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>36/36</span>
+                <span class='fraction'>38/38</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">95.45% </span>
+                <span class="strong">91.66% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>21/22</span>
+                <span class='fraction'>22/24</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>35/35</span>
+                <span class='fraction'>38/38</span>
             </div>
         
             
@@ -138,7 +138,11 @@
 <a name='L73'></a><a href='#L73'>73</a>
 <a name='L74'></a><a href='#L74'>74</a>
 <a name='L75'></a><a href='#L75'>75</a>
-<a name='L76'></a><a href='#L76'>76</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -146,16 +150,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">59x</span>
-<span class="cline-any cline-yes">59x</span>
-<span class="cline-any cline-yes">59x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">59x</span>
+<span class="cline-any cline-yes">43x</span>
+<span class="cline-any cline-yes">43x</span>
+<span class="cline-any cline-yes">43x</span>
+<span class="cline-any cline-yes">43x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">43x</span>
 <span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-yes">29x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">28x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -173,13 +177,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">59x</span>
+<span class="cline-any cline-yes">43x</span>
+<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-yes">16x</span>
 <span class="cline-any cline-yes">16x</span>
 <span class="cline-any cline-yes">16x</span>
 <span class="cline-any cline-yes">16x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">59x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">43x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -213,7 +221,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useState, useEffect, useRef } from "react";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect, useRef, useCallback } from "react";
 &nbsp;
 export function useEfficientUpdates&lt;T&gt;(
   initialData: T,
@@ -222,15 +231,14 @@ export function useEfficientUpdates&lt;T&gt;(
   thresholdPercent: number = 5
 ): [T, boolean, () =&gt; void] {
   const [data, setData] = useState&lt;T&gt;(initialData);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const previousDataRef = useRef&lt;T&gt;(initialData);
+  const intervalRef = useRef&lt;number | null&gt;(null);
 &nbsp;
-  const refreshData = async () =&gt; {
+  const refreshData = useCallback(async () =&gt; {
     setIsLoading(true);
     try {
       const newData = await updateFn();
-&nbsp;
-      // Check if data changed significantly (delta update)
       const hasSignificantChange = hasSignificantDifference(
         previousDataRef.current,
         newData,
@@ -246,13 +254,17 @@ export function useEfficientUpdates&lt;T&gt;(
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [thresholdPercent, updateFn]);
 &nbsp;
   useEffect(() =&gt; {
     refreshData();
-    const timer = setInterval(refreshData, interval);
-    return () =&gt; clearInterval(timer);
-  }, [interval]);
+    intervalRef.current = window.setInterval(refreshData, interval);
+    return () =&gt; {
+      <span class="missing-if-branch" title="else path not taken" >E</span>if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [interval, refreshData]);
 &nbsp;
   return [data, isLoading, refreshData];
 }
@@ -295,7 +307,7 @@ function hasSignificantDifference&lt;T&gt;(prev: T, current: T, thresholdPercent
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-28T16:27:01.651Z
+                at 2026-03-07T11:40:23.586Z
             </div>
         <script src="../prettify.js"></script>
         <script>

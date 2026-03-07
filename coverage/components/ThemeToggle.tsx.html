@@ -3,7 +3,7 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for stores/keyStore.ts</title>
+    <title>Code coverage report for components/ThemeToggle.tsx</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
@@ -19,13 +19,13 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../index.html">All files</a> / <a href="index.html">stores</a> keyStore.ts</h1>
+        <h1><a href="../index.html">All files</a> / <a href="index.html">components</a> ThemeToggle.tsx</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>6/6</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>4/4</span>
             </div>
         
             
@@ -87,57 +87,54 @@
 <a name='L22'></a><a href='#L22'>22</a>
 <a name='L23'></a><a href='#L23'>23</a>
 <a name='L24'></a><a href='#L24'>24</a>
-<a name='L25'></a><a href='#L25'>25</a>
-<a name='L26'></a><a href='#L26'>26</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L25'></a><a href='#L25'>25</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { create } from "zustand";
-import type { KeyInfo } from "../types";
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useThemeStore } from "../stores/themeStore";
 &nbsp;
-interface KeyStore {
-  keys: KeyInfo[];
-  selectedKey: string | null;
-  searchPattern: string;
-  isLoading: boolean;
-  setKeys: (keys: KeyInfo[]) =&gt; void;
-  setSelectedKey: (key: string | null) =&gt; void;
-  setSearchPattern: (pattern: string) =&gt; void;
-  setIsLoading: (loading: boolean) =&gt; void;
+export function ThemeToggle() {
+  const { theme, toggleTheme } = useThemeStore();
+&nbsp;
+  const themes = [
+    { value: "dark" as const, label: "Dark", icon: "🌙" },
+    { value: "light" as const, label: "Light", icon: "☀️" },
+    { value: "system" as const, label: "System", icon: "💻" },
+  ];
+&nbsp;
+  const currentTheme = themes.find((t) =&gt; t.value === theme);
+&nbsp;
+  return (
+    &lt;button
+      onClick={toggleTheme}
+      className="flex items-center gap-2 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-600 hover:bg-zinc-700"
+      title={`Current theme: ${currentTheme?.label}`}
+    &gt;
+      &lt;span&gt;{currentTheme?.icon}&lt;/span&gt;
+      &lt;span className="hidden sm:inline"&gt;{currentTheme?.label}&lt;/span&gt;
+    &lt;/button&gt;
+  );
 }
-&nbsp;
-export const useKeyStore = create&lt;KeyStore&gt;((set) =&gt; ({
-  keys: [],
-  selectedKey: null,
-  searchPattern: "*",
-  isLoading: false,
-&nbsp;
-  setKeys: (keys) =&gt; set({ keys }),
-  setSelectedKey: (key) =&gt; set({ selectedKey: key }),
-  setSearchPattern: (pattern) =&gt; set({ searchPattern: pattern }),
-  setIsLoading: (loading) =&gt; set({ isLoading: loading }),
-}));
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
