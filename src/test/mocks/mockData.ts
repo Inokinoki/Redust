@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Mock data generators for testing
  * Provides realistic Redis data for test scenarios

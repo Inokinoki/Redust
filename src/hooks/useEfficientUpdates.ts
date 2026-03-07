@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect, useRef, useCallback } from "react";
 
 export function useEfficientUpdates<T>(
   initialData: T,
@@ -7,15 +8,14 @@ export function useEfficientUpdates<T>(
   thresholdPercent: number = 5
 ): [T, boolean, () => void] {
   const [data, setData] = useState<T>(initialData);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const previousDataRef = useRef<T>(initialData);
+  const intervalRef = useRef<number | null>(null);
 
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
     setIsLoading(true);
     try {
       const newData = await updateFn();
-
-      // Check if data changed significantly (delta update)
       const hasSignificantChange = hasSignificantDifference(
         previousDataRef.current,
         newData,
@@ -31,12 +31,16 @@ export function useEfficientUpdates<T>(
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [thresholdPercent, updateFn]);
 
   useEffect(() => {
     refreshData();
-    const timer = setInterval(refreshData, interval);
-    return () => clearInterval(timer);
+    intervalRef.current = window.setInterval(refreshData, interval);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, [interval, refreshData]);
 
   return [data, isLoading, refreshData];

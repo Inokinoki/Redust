@@ -354,3 +354,112 @@ export async function getCachedEmbedding(
 } | null> {
   return await invoke("get_cached_embedding", { config, key });
 }
+
+export interface VectorFieldConfig {
+  name: string;
+  dimensions: number;
+  algorithm: string;
+  distanceMetric: string;
+  initialCap?: number;
+  m?: number;
+  efConstruction?: number;
+  efRuntime?: number;
+}
+
+export interface CreateVectorIndexRequest {
+  indexName: string;
+  prefix: string;
+  vectorField: VectorFieldConfig;
+}
+
+export async function createVectorIndex(
+  config: ConnectionConfig,
+  request: CreateVectorIndexRequest
+): Promise<string> {
+  return await invoke("createVectorIndex", { config, request });
+}
+
+export interface VectorSearchRequestApi {
+  indexName: string;
+  queryVector: number[];
+  vectorField: string;
+  topK?: number;
+  returnFields?: string[];
+}
+
+export interface VectorSearchResult {
+  key: string;
+  score: number;
+  fields?: Record<string, string>;
+}
+
+export async function vectorSearchApi(
+  config: ConnectionConfig,
+  request: VectorSearchRequestApi
+): Promise<VectorSearchResult[]> {
+  return await invoke("vectorSearch", { config, request });
+}
+
+export async function listVectorIndexes(config: ConnectionConfig): Promise<string[]> {
+  return await invoke("listVectorIndexes", { config });
+}
+
+export interface VectorIndexInfo {
+  indexName: string;
+  indexStatus: string;
+  schemaFields: Array<{ name: string; fieldType: string; sortable: boolean }>;
+  numDocs: number;
+  vectorField?: string;
+  vectorDimensions?: number;
+}
+
+export async function getVectorIndexInfo(
+  config: ConnectionConfig,
+  indexName: string
+): Promise<VectorIndexInfo> {
+  return await invoke("getVectorIndexInfo", { config, indexName });
+}
+
+export async function deleteVectorIndex(
+  config: ConnectionConfig,
+  indexName: string
+): Promise<boolean> {
+  return await invoke("deleteVectorIndex", { config, indexName });
+}
+
+export interface ClusterPoint {
+  key: string;
+  x: number;
+  y: number;
+  clusterId: number;
+  label?: string;
+}
+
+export interface ClusterVisualization {
+  points: ClusterPoint[];
+  numClusters: number;
+  clusterCentroids: [number, number][];
+}
+
+export async function getEmbeddingClusters(
+  config: ConnectionConfig,
+  indexName: string,
+  vectorField: string,
+  numClusters: number,
+  sampleSize?: number
+): Promise<ClusterVisualization> {
+  return await invoke("getEmbeddingClusters", {
+    config,
+    indexName,
+    vectorField,
+    numClusters,
+    sampleSize,
+  });
+}
+
+export async function batchVectorSearch(
+  config: ConnectionConfig,
+  requests: VectorSearchRequestApi[]
+): Promise<VectorSearchResult[][]> {
+  return await invoke("batchVectorSearch", { config, requests });
+}

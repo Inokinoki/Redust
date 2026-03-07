@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card } from "./ui/card";
-import type { SortedSetMember } from "../lib/api";
+import {
+  listVectorIndexes,
+  getVectorIndexInfo,
+  vectorSearchApi,
+  type VectorIndexInfo,
+  type VectorSearchResult,
+} from "../lib/api";
+import { useConnectionStore } from "../stores/connectionStore";
 
 interface VectorSearchProps {
   isOpen: boolean;
@@ -11,30 +18,88 @@ interface VectorSearchProps {
 }
 
 export function VectorSearch({ isOpen, onClose }: VectorSearchProps) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SortedSetMember[]>([]);
+  const getActiveConnection = useConnectionStore((s) => s.getActiveConnection);
+  const activeConnection = getActiveConnection();
+  const [indexes, setIndexes] = useState<string[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState<string>("");
+  const [indexInfo, setIndexInfo] = useState<VectorIndexInfo | null>(null);
+  const [queryVector, setQueryVector] = useState("");
+  const [results, setResults] = useState<VectorSearchResult[]>([]);
   const [topK, setTopK] = useState(10);
-  const [searching, setSearching] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen && activeConnection) {
+      loadIndexes();
+    }
+  }, [isOpen, activeConnection]);
+
+  useEffect(() => {
+    if (selectedIndex && activeConnection) {
+      loadIndexInfo();
+    }
+  }, [selectedIndex]);
+
+  const loadIndexes = async () => {
+    if (!activeConnection) return;
+    try {
+      const idx = await listVectorIndexes(activeConnection);
+      setIndexes(idx);
+      if (idx.length > 0 && !selectedIndex) {
+        setSelectedIndex(idx[0]);
+      }
+    } catch (e) {
+      console.error("Failed to load indexes:", e);
+    }
+  };
+
+  const loadIndexInfo = async () => {
+    if (!activeConnection || !selectedIndex) return;
+    try {
+      const info = await getVectorIndexInfo(activeConnection, selectedIndex);
+      setIndexInfo(info);
+    } catch (e) {
+      console.error("Failed to load index info:", e);
+      setIndexInfo(null);
+    }
+  };
 
   const handleSearch = async () => {
-    if (!query.trim()) return;
+    if (!activeConnection || !selectedIndex || !queryVector.trim()) return;
 
-    setSearching(true);
+    setLoading(true);
+    setError(null);
     try {
-      // Simulated vector search - in production this would call actual API
-      // For now, we'll show mock results
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const vector = parseVector(queryVector);
+      if (!vector) {
+        setError("Invalid vector format. Use comma-separated numbers.");
+        return;
+      }
 
-      setResults([
-        { member: "result1", score: 0.95 },
-        { member: "result2", score: 0.87 },
-        { member: "result3", score: 0.82 },
-        { member: "result4", score: 0.78 },
-      ]);
-    } catch (error) {
-      console.error("Search failed:", error);
+      const res = await vectorSearchApi(activeConnection, {
+        indexName: selectedIndex,
+        queryVector: vector,
+        vectorField: indexInfo?.vectorField || "embedding",
+        topK,
+        returnFields: ["text", "metadata"],
+      });
+
+      setResults(res);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Search failed");
     } finally {
-      setSearching(false);
+      setLoading(false);
+    }
+  };
+
+  const parseVector = (input: string): number[] | null => {
+    try {
+      const parts = input.split(",").map((s) => parseFloat(s.trim()));
+      if (parts.some(isNaN)) return null;
+      return parts;
+    } catch {
+      return null;
     }
   };
 
@@ -48,14 +113,50 @@ export function VectorSearch({ isOpen, onClose }: VectorSearchProps) {
         <Card className="p-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="query">Query Text</Label>
-              <Input
-                id="query"
-                placeholder="Enter your query..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                disabled={searching}
+              <Label>Select Index</Label>
+              <select
+                className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+                value={selectedIndex}
+                onChange={(e) => setSelectedIndex(e.target.value)}
+                disabled={loading}
+              >
+                <option value="">Select an index...</option>
+                {indexes.map((idx) => (
+                  <option key={idx} value={idx}>
+                    {idx}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {indexInfo && (
+              <div className="rounded-md border border-zinc-800 bg-zinc-900 p-3 text-sm">
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <span className="text-zinc-400">Dimensions:</span>{" "}
+                    <span className="text-green-400">{indexInfo.vectorDimensions || "?"}</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-400">Documents:</span>{" "}
+                    <span className="text-blue-400">{indexInfo.numDocs}</span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-400">Vector Field:</span>{" "}
+                    <span className="text-purple-400">{indexInfo.vectorField || "?"}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="queryVector">Query Vector (comma-separated)</Label>
+              <textarea
+                id="queryVector"
+                className="flex min-h-[80px] w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+                placeholder="0.1, 0.2, 0.3, ..."
+                value={queryVector}
+                onChange={(e) => setQueryVector(e.target.value)}
+                disabled={loading}
               />
             </div>
 
@@ -68,48 +169,53 @@ export function VectorSearch({ isOpen, onClose }: VectorSearchProps) {
                   min={1}
                   max={100}
                   value={topK}
-                  onChange={(e) => setTopK(parseInt(e.target.value))}
-                  disabled={searching}
+                  onChange={(e) => setTopK(parseInt(e.target.value) || 10)}
+                  disabled={loading}
                 />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Distance Metric</Label>
-                <select
-                  className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
-                  disabled={searching}
-                >
-                  <option value="COSINE">COSINE</option>
-                  <option value="L2">L2 Distance</option>
-                  <option value="IP">Inner Product</option>
-                </select>
               </div>
             </div>
 
-            <Button onClick={handleSearch} disabled={searching || !query.trim()} className="w-full">
-              {searching ? "Searching..." : "Search"}
+            {error && (
+              <div className="rounded-md border border-red-800 bg-red-900/20 p-3 text-sm text-red-400">
+                {error}
+              </div>
+            )}
+
+            <Button
+              onClick={handleSearch}
+              disabled={loading || !selectedIndex || !queryVector.trim()}
+              className="w-full"
+            >
+              {loading ? "Searching..." : "Search"}
             </Button>
           </div>
 
           {results.length > 0 && (
             <div className="mt-6 space-y-3">
-              <h3 className="text-lg font-medium">Results</h3>
-              <div className="space-y-2">
+              <h3 className="text-lg font-medium">Results ({results.length})</h3>
+              <div className="max-h-96 space-y-2 overflow-auto">
                 {results.map((result, index) => (
                   <div
-                    key={result.member}
-                    className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900 p-3"
+                    key={result.key}
+                    className="rounded-md border border-zinc-800 bg-zinc-900 p-3"
                   >
-                    <div className="flex-1">
-                      <div className="font-mono text-sm">{result.member}</div>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <span className="text-sm text-zinc-400">
-                        Score: {result.score.toFixed(4)}
-                      </span>
-                      <span className="rounded bg-red-900/50 px-2 py-1 text-xs text-red-400">
-                        #{index + 1}
-                      </span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="font-mono text-sm">{result.key}</div>
+                        {result.fields?.text && (
+                          <div className="mt-1 truncate text-xs text-zinc-400">
+                            {result.fields.text}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <span className="text-sm text-zinc-400">
+                          Score: {result.score.toFixed(4)}
+                        </span>
+                        <span className="rounded bg-red-900/50 px-2 py-1 text-xs text-red-400">
+                          #{index + 1}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}
