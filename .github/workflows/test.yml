@@ -90,6 +90,7 @@ jobs:
   redis-integration-tests:
     name: Redis Integration Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     services:
       redis:
