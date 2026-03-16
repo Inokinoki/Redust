@@ -408,8 +408,13 @@ describe("Real Redis Integration Tests", () => {
 
       await subscriber.connect();
 
-      // Subscribe
-      await subscriber.subscribe(channel);
+      // Track received message
+      let receivedMessage: string | null = null;
+
+      // Subscribe with callback
+      await subscriber.subscribe(channel, (msg: string) => {
+        receivedMessage = msg;
+      });
 
       // Wait a bit for subscription to be established
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -417,25 +422,15 @@ describe("Real Redis Integration Tests", () => {
       // Publish message
       await redisClient.publish(channel, message);
 
-      // Wait for message (with timeout)
-      const messagePromise = new Promise((resolve) => {
-        const timeout = setTimeout(() => {
-          subscriber.disconnect();
-          resolve("timeout");
-        }, 3000);
+      // Wait for message to be received
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-        subscriber.on("message", (channel, receivedMessage) => {
-          clearTimeout(timeout);
-          subscriber.disconnect();
-          resolve(receivedMessage);
-        });
-      });
+      // Cleanup
+      await subscriber.unsubscribe(channel);
+      await subscriber.quit();
 
-      const received = await messagePromise;
-      // Either we get the message or timeout - both are acceptable outcomes
-      expect(received === message || received === "timeout").toBe(true);
-
-      await subscriber.quit().catch(() => {}); // Clean up even if already disconnected
+      // Message should be received
+      expect(receivedMessage).toBe(message);
     });
   });
 
