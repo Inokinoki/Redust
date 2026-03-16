@@ -186,9 +186,9 @@ jobs:
           PREVIEW_PID=$!
           echo "Preview server started with PID: $PREVIEW_PID"
           echo "Waiting for server to be ready..."
-          # Wait for server to be ready
+          # Wait for server to be ready (vite preview uses port 4173 by default)
           for i in {1..30}; do
-            if curl -s http://localhost:5173 > /dev/null 2>&1; then
+            if curl -s http://localhost:4173 > /dev/null 2>&1; then
               echo "✅ Preview server is ready"
               break
             fi
@@ -196,7 +196,7 @@ jobs:
             sleep 2
           done
           # Verify server is running
-          curl -s http://localhost:5173 || echo "Warning: Server may not be fully ready"
+          curl -s http://localhost:4173 || echo "Warning: Server may not be fully ready"
 
       - name: Run E2E tests
         run: npm run test:e2e
