@@ -11,6 +11,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:e2e": "playwright test",
+    "test:rust": "./scripts/test-rust-integration.sh",
+    "test:integration": "./scripts/test-integration.sh",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
@@ -24,6 +26,7 @@
     "clsx": "^2.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "redis": "^5.11.0",
     "tailwind-merge": "^2.2.0",
     "zustand": "^4.5.0"
   },
