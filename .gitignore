@@ -25,6 +25,7 @@ dist-ssr
 
 # Rust
 src-tauri/target
+src-tauri/tests/target
 *.rs.bk
 *.pdb
 
