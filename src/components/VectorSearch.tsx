@@ -52,18 +52,7 @@ export function VectorSearch({ isOpen, onClose }: VectorSearchProps) {
   const [error, setError] = useState<string | null>(null);
   const [searchTime, setSearchTime] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (isOpen && activeConnection) {
-      loadIndexes();
-    }
-  }, [isOpen, activeConnection]);
-
-  useEffect(() => {
-    if (selectedIndex && activeConnection) {
-      loadIndexInfo();
-    }
-  }, [selectedIndex]);
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadIndexes = async () => {
     if (!activeConnection) return;
     try {
@@ -77,6 +66,7 @@ export function VectorSearch({ isOpen, onClose }: VectorSearchProps) {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadIndexInfo = async () => {
     if (!activeConnection || !selectedIndex) return;
     try {
@@ -87,6 +77,18 @@ export function VectorSearch({ isOpen, onClose }: VectorSearchProps) {
       setIndexInfo(null);
     }
   };
+
+  useEffect(() => {
+    if (isOpen && activeConnection) {
+      loadIndexes();
+    }
+  }, [isOpen, activeConnection, loadIndexes]);
+
+  useEffect(() => {
+    if (selectedIndex && activeConnection) {
+      loadIndexInfo();
+    }
+  }, [selectedIndex, activeConnection, loadIndexInfo]);
 
   const addFilter = () => {
     setFilters([...filters, { field: "", operator: "eq", value: "" }]);
@@ -135,7 +137,7 @@ export function VectorSearch({ isOpen, onClose }: VectorSearchProps) {
     const startTime = performance.now();
 
     try {
-      let vector: number[];
+      let vector: number[] | null;
 
       if (searchMode === "text") {
         // Generate embedding from text
@@ -156,7 +158,14 @@ export function VectorSearch({ isOpen, onClose }: VectorSearchProps) {
       }
 
       // Build search parameters
-      const searchParams: any = {
+      const searchParams: {
+        indexName: string;
+        queryVector: number[];
+        vectorField: string;
+        topK: number;
+        returnFields: string[];
+        minScore?: number;
+      } = {
         indexName: selectedIndex,
         queryVector: vector,
         vectorField: indexInfo?.vectorField || "embedding",
@@ -547,7 +556,7 @@ export function VectorSearch({ isOpen, onClose }: VectorSearchProps) {
                     />
                     <select
                       value={filter.operator}
-                      onChange={(e) => updateFilter(index, { operator: e.target.value as any })}
+                      onChange={(e) => updateFilter(index, { operator: e.target.value as FilterCondition["operator"] })}
                       className="h-10 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
                     >
                       <option value="eq">=</option>

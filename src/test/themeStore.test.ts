@@ -166,11 +166,10 @@ describe("ThemeStore", () => {
     useThemeStore.getState().setTheme("system");
 
     // Get the event listener - it's added as the second parameter to addEventListener
-    const addEventCalls = (window.matchMedia as any).mock.calls;
     const addEventListenerCalls =
-      (window.matchMedia as any).prototype.addEventListener?.mock.calls || [];
+      (window.matchMedia as unknown).mock.calls || [];
 
-    if (addEventListenerCalls.length > 0 && addEventListenerCalls[0][1]) {
+    if (addEventListenerCalls.length > 0 && (addEventListenerCalls[0] as unknown[])[1]) {
       const listener = addEventListenerCalls[0][1];
 
       // Simulate system theme change to dark

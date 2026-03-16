@@ -11,7 +11,7 @@ import * as api from "../lib/api";
 // Mock Tauri invoke function
 const mockInvoke = vi.fn();
 vi.mock("@tauri-apps/api/core", () => ({
-  invoke: (...args: any[]) => mockInvoke(...args),
+  invoke: (...args: unknown[]) => mockInvoke(...args),
 }));
 
 describe("LLM API", () => {

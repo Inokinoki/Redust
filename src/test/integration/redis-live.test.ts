@@ -159,7 +159,7 @@ describe("Real Redis Integration Tests", () => {
         await redisClient.json.set(key, "$", jsonData);
         const retrieved = await redisClient.json.get(key);
         expect(retrieved).toEqual(jsonData);
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (error.message.includes("unknown command")) {
           console.log("⚠️ RedisJSON module not available, skipping JSON tests");
           expect(true).toBe(true); // Skip test gracefully
@@ -178,7 +178,7 @@ describe("Real Redis Integration Tests", () => {
       try {
         // Check if Redis Search is available
         await redisClient.ft.info(indexName);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Redis Search not available, skip test
         console.log("⚠️ Redis Search module not available, skipping vector search tests");
         expect(true).toBe(true);
@@ -239,7 +239,7 @@ describe("Real Redis Integration Tests", () => {
         // Cleanup
         await redisClient.del(...documents.map(doc => doc.key));
         await redisClient.ft.dropIndex(indexName);
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (error.message.includes("unknown command") || error.message.includes("Redis Search")) {
           console.log("⚠️ Redis Search module not available, skipping vector search tests");
           expect(true).toBe(true); // Skip test gracefully
@@ -464,7 +464,7 @@ describe("Real Redis Integration Tests", () => {
         await redisClient.json.set(key, "$.user.preferences.theme", "light");
         const updatedTheme = await redisClient.json.get(key, { path: "$.user.preferences.theme" });
         expect(updatedTheme).toEqual(["light"]);
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (error.message.includes("unknown command")) {
           console.log("⚠️ RedisJSON module not available, skipping JSON tests");
           expect(true).toBe(true);

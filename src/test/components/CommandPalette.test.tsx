@@ -4,7 +4,7 @@ import { CommandPalette, Command } from "../../components/CommandPalette";
 
 // Mock UI components
 vi.mock("../../components/ui/input", () => ({
-  Input: ({ value, onChange, placeholder, autoFocus, className }: any) => (
+  Input: ({ value, onChange, placeholder, autoFocus, className }: unknown) => (
     <input
       value={value}
       onChange={onChange}

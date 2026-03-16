@@ -5,8 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, screen } from "@testing-library/react";
 
 // Mock the API
 vi.mock("../lib/api", () => ({
@@ -71,7 +70,7 @@ describe("JSON Analyzer Component", () => {
   it("should analyze JSON structure correctly", async () => {
     const { JSONAnalyzer } = await import("../components/JSONAnalyzer");
 
-    const { container } = render(
+    render(
       <JSONAnalyzer
         isOpen={true}
         onClose={() => {}}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -27,7 +27,7 @@ export function ClusterTopology({ isOpen, onClose }: { isOpen: boolean; onClose:
   const [clusterInfo, setClusterInfo] = useState<ClusterInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const loadClusterInfo = async () => {
+  const loadClusterInfo = useCallback(async () => {
     const config = getActiveConnection();
     if (!config) {
       setError("No active connection");
@@ -44,7 +44,7 @@ export function ClusterTopology({ isOpen, onClose }: { isOpen: boolean; onClose:
     } finally {
       setLoading(false);
     }
-  };
+  }, [getActiveConnection]);
 
   useEffect(() => {
     if (isOpen) {

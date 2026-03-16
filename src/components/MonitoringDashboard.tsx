@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -48,7 +48,7 @@ export function MonitoringDashboard({ isOpen, onClose }: { isOpen: boolean; onCl
 
   const [refreshing, setRefreshing] = useState(false);
 
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
     const config = getActiveConnection();
     if (!config) {
       console.error("No active connection");
@@ -66,7 +66,7 @@ export function MonitoringDashboard({ isOpen, onClose }: { isOpen: boolean; onCl
     } finally {
       setRefreshing(false);
     }
-  };
+  }, [getActiveConnection]);
 
   useEffect(() => {
     if (isOpen) {

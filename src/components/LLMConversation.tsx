@@ -42,7 +42,7 @@ export function LLMConversation({ isOpen, onClose }: LLMConversationProps) {
   });
   const [vectorField, setVectorField] = useState("embedding");
   const [loading, setLoading] = useState(false);
-  const [streaming, setStreaming] = useState(false);
+  const streaming = false;
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export function LLMConversation({ isOpen, onClose }: LLMConversationProps) {
     setLoading(true);
 
     try {
-      const connection = useConnectionStore.getState().currentConnection;
+      const connection = useConnectionStore.getState().getActiveConnection();
       if (!connection) {
         throw new Error("No active Redis connection");
       }

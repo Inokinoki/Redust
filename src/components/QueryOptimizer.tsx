@@ -4,7 +4,6 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { useConnectionStore } from "../stores/connectionStore";
 import * as api from "../lib/api";
 import type { LLMModel, LLMProvider } from "../lib/api";
 
@@ -34,8 +33,6 @@ export function QueryOptimizer({ isOpen, onClose, initialQuery = "" }: QueryAnal
   const [llmModel, setLlmModel] = useState<LLMModel>("gpt-4-turbo");
   const [llmProvider, setLlmProvider] = useState<LLMProvider>("OpenAI");
   const [apiKey, setApiKey] = useState("");
-
-  const activeConnection = useConnectionStore((s) => s.currentConnection);
 
   useEffect(() => {
     if (initialQuery) {

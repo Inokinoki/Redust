@@ -10,7 +10,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Mock the Tauri API
 const mockInvoke = vi.fn();
 vi.mock("@tauri-apps/api/core", () => ({
-  invoke: (...args: any[]) => mockInvoke(...args),
+  invoke: (...args: unknown[]) => mockInvoke(...args),
 }));
 
 import * as api from "../../lib/api";

@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
 
 interface VectorVisualizationProps {
   isOpen: boolean;
@@ -33,12 +31,7 @@ export function VectorVisualization({
   const [hoveredPoint, setHoveredPoint] = useState<ProjectionPoint | null>(null);
   const [selectedPoint, setSelectedPoint] = useState<ProjectionPoint | null>(null);
 
-  useEffect(() => {
-    if (isOpen && vectors.length > 0) {
-      computeProjection();
-    }
-  }, [isOpen, vectors, projectionMethod]);
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const computeProjection = () => {
     let points: ProjectionPoint[];
 
@@ -59,6 +52,12 @@ export function VectorVisualization({
     setProjection(points);
   };
 
+  useEffect(() => {
+    if (isOpen && vectors.length > 0) {
+      computeProjection();
+    }
+  }, [isOpen, vectors, projectionMethod, computeProjection]);
+
   const computePCA = (): ProjectionPoint[] => {
     if (vectors.length === 0) return [];
 
@@ -68,11 +67,11 @@ export function VectorVisualization({
     // Center the data
     const means = new Array(dimensions).fill(0);
     vectors.forEach((vec) => {
-      vec.forEach((val, i) => {
-        means[i] += val;
+      vec.forEach((_, i) => {
+        means[i] += vec[i];
       });
     });
-    means.forEach((val, i) => (means[i] /= numVectors));
+    means.forEach((_, i) => (means[i] /= numVectors));
 
     const centered = vectors.map((vec) => vec.map((val, i) => val - means[i]));
 
@@ -85,7 +84,7 @@ export function VectorVisualization({
         }
       }
     });
-    cov.forEach((row, i) => row.forEach((val, j) => (cov[i][j] /= numVectors)));
+    cov.forEach((row, i) => row.forEach((_, j) => (cov[i][j] /= numVectors)));
 
     // Simple power iteration for first eigenvector
     let eigenvector = new Array(dimensions).fill(1).map(() => Math.random());
@@ -187,6 +186,7 @@ export function VectorVisualization({
     }));
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const drawCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas || projection.length === 0) return;
@@ -262,7 +262,7 @@ export function VectorVisualization({
     if (projection.length > 0) {
       drawCanvas();
     }
-  }, [projection, hoveredPoint, selectedPoint]);
+  }, [projection, hoveredPoint, selectedPoint, drawCanvas]);
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -287,7 +287,7 @@ export function VectorVisualization({
     setHoveredPoint(closest);
   };
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleCanvasClick = () => {
     if (hoveredPoint) {
       setSelectedPoint(selectedPoint?.originalIndex === hoveredPoint.originalIndex ? null : hoveredPoint);
     } else {

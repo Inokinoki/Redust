@@ -43,7 +43,7 @@ vi.mock("../../components/ui/button", () => ({
 }));
 
 vi.mock("../../components/ui/input", () => ({
-  Input: ({ id, type, value, onChange, required }: any) => (
+  Input: ({ id, type, value, onChange, required }: unknown) => (
     <input
       id={id}
       type={type || "text"}

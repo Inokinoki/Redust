@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { useConnectionStore } from "../stores/connectionStore";
 import * as api from "../lib/api";
-import type { LLMModel, LLMProvider } from "../lib/api";
 
 interface JSONAnalysisResult {
   summary: string;
@@ -47,25 +44,25 @@ interface JSONAnalyzerProps {
   isOpen: boolean;
   onClose: () => void;
   keyName: string;
-  jsonData: any;
+  jsonData: unknown;
 }
 
 export function JSONAnalyzer({ isOpen, onClose, keyName, jsonData }: JSONAnalyzerProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<JSONAnalysisResult | null>(null);
-  const [analysisType, setAnalysisType] = useState<"structure" | "ai" | "both">("both");
+  const [analysisType] = useState<"structure" | "ai" | "both">("both");
 
-  const [llmModel, setLlmModel] = useState<LLMModel>("gpt-4-turbo");
-  const [llmProvider, setLlmProvider] = useState<LLMProvider>("OpenAI");
-  const [apiKey, setApiKey] = useState("");
+  const llmModel = "gpt-4-turbo";
+  const apiKey = "";
 
-  const activeConnection = useConnectionStore((s) => s.currentConnection);
+  const activeConnection = useConnectionStore((s) => s.getActiveConnection());
 
   useEffect(() => {
     if (isOpen && jsonData) {
       performAnalysis();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, jsonData]);
 
   const analyzeStructure = (): JSONStructureInfo => {
@@ -76,7 +73,7 @@ export function JSONAnalyzer({ isOpen, onClose, keyName, jsonData }: JSONAnalyze
     let objects = 0;
     let primitives = 0;
 
-    const traverse = (obj: any, currentDepth: number) => {
+    const traverse = (obj: unknown, currentDepth: number) => {
       depth = Math.max(depth, currentDepth);
 
       if (Array.isArray(obj)) {
@@ -84,9 +81,9 @@ export function JSONAnalyzer({ isOpen, onClose, keyName, jsonData }: JSONAnalyze
         obj.forEach((item) => traverse(item, currentDepth + 1));
       } else if (obj !== null && typeof obj === "object") {
         objects++;
-        Object.keys(obj).forEach((key) => {
+        Object.keys(obj as object).forEach((key) => {
           totalKeys++;
-          const value = obj[key];
+          const value = (obj as Record<string, unknown>)[key];
           const type = Array.isArray(value) ? "array" : typeof value;
           keyTypes[type] = (keyTypes[type] || 0) + 1;
           traverse(value, currentDepth + 1);
@@ -109,7 +106,7 @@ export function JSONAnalyzer({ isOpen, onClose, keyName, jsonData }: JSONAnalyze
     };
   };
 
-  const generateSchema = (obj: any): JSONSchema => {
+  const generateSchema = (obj: unknown): JSONSchema => {
     if (Array.isArray(obj)) {
       if (obj.length > 0) {
         return {
@@ -124,8 +121,8 @@ export function JSONAnalyzer({ isOpen, onClose, keyName, jsonData }: JSONAnalyze
       const properties: Record<string, JSONSchema> = {};
       const required: string[] = [];
 
-      Object.keys(obj).forEach((key) => {
-        properties[key] = generateSchema(obj[key]);
+      Object.keys(obj as object).forEach((key) => {
+        properties[key] = generateSchema((obj as Record<string, unknown>)[key]);
         required.push(key);
       });
 
@@ -145,7 +142,7 @@ export function JSONAnalyzer({ isOpen, onClose, keyName, jsonData }: JSONAnalyze
 
     // Simple complexity calculation
     let complexity = 0;
-    const traverse = (obj: any) => {
+    const traverse = (obj: unknown) => {
       if (Array.isArray(obj)) {
         complexity += obj.length * 0.5;
         obj.forEach(traverse);
@@ -158,14 +155,14 @@ export function JSONAnalyzer({ isOpen, onClose, keyName, jsonData }: JSONAnalyze
 
     // Count unique paths
     let uniquePaths = 0;
-    const getPaths = (obj: any, prefix = ""): string[] => {
+    const getPaths = (obj: unknown, prefix = ""): string[] => {
       if (Array.isArray(obj)) {
         return obj.flatMap((item, i) => getPaths(item, `${prefix}[${i}]`));
       }
       if (obj !== null && typeof obj === "object") {
-        return Object.keys(obj).flatMap((key) => {
+        return Object.keys(obj as object).flatMap((key) => {
           uniquePaths++;
-          return getPaths(obj[key], `${prefix}.${key}`);
+          return getPaths((obj as Record<string, unknown>)[key], `${prefix}.${key}`);
         });
       }
       return [prefix];
@@ -325,7 +322,7 @@ Provide analysis in a clear, structured format.`;
     }
 
     const arrayTypes = Object.entries(structure.keyTypes)
-      .filter(([_, count]) => _ === "array")
+      .filter(([type]) => type === "array")
       .map(([type, count]) => `${count} ${type}s`);
     if (arrayTypes.length > 0) {
       insights.push(`Mixed data types detected: ${arrayTypes.join(", ")}`);

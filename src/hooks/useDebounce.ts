@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 
 export function useDebounce<T>(value: T, delay: number = 300): T {
@@ -18,7 +16,7 @@ export function useDebounce<T>(value: T, delay: number = 300): T {
   return debouncedValue;
 }
 
-export function useDebouncedCallback<T extends (...args: any[]) => any>(
+export function useDebouncedCallback<T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number = 300
 ): T {
@@ -32,7 +30,7 @@ export function useDebouncedCallback<T extends (...args: any[]) => any>(
     };
   }, [timeoutId]);
 
-  return ((...args: any[]) => {
+  return ((...args: unknown[]) => {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }

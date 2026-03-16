@@ -22,7 +22,7 @@ vi.mock("../../stores/splitPaneStore", () => ({
 
 // Mock UI components
 vi.mock("../../components/ui/button", () => ({
-  Button: ({ children, onClick, variant, size }: any) => (
+  Button: ({ children, onClick, variant, size }: unknown) => (
     <button onClick={onClick} data-variant={variant} data-size={size}>
       {children}
     </button>
@@ -30,7 +30,7 @@ vi.mock("../../components/ui/button", () => ({
 }));
 
 vi.mock("../../components/ValueEditor", () => ({
-  ValueEditor: ({ isOpen, keyType, onClose }: any) =>
+  ValueEditor: ({ isOpen, keyType, onClose }: unknown) =>
     isOpen ? (
       <div data-testid="value-editor" data-keytype={keyType}>
         <button onClick={onClose}>Close Editor</button>
