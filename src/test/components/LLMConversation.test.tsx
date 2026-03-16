@@ -18,8 +18,8 @@ vi.mock("../../lib/api", () => ({
 }));
 
 // Mock the connection store
-vi.mock("../../stores/connectionStore", () => ({
-  useConnectionStore: vi.fn(() => ({
+const mockConnectionStore = {
+  getState: vi.fn(() => ({
     currentConnection: {
       id: "test-conn",
       name: "Test Connection",
@@ -28,6 +28,13 @@ vi.mock("../../stores/connectionStore", () => ({
       tls: false,
     },
   })),
+};
+
+vi.mock("../../stores/connectionStore", () => ({
+  useConnectionStore: vi.fn((selector) => {
+    const state = mockConnectionStore.getState();
+    return selector ? selector(state) : state;
+  }),
 }));
 
 import * as api from "../../lib/api";
