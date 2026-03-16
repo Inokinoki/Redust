@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redust-test-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --save 60 1 --loglevel warning
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - redust-test
+
+  redis-stack:
+    image: redis/redis-stack-server:latest
+    container_name: redust-test-redis-stack
+    ports:
+      - "6380:6379"
+    command: redis-stack-server --save 60 1 --loglevel warning
+    volumes:
+      - redis-stack-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - redust-test
+
+volumes:
+  redis-data:
+    driver: local
+  redis-stack-data:
+    driver: local
+
+networks:
+  redust-test:
+    driver: bridge
