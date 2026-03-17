@@ -35,21 +35,7 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ],
-    "macOS": {
-      "dmgBackground": "#ffffff",
-      "minimumSystemVersion": "10.15"
-    },
-    "windows": {
-      "nsis": {
-        "installerIcon": "icons/icon.ico"
-      }
-    },
-    "linux": {
-      "deb": {
-        "depends": ["libwebkit2gtk-4.0-dev", "libssl-dev", "libgtk-3-dev"]
-      }
-    }
+    ]
   },
   "plugins": {}
 }
