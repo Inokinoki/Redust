@@ -189,7 +189,8 @@ fn parse_cluster_nodes(nodes_str: &str) -> Vec<ClusterNode> {
             };
 
             let slots = if parts.len() > 8 {
-                let slot_parts: Vec<&str> = parts[8..].join(" ").split(',').collect();
+                let slots_string = parts[8..].join(" ");
+                let slot_parts: Vec<&str> = slots_string.split(',').collect();
                 if slot_parts.is_empty() {
                     None
                 } else {
