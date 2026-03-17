@@ -252,7 +252,6 @@ impl RedisManager {
 
         Ok(true)
     }
-}
 
     pub async fn hash_get(&mut self, key: &str, field: &str) -> Result<Option<String>> {
         let client = self.get_client().await?;
