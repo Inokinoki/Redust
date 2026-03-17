@@ -336,10 +336,47 @@ For macOS notarization and Windows signing, configure these secrets:
 
 ### Release Process
 
-1. Tag a release: `git tag v0.1.0 && git push origin v0.1.0`
-2. GitHub Actions builds all platform binaries
-3. Draft release is created with artifacts
-4. Review and publish the release
+#### Creating a Release
+
+1. **Update the version** in `src-tauri/tauri.conf.json`:
+   ```bash
+   # Update version in tauri.conf.json (e.g., "version": "0.1.0")
+   ```
+
+2. **Create and push a version tag**:
+   ```bash
+   # Standard release
+   git tag v0.1.0
+   git push origin v0.1.0
+
+   # Pre-release (alpha, beta, rc)
+   git tag v0.1.0-beta.1
+   git push origin v0.1.0-beta.1
+   ```
+
+3. **GitHub Actions automatically**:
+   - Builds binaries for all platforms (macOS, Windows, Linux)
+   - Creates a draft GitHub release with all artifacts attached
+   - Marks as pre-release if tag contains "alpha", "beta", or "rc"
+
+4. **Review and publish** the draft release on GitHub
+
+#### Manual Build (No Release)
+
+To test builds without creating a release:
+1. Go to Actions → "Build and Release" workflow
+2. Click "Run workflow"
+3. Select branch and click "Run workflow"
+4. Artifacts will be uploaded for download (no release created)
+
+#### Version Tag Format
+
+| Format | Example | Release Type |
+|--------|---------|--------------|
+| Stable | `v1.0.0` | Production release |
+| Beta | `v1.0.0-beta.1` | Pre-release (beta) |
+| Alpha | `v1.0.0-alpha.1` | Pre-release (alpha) |
+| RC | `v1.0.0-rc.1` | Release candidate |
 
 ---
 
