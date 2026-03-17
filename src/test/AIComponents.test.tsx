@@ -222,6 +222,14 @@ EXPLANATION: SCAN is more efficient than KEYS for production environments`
   });
 });
 
+/**
+ * Vector Visualization tests are skipped because:
+ * - The component uses HTMLCanvasElement which requires canvas rendering
+ * - jsdom does not fully support canvas operations, causing timeouts
+ * - These are visual/UI tests that can be verified manually
+ *
+ * To enable: remove .skip and ensure canvas package is installed
+ */
 describe.skip("Vector Visualization Component", () => {
   const mockVectors = [
     [0.1, 0.2, 0.3, 0.4],

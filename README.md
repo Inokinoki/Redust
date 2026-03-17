@@ -2,6 +2,24 @@
 
 **Lightning-fast Redis GUI with AI-powered insights and vector search support**
 
+[![Build Status](https://github.com/Inokinoki/Redust/actions/workflows/build.yml/badge.svg)](https://github.com/Inokinoki/Redust/actions/workflows/build.yml)
+[![Tests](https://github.com/Inokinoki/Redust/actions/workflows/test.yml/badge.svg)](https://github.com/Inokinoki/Redust/actions/workflows/test.yml)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+
+---
+
+## 📥 Downloads
+
+Get the latest release from the [GitHub Releases page](https://github.com/Inokinoki/Redust/releases):
+
+| Platform | Download |
+|----------|----------|
+| macOS (Apple Silicon) | `.dmg` installer |
+| macOS (Intel) | `.dmg` installer |
+| Windows (x64) | `.exe` installer |
+| Linux (Debian/Ubuntu) | `.deb` package |
+| Linux (AppImage) | `.AppImage` |
+
 ---
 
 ## 🚀 Quick Overview
@@ -254,7 +272,7 @@ redust/
 ### Installation (Development)
 
 ```bash
-git clone https://github.com/your-org/redust.git
+git clone https://github.com/Inokinoki/Redust.git
 cd redust
 npm install
 npm run tauri dev
@@ -266,7 +284,62 @@ npm run tauri dev
 npm run tauri build
 ```
 
+Build artifacts will be created in `src-tauri/target/release/bundle/`:
+- **macOS**: `.dmg` installer and `.app` bundle
+- **Windows**: `.exe` installer (NSIS) and `.msi` package
+- **Linux**: `.deb` package, `.AppImage`, and `.rpm` package
+
 **Note:** Production build on Ubuntu 20.04 requires gio-2.0 >= 2.70. For development builds, the application will work without newer gio-2.0.
+
+### Cross-Platform Build Matrix
+
+| Platform | Architectures | Formats |
+|----------|---------------|---------|
+| macOS | ARM64 (Apple Silicon), Intel (x86_64) | DMG, APP |
+| Windows | x64, ARM64 | EXE (NSIS), MSI |
+| Linux | x64 | DEB, AppImage, RPM |
+
+---
+
+## 🏗 CI/CD Builds
+
+Redust uses GitHub Actions to build and release binaries for all major platforms.
+
+### Build Workflow
+
+The build workflow (`.github/workflows/build.yml`) is triggered on:
+- Version tag pushes (e.g., `v0.1.0`)
+- Manual workflow dispatch
+
+### Build Configuration
+
+| Job | Runner | Targets | Output |
+|-----|--------|---------|--------|
+| `build-macos` | `macos-14` | Universal (ARM64 + Intel) | DMG, APP |
+| `build-windows` | `windows-2022` | x64 | EXE, MSI |
+| `build-linux` | `ubuntu-22.04` | x64 | DEB, AppImage, RPM |
+
+### Code Signing (Optional)
+
+For macOS notarization and Windows signing, configure these secrets:
+
+| Secret | Description |
+|--------|-------------|
+| `APPLE_CERTIFICATE` | Apple developer certificate (base64) |
+| `APPLE_CERTIFICATE_PASSWORD` | Certificate password |
+| `APPLE_SIGNING_IDENTITY` | Signing identity name |
+| `APPLE_ID` | Apple ID for notarization |
+| `APPLE_PASSWORD` | App-specific password |
+| `APPLE_TEAM_ID` | Apple Team ID |
+| `TAURI_PRIVATE_KEY` | Tauri updater private key |
+| `TAURI_KEY_PASSWORD` | Private key password |
+
+### Release Process
+
+1. Tag a release: `git tag v0.1.0 && git push origin v0.1.0`
+2. GitHub Actions builds all platform binaries
+3. Draft release is created with artifacts
+4. Review and publish the release
 
 ---
 
@@ -310,7 +383,7 @@ We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guideline
 ## 🔗 Links
 
 - [Documentation](./docs/)
-- [Issue Tracker](https://github.com/your-org/redust/issues)
+- [Issue Tracker](https://github.com/Inokinoki/Redust/issues)
 - [Roadmap](./ROADMAP.md)
 
 ---
