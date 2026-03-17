@@ -71,6 +71,10 @@ fn main() {
             getCachedEmbedding,
             getEmbeddingClusters,
             batchVectorSearch,
+            // LLM commands
+            llm_chat,
+            llm_rag,
+            llm_generate_embedding,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

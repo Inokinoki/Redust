@@ -35,18 +35,7 @@ export function EmbeddingCache({ isOpen, onClose }: EmbeddingCacheProps) {
   const [viewingKey, setViewingKey] = useState<string | null>(null);
   const [viewedEmbedding, setViewedEmbedding] = useState<EmbeddingCacheItem | null>(null);
 
-  useEffect(() => {
-    if (isOpen && activeConnection) {
-      loadIndexes();
-    }
-  }, [isOpen, activeConnection]);
-
-  useEffect(() => {
-    if (selectedIndex && activeConnection) {
-      loadIndexInfo();
-    }
-  }, [selectedIndex]);
-
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadIndexes = async () => {
     if (!activeConnection) return;
     try {
@@ -60,6 +49,7 @@ export function EmbeddingCache({ isOpen, onClose }: EmbeddingCacheProps) {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadIndexInfo = async () => {
     if (!activeConnection || !selectedIndex) return;
     try {
@@ -70,6 +60,18 @@ export function EmbeddingCache({ isOpen, onClose }: EmbeddingCacheProps) {
       setIndexInfo(null);
     }
   };
+
+  useEffect(() => {
+    if (isOpen && activeConnection) {
+      loadIndexes();
+    }
+  }, [isOpen, activeConnection, loadIndexes]);
+
+  useEffect(() => {
+    if (selectedIndex && activeConnection) {
+      loadIndexInfo();
+    }
+  }, [selectedIndex, activeConnection, loadIndexInfo]);
 
   const handleUpload = async () => {
     if (!activeConnection || !selectedIndex || !jsonInput.trim()) return;

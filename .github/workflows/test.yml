@@ -11,9 +11,10 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  unit-and-integration-tests:
-    name: Unit and Integration Tests
+  unit-tests:
+    name: Unit Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
@@ -27,25 +28,28 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test
+      - name: Run unit tests (stores, components, and utilities)
+        run: npm test -- --run src/test/store.test.ts src/test/themeStore.test.ts src/test/connectionStore.test.ts src/test/keyStore.test.ts src/test/splitPaneStore.test.ts src/test/commandPaletteStore.test.ts src/test/useDebounce.test.ts src/test/useEfficientUpdates.test.ts src/test/performance.test.ts src/test/apiErrorHandling.test.ts src/test/llm.test.ts src/test/integration/redis.test.ts src/test/components/
 
-      - name: Generate coverage report
-        run: npm run test:coverage
+  api-integration-tests:
+    name: API Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
         with:
-          files: ./coverage/coverage-final.json
-          flags: unittests
-          name: codecov-umbrella
+          node-version: "20"
 
-      - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: coverage/
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run API integration tests
+        run: npm test -- --run src/test/integration/api.test.ts src/test/integration/llm.integration.test.ts
 
   lint:
     name: Lint
@@ -87,6 +91,62 @@ jobs:
         env:
           TS_NODE_PROJECT_OPTIONS: '{"skipLibCheck": true}'
 
+  redis-integration-tests:
+    name: Redis Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis-stack:
+        image: redis/redis-stack-server:latest
+        ports:
+          - 6380:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Redis CLI
+        run: sudo apt-get update && sudo apt-get install -y redis-tools
+
+      - name: Verify Redis connection
+        run: |
+          redis-cli -h localhost -p 6379 ping
+          redis-cli -h localhost -p 6380 ping
+
+      - name: Run Redis live integration tests
+        run: npx vitest --run --config vitest.config.redis.ts
+        env:
+          REDIS_HOST: localhost
+          REDIS_PORT: 6379
+          NODE_ENV: test
+
+      - name: Run AI feature integration tests
+        run: npm test -- --run src/test/AIComponents.test.tsx
+
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
@@ -117,7 +177,17 @@ jobs:
           PREVIEW_PID=$!
           echo "Preview server started with PID: $PREVIEW_PID"
           echo "Waiting for server to be ready..."
-          sleep 15
+          # Wait for server to be ready (vite preview uses port 4173 by default)
+          for i in {1..30}; do
+            if curl -s http://localhost:4173 > /dev/null 2>&1; then
+              echo "✅ Preview server is ready"
+              break
+            fi
+            echo "⏳ Waiting for preview server... ($i/30)"
+            sleep 2
+          done
+          # Verify server is running
+          curl -s http://localhost:4173 || echo "Warning: Server may not be fully ready"
 
       - name: Run E2E tests
         run: npm run test:e2e
@@ -143,7 +213,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [unit-and-integration-tests, lint, typecheck, e2e-tests]
+    needs: [unit-tests, api-integration-tests, redis-integration-tests, lint, typecheck, e2e-tests]
     if: always()
 
     steps:

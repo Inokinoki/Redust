@@ -15,3 +15,12 @@ Object.defineProperty(window, "matchMedia", {
     dispatchEvent: vi.fn(),
   })),
 });
+
+// Suppress console warnings for HTMLCanvasElement in tests
+const originalWarn = console.warn;
+console.warn = (...args: unknown[]) => {
+  if (typeof args[0] === "string" && args[0].includes("HTMLCanvasElement")) {
+    return;
+  }
+  originalWarn.call(console, ...args);
+};

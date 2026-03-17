@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -47,25 +47,7 @@ export function ClusterVisualization({ isOpen, onClose }: ClusterVisualizationPr
   const [hoveredPoint, setHoveredPoint] = useState<ClusterPoint | null>(null);
   const [selectedPoint, setSelectedPoint] = useState<ClusterPoint | null>(null);
 
-  useEffect(() => {
-    if (isOpen && activeConnection) {
-      loadIndexes();
-    }
-  }, [isOpen, activeConnection]);
-
-  useEffect(() => {
-    if (selectedIndex && activeConnection) {
-      loadIndexInfo();
-    }
-  }, [selectedIndex]);
-
-  useEffect(() => {
-    if (clusterData && canvasRef.current) {
-      drawClusters();
-    }
-  }, [clusterData, selectedPoint]);
-
-  const loadIndexes = async () => {
+  const loadIndexes = useCallback(async () => {
     if (!activeConnection) return;
     try {
       const idx = await listVectorIndexes(activeConnection);
@@ -76,9 +58,9 @@ export function ClusterVisualization({ isOpen, onClose }: ClusterVisualizationPr
     } catch (e) {
       console.error("Failed to load indexes:", e);
     }
-  };
+  }, [activeConnection, selectedIndex]);
 
-  const loadIndexInfo = async () => {
+  const loadIndexInfo = useCallback(async () => {
     if (!activeConnection || !selectedIndex) return;
     try {
       const info = await getVectorIndexInfo(activeConnection, selectedIndex);
@@ -87,30 +69,9 @@ export function ClusterVisualization({ isOpen, onClose }: ClusterVisualizationPr
       console.error("Failed to load index info:", e);
       setIndexInfo(null);
     }
-  };
+  }, [activeConnection, selectedIndex]);
 
-  const handleCluster = async () => {
-    if (!activeConnection || !selectedIndex || !indexInfo?.vectorField) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getEmbeddingClusters(
-        activeConnection,
-        selectedIndex,
-        indexInfo.vectorField,
-        numClusters,
-        sampleSize
-      );
-      setClusterData(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Clustering failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const drawClusters = () => {
+  const drawClusters = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || !clusterData) return;
 
@@ -121,23 +82,10 @@ export function ClusterVisualization({ isOpen, onClose }: ClusterVisualizationPr
     const height = canvas.height;
     const padding = 40;
 
-    ctx.fillStyle = "#09090b";
-    ctx.fillRect(0, 0, width, height);
+    ctx.clearRect(0, 0, width, height);
 
-    ctx.strokeStyle = "#27272a";
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 10; i++) {
-      const x = padding + (i / 10) * (width - 2 * padding);
-      const y = padding + (i / 10) * (height - 2 * padding);
-      ctx.beginPath();
-      ctx.moveTo(x, padding);
-      ctx.lineTo(x, height - padding);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(padding, y);
-      ctx.lineTo(width - padding, y);
-      ctx.stroke();
-    }
+    ctx.fillStyle = "#18181b";
+    ctx.fillRect(0, 0, width, height);
 
     if (clusterData.clusterCentroids) {
       clusterData.clusterCentroids.forEach((centroid, i) => {
@@ -181,6 +129,45 @@ export function ClusterVisualization({ isOpen, onClose }: ClusterVisualizationPr
     ctx.rotate(-Math.PI / 2);
     ctx.fillText("Dimension 2 (reduced)", 0, 0);
     ctx.restore();
+  }, [clusterData, selectedPoint, hoveredPoint]);
+
+  useEffect(() => {
+    if (isOpen && activeConnection) {
+      loadIndexes();
+    }
+  }, [isOpen, activeConnection, loadIndexes]);
+
+  useEffect(() => {
+    if (selectedIndex && activeConnection) {
+      loadIndexInfo();
+    }
+  }, [selectedIndex, activeConnection, loadIndexInfo]);
+
+  useEffect(() => {
+    if (clusterData && canvasRef.current) {
+      drawClusters();
+    }
+  }, [clusterData, selectedPoint, drawClusters]);
+
+  const handleCluster = async () => {
+    if (!activeConnection || !selectedIndex || !indexInfo?.vectorField) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getEmbeddingClusters(
+        activeConnection,
+        selectedIndex,
+        indexInfo.vectorField,
+        numClusters,
+        sampleSize
+      );
+      setClusterData(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Clustering failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {

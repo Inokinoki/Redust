@@ -463,3 +463,101 @@ export async function batchVectorSearch(
 ): Promise<VectorSearchResult[][]> {
   return await invoke("batchVectorSearch", { config, requests });
 }
+
+// LLM types and commands
+
+export type LLMProvider = "OpenAI" | "Anthropic" | "Ollama";
+
+export type LLMModel =
+  | "gpt-4"
+  | "gpt-4-turbo"
+  | "gpt-3.5-turbo"
+  | "claude-3-opus"
+  | "claude-3-sonnet"
+  | "claude-3-haiku"
+  | "llama2"
+  | "mistral";
+
+export interface LLMMessage {
+  role: string;
+  content: string;
+}
+
+export interface LLMRequest {
+  model: LLMModel;
+  messages: LLMMessage[];
+  temperature?: number;
+  max_tokens?: number;
+  stream?: boolean;
+  api_key?: string;
+  api_endpoint?: string;
+}
+
+export interface LLMResponse {
+  content: string;
+  model: string;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+export interface RAGRequest {
+  query: string;
+  model: LLMModel;
+  index_name: string;
+  vector_field: string;
+  top_k: number;
+  temperature?: number;
+  max_tokens?: number;
+  api_key?: string;
+  api_endpoint?: string;
+  conversation_history?: LLMMessage[];
+}
+
+export interface RAGSource {
+  key: string;
+  score: number;
+  snippet?: string;
+}
+
+export interface RAGResponse {
+  answer: string;
+  sources: RAGSource[];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
+export interface EmbeddingRequest {
+  text: string;
+  model?: string;
+  provider: LLMProvider;
+  api_key?: string;
+}
+
+export interface EmbeddingResponse {
+  embedding: number[];
+  model: string;
+}
+
+// LLM commands
+export async function llmChat(request: LLMRequest): Promise<LLMResponse> {
+  return await invoke("llm_chat", { request });
+}
+
+export async function llmRAG(
+  config: ConnectionConfig,
+  request: RAGRequest
+): Promise<RAGResponse> {
+  return await invoke("llm_rag", { config, request });
+}
+
+export async function llmGenerateEmbedding(
+  request: EmbeddingRequest
+): Promise<EmbeddingResponse> {
+  return await invoke("llm_generate_embedding", { request });
+}

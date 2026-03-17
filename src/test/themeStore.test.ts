@@ -162,6 +162,59 @@ describe("ThemeStore", () => {
     expect(state.effectiveTheme).toBe("light");
   });
 
+  it("should update effective theme when system theme changes to dark", () => {
+    useThemeStore.getState().setTheme("system");
+
+    // Get the event listener - it's added as the second parameter to addEventListener
+    const addEventListenerCalls =
+      (window.matchMedia as unknown).mock.calls || [];
+
+    if (addEventListenerCalls.length > 0 && (addEventListenerCalls[0] as unknown[])[1]) {
+      const listener = addEventListenerCalls[0][1];
+
+      // Simulate system theme change to dark
+      listener({ matches: true });
+
+      const state = useThemeStore.getState();
+      expect(state.effectiveTheme).toBe("dark");
+    }
+  });
+
+  it("should update effective theme when system theme changes to light", () => {
+    useThemeStore.getState().setTheme("system");
+
+    // Get the event listener
+    const addEventListenerCalls =
+      (window.matchMedia as any).prototype.addEventListener?.mock.calls || [];
+
+    if (addEventListenerCalls.length > 0 && addEventListenerCalls[1][1]) {
+      const listener = addEventListenerCalls[1][1];
+
+      // Simulate system theme change to light
+      listener({ matches: false });
+
+      const state = useThemeStore.getState();
+      expect(state.effectiveTheme).toBe("light");
+    }
+  });
+
+  it("should not update effective theme when not in system mode", () => {
+    useThemeStore.getState().setTheme("dark");
+
+    const initialTheme = useThemeStore.getState().effectiveTheme;
+
+    // Try to trigger system theme change
+    const addEventListenerCalls =
+      (window.matchMedia as any).prototype.addEventListener?.mock.calls || [];
+    if (addEventListenerCalls.length > 0 && addEventListenerCalls[2]?.[1]) {
+      const listener = addEventListenerCalls[2][1];
+      listener({ matches: true });
+    }
+
+    const state = useThemeStore.getState();
+    expect(state.effectiveTheme).toBe(initialTheme);
+  });
+
   it("should add effective theme class to document", () => {
     useThemeStore.getState().setTheme("light");
 

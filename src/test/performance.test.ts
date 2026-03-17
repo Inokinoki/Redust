@@ -21,7 +21,7 @@ describe("Performance Tests", () => {
     it("should handle 100 keys efficiently", async () => {
       const config = mockConnectionConfig();
       const keys = mockKeyInfos(100);
-      (invoke as any).mockResolvedValue(keys);
+      (invoke as unknown).mockResolvedValue(keys);
 
       const startTime = performance.now();
       const result = await getKeys(config, "*", 100);
@@ -34,7 +34,7 @@ describe("Performance Tests", () => {
     it("should handle 1000 keys efficiently", async () => {
       const config = mockConnectionConfig();
       const keys = mockKeyInfos(1000);
-      (invoke as any).mockResolvedValue(keys);
+      (invoke as unknown).mockResolvedValue(keys);
 
       const startTime = performance.now();
       const result = await getKeys(config, "*", 1000);
@@ -47,7 +47,7 @@ describe("Performance Tests", () => {
     it("should handle 10000 keys efficiently", async () => {
       const config = mockConnectionConfig();
       const keys = mockKeyInfos(10000);
-      (invoke as any).mockResolvedValue(keys);
+      (invoke as unknown).mockResolvedValue(keys);
 
       const startTime = performance.now();
       const result = await getKeys(config, "*", 10000);
@@ -62,7 +62,7 @@ describe("Performance Tests", () => {
     it("should handle small strings efficiently", async () => {
       const config = mockConnectionConfig();
       const value = "small value";
-      (invoke as any).mockResolvedValue(true);
+      (invoke as unknown).mockResolvedValue(true);
 
       const startTime = performance.now();
       await setString(config, "test-key", value);
@@ -74,7 +74,7 @@ describe("Performance Tests", () => {
     it("should handle large strings efficiently", async () => {
       const config = mockConnectionConfig();
       const largeValue = "a".repeat(10000);
-      (invoke as any).mockResolvedValue(true);
+      (invoke as unknown).mockResolvedValue(true);
 
       const startTime = performance.now();
       await setString(config, "test-key", largeValue);
@@ -86,7 +86,7 @@ describe("Performance Tests", () => {
     it("should handle JSON strings efficiently", async () => {
       const config = mockConnectionConfig();
       const jsonValue = JSON.stringify({ a: 1, b: { c: [1, 2, 3] } });
-      (invoke as any).mockResolvedValue(true);
+      (invoke as unknown).mockResolvedValue(true);
 
       const startTime = performance.now();
       await setString(config, "test-key", jsonValue);
@@ -99,7 +99,7 @@ describe("Performance Tests", () => {
   describe("Batch Operations", () => {
     it("should handle multiple sequential operations efficiently", async () => {
       const config = mockConnectionConfig();
-      (invoke as any).mockResolvedValue(true);
+      (invoke as unknown).mockResolvedValue(true);
 
       const startTime = performance.now();
       const promises = [];
@@ -114,7 +114,7 @@ describe("Performance Tests", () => {
 
     it("should handle parallel operations efficiently", async () => {
       const config = mockConnectionConfig();
-      (invoke as any).mockResolvedValue(true);
+      (invoke as unknown).mockResolvedValue(true);
 
       const startTime = performance.now();
       const promises = Array.from({ length: 50 }, (_, i) =>
@@ -130,15 +130,15 @@ describe("Performance Tests", () => {
   describe("Memory Usage", () => {
     it("should not leak memory on repeated operations", async () => {
       const config = mockConnectionConfig();
-      (invoke as any).mockResolvedValue("value");
+      (invoke as unknown).mockResolvedValue("value");
 
-      const initialMemory = (performance as any).memory?.usedJSHeapSize || 0;
+      const initialMemory = (performance as unknown).memory?.usedJSHeapSize || 0;
 
       for (let i = 0; i < 1000; i++) {
         await getString(config, `key:${i}`);
       }
 
-      const finalMemory = (performance as any).memory?.usedJSHeapSize || 0;
+      const finalMemory = (performance as unknown).memory?.usedJSHeapSize || 0;
       const memoryIncrease = finalMemory - initialMemory;
 
       expect(memoryIncrease).toBeLessThan(10 * 1024 * 1024);
@@ -156,23 +156,23 @@ describe("Performance Tests", () => {
 
       const benchmarks: Record<string, number> = {};
 
-      (invoke as any).mockResolvedValue("value");
+      (invoke as unknown).mockResolvedValue("value");
       const start = performance.now();
       await getString(config, "test-key");
       benchmarks.getString = performance.now() - start;
 
-      (invoke as any).mockResolvedValue([mockKeyInfos(100)]);
+      (invoke as unknown).mockResolvedValue([mockKeyInfos(100)]);
       const startKeys = performance.now();
       await getKeys(config, "*", 100);
       benchmarks.getKeys = performance.now() - startKeys;
 
-      (invoke as any).mockResolvedValue(true);
+      (invoke as unknown).mockResolvedValue(true);
       const startSet = performance.now();
       await setString(config, "test-key", "value");
       benchmarks.setString = performance.now() - startSet;
 
       for (const [operation, time] of Object.entries(benchmarks)) {
-        expect(time).toBeLessThan((targets as any)[operation]);
+        expect(time).toBeLessThan((targets as unknown)[operation]);
       }
     });
   });
@@ -181,14 +181,14 @@ describe("Performance Tests", () => {
     Object.entries(performanceTestScenarios).forEach(([name, scenario]) => {
       it(`should complete ${scenario.description}`, async () => {
         const config = mockConnectionConfig();
-        const keys = mockKeyInfos((scenario as any).keyCount);
-        (invoke as any).mockResolvedValue(keys);
+        const keys = mockKeyInfos((scenario as unknown).keyCount);
+        (invoke as unknown).mockResolvedValue(keys);
 
         const startTime = performance.now();
-        const result = await getKeys(config, "*", (scenario as any).keyCount);
+        const result = await getKeys(config, "*", (scenario as unknown).keyCount);
         const endTime = performance.now();
 
-        expect(result).toHaveLength((scenario as any).keyCount);
+        expect(result).toHaveLength((scenario as unknown).keyCount);
 
         const timeLimit =
           {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -25,7 +25,7 @@ export function PubSubMonitor({ isOpen, onClose }: { isOpen: boolean; onClose: (
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const loadChannels = async () => {
+  const loadChannels = useCallback(async () => {
     const config = getActiveConnection();
     if (!config) return;
 
@@ -38,7 +38,7 @@ export function PubSubMonitor({ isOpen, onClose }: { isOpen: boolean; onClose: (
     } finally {
       setLoadingChannels(false);
     }
-  };
+  }, [getActiveConnection]);
 
   const handlePublish = async () => {
     if (!inputChannel.trim() || !inputMessage.trim()) return;

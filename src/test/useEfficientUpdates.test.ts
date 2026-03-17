@@ -272,7 +272,9 @@ describe("useEfficientUpdates", () => {
 
     try {
       await updateFn.mock.results[0].value;
-    } catch (e) {}
+    } catch {
+      // Expected error for testing purposes
+    }
 
     expect(console.error).toHaveBeenCalled();
     expect(result.current[1]).toBe(false);
