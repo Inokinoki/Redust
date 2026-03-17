@@ -19,7 +19,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.36", features = ["full"] }
 tokio-stream = "0.1"
-redis = { version = "0.25", features = ["tokio-comp", "connection-manager", "aio", "tls-rustls", "cluster"] }
+redis = { version = "0.25", features = ["tokio-comp", "connection-manager", "aio", "cluster"] }
 thiserror = "1.0"
 anyhow = "1.0"
 reqwest = { version = "0.11", features = ["json", "stream"] }
