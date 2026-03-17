@@ -43,7 +43,7 @@ impl RedisManager {
                 .context("Failed to create Redis client")?;
 
             // Configure connection settings
-            client.set_protocol_version(ProtocolVersion::RESP3);
+            // Note: ProtocolVersion configuration removed in redis-rs 0.25
 
             self.client = Some(client);
         }
@@ -586,16 +586,20 @@ impl RedisManager {
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("ZRANGE").arg(key).arg(start).arg(stop);
         if with_scores {
-            cmd.arg("WITHSCORES");
-        }
-
-        if with_scores {
-            let result: Vec<(String, f64)> = cmd.query_async(&mut conn).await?;
+            let result: Vec<(String, f64)> = redis::cmd("ZRANGE")
+                .arg(key)
+                .arg(start)
+                .arg(stop)
+                .arg("WITHSCORES")
+                .query_async(&mut conn).await?;
             Ok(result.into_iter().map(|(member, score)| SortedSetMember { member, score }).collect())
         } else {
-            let result: Vec<String> = cmd.query_async(&mut conn).await?;
+            let result: Vec<String> = redis::cmd("ZRANGE")
+                .arg(key)
+                .arg(start)
+                .arg(stop)
+                .query_async(&mut conn).await?;
             Ok(result.into_iter().map(|m| SortedSetMember { member: m, score: 0.0 }).collect())
         }
     }
@@ -607,16 +611,20 @@ impl RedisManager {
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("ZRANGEBYSCORE").arg(key).arg(min).arg(max);
         if with_scores {
-            cmd.arg("WITHSCORES");
-        }
-
-        if with_scores {
-            let result: Vec<(String, f64)> = cmd.query_async(&mut conn).await?;
+            let result: Vec<(String, f64)> = redis::cmd("ZRANGEBYSCORE")
+                .arg(key)
+                .arg(min)
+                .arg(max)
+                .arg("WITHSCORES")
+                .query_async(&mut conn).await?;
             Ok(result.into_iter().map(|(member, score)| SortedSetMember { member, score }).collect())
         } else {
-            let result: Vec<String> = cmd.query_async(&mut conn).await?;
+            let result: Vec<String> = redis::cmd("ZRANGEBYSCORE")
+                .arg(key)
+                .arg(min)
+                .arg(max)
+                .query_async(&mut conn).await?;
             Ok(result.into_iter().map(|m| SortedSetMember { member: m, score: 0.0 }).collect())
         }
     }
@@ -723,8 +731,8 @@ impl RedisManager {
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("FT.CREATE")
-            .arg(index_name)
+        let mut cmd = redis::cmd("FT.CREATE");
+        cmd.arg(index_name)
             .arg("ON")
             .arg("HASH")
             .arg("PREFIX")
@@ -807,8 +815,8 @@ impl RedisManager {
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("FT.CREATE")
-            .arg(&request.index_name)
+        let mut cmd = redis::cmd("FT.CREATE");
+        cmd.arg(&request.index_name)
             .arg("ON")
             .arg("HASH")
             .arg("PREFIX")
@@ -862,8 +870,8 @@ impl RedisManager {
             top_k, request.vector_field
         );
 
-        let mut cmd = redis::cmd("FT.SEARCH")
-            .arg(&request.index_name)
+        let mut cmd = redis::cmd("FT.SEARCH");
+        cmd.arg(&request.index_name)
             .arg(&query)
             .arg("PARAMS")
             .arg(2)
@@ -878,7 +886,7 @@ impl RedisManager {
         }
 
         let result: redis::Value = cmd.query_async(&mut conn).await?;
-        
+
         let results = parse_vector_search_result(&result, request.return_fields.as_ref());
         Ok(results)
     }
@@ -1233,7 +1241,8 @@ impl RedisManager {
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("TS.CREATE").arg(key);
+        let mut cmd = redis::cmd("TS.CREATE");
+        cmd.arg(key);
         if let Some(retention) = retention_ms {
             cmd.arg("RETENTION").arg(retention);
         }
@@ -1278,7 +1287,8 @@ impl RedisManager {
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("TS.RANGE").arg(key);
+        let mut cmd = redis::cmd("TS.RANGE");
+        cmd.arg(key);
         if let Some(from) = from_ts {
             cmd.arg(from);
         } else {
