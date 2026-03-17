@@ -1448,6 +1448,7 @@ fn parse_vector_search_result(
                                 serde_json::Value::String(s.to_string())
                             }
                             redis::Value::Int(v) => serde_json::Value::Number((*v).into()),
+                            _ => serde_json::Value::Null,
                         };
 
                         if return_fields.is_none() || return_fields.unwrap().contains(&field_name) {

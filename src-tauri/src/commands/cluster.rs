@@ -201,7 +201,7 @@ fn parse_cluster_nodes(nodes_str: &str) -> Vec<ClusterNode> {
 
             nodes.push(ClusterNode {
                 id,
-                role,
+                role: role.to_string(),
                 host,
                 port,
                 master_id,
