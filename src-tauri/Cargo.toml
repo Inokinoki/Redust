@@ -2,9 +2,9 @@
 name = "redust"
 version = "0.1.0"
 description = "Next-Gen Redis GUI Client"
-authors = ["Redust Team"]
+authors = ["Inoki"]
 license = "AGPL-3.0"
-repository = "https://github.com/your-org/redust"
+repository = "https://github.com/Inokinoki/Redust"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
