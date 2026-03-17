@@ -34,20 +34,6 @@ export function VectorVisualization({
   const computePCA = useCallback((): ProjectionPoint[] => {
     if (vectors.length === 0) return [];
 
-    const numVectors = vectors.length;
-    const dimensions = vectors[0].length;
-
-    // Center the data
-    const means = new Array(dimensions).fill(0);
-    vectors.forEach((vec) => {
-      vec.forEach((_, i) => {
-        means[i] += vec[i];
-      });
-    });
-    means.forEach((_, i) => (means[i] /= numVectors));
-
-    const centered = vectors.map((vec) => vec.map((val, i) => val - means[i]));
-
     // Project onto first two dimensions (simplified PCA)
     const points: ProjectionPoint[] = vectors.map((vec, idx) => {
       const x = vec.length > 0 ? vec[0] : 0;
