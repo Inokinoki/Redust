@@ -29,7 +29,7 @@ pub async fn createIndex(
     config: ConnectionConfig,
     request: CreateIndexRequest,
 ) -> Result<String, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .create_search_index(&request.index_name, &request.prefix, &request.fields)
         .await
@@ -43,7 +43,7 @@ pub async fn searchIndex(
     query: String,
     limit: Option<usize>,
 ) -> Result<Vec<SearchResult>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .search_index(&index_name, &query, limit.unwrap_or(10))
         .await
@@ -55,7 +55,7 @@ pub async fn dropIndex(
     config: ConnectionConfig,
     index_name: String,
 ) -> Result<bool, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .drop_index(&index_name)
         .await
@@ -67,7 +67,7 @@ pub async fn getIndexInfo(
     config: ConnectionConfig,
     index_name: String,
 ) -> Result<String, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .get_index_info(&index_name)
         .await

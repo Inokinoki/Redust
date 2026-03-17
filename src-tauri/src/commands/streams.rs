@@ -18,7 +18,7 @@ pub async fn xadd(
     field: String,
     value: String,
 ) -> Result<String, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .xadd(&key, &stream_id, &field, &value)
         .await
@@ -34,7 +34,7 @@ pub async fn xrange(
     end: String,
     count: Option<usize>,
 ) -> Result<Vec<StreamMessage>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .xrange(&key, &stream_id, &start, &end, count)
         .await
@@ -49,7 +49,7 @@ pub async fn xreadgroup(
     consumer: String,
     count: Option<usize>,
 ) -> Result<Vec<StreamMessage>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .xreadgroup(&key, &group, &consumer, count)
         .await
@@ -61,7 +61,7 @@ pub async fn getStreamInfo(
     config: ConnectionConfig,
     key: String,
 ) -> Result<String, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .get_stream_info(&key)
         .await

@@ -8,7 +8,7 @@ pub async fn listLen(
     config: ConnectionConfig,
     key: String,
 ) -> Result<usize, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .list_len(&key)
         .await
@@ -22,7 +22,7 @@ pub async fn listRange(
     start: i64,
     stop: i64,
 ) -> Result<Vec<String>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .list_range(&key, start, stop)
         .await
@@ -36,7 +36,7 @@ pub async fn listPush(
     values: Vec<String>,
     left: bool,
 ) -> Result<usize, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .list_push(&key, &values, left)
         .await
@@ -49,7 +49,7 @@ pub async fn listPop(
     key: String,
     left: bool,
 ) -> Result<Option<String>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .list_pop(&key, left)
         .await
@@ -62,7 +62,7 @@ pub async fn listIndex(
     key: String,
     index: i64,
 ) -> Result<Option<String>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .list_index(&key, index)
         .await
@@ -76,7 +76,7 @@ pub async fn listRemove(
     count: i64,
     value: String,
 ) -> Result<i64, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .list_remove(&key, count, &value)
         .await
@@ -90,7 +90,7 @@ pub async fn listTrim(
     start: i64,
     stop: i64,
 ) -> Result<bool, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .list_trim(&key, start, stop)
         .await

@@ -6,7 +6,7 @@ use crate::commands::vector::{
 use anyhow::{Context, Result};
 use redis::AsyncCommands;
 use redis::aio::{ConnectionManager, MultiplexedConnection};
-use redis::{Client, ProtocolVersion};
+use redis::{Client};
 use std::time::Duration;
 
 pub struct RedisManager {
@@ -1169,16 +1169,13 @@ impl RedisManager {
                     for chunk in field_pairs.chunks(2) {
                         if chunk.len() == 2 {
                             if let (redis::Value::Data(k), redis::Value::Data(v)) = (&chunk[0], &chunk[1]) {
-                                match String::from_utf8_lossy(k).as_ref() {
-                                    "embedding" | vector_field => {
-                                        embedding = v.chunks_exact(4)
-                                            .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]) as f64)
-                                            .collect();
-                                    }
-                                    "text" => {
-                                        text = Some(String::from_utf8_lossy(v).to_string());
-                                    }
-                                    _ => {}
+                                let field_name = String::from_utf8_lossy(k);
+                                if field_name == "embedding" || field_name == vector_field {
+                                    embedding = v.chunks_exact(4)
+                                        .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]) as f64)
+                                        .collect();
+                                } else if field_name == "text" {
+                                    text = Some(String::from_utf8_lossy(v).to_string());
                                 }
                             }
                         }

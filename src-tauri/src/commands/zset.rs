@@ -15,7 +15,7 @@ pub async fn zsetAdd(
     key: String,
     members: Vec<SortedSetMember>,
 ) -> Result<usize, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .zset_add(&key, &members)
         .await
@@ -30,7 +30,7 @@ pub async fn zsetRange(
     stop: i64,
     with_scores: bool,
 ) -> Result<Vec<SortedSetMember>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .zset_range(&key, start, stop, with_scores)
         .await
@@ -45,7 +45,7 @@ pub async fn zsetRangeByScore(
     max: f64,
     with_scores: bool,
 ) -> Result<Vec<SortedSetMember>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .zset_range_by_score(&key, min, max, with_scores)
         .await
@@ -58,7 +58,7 @@ pub async fn zsetRem(
     key: String,
     members: Vec<String>,
 ) -> Result<usize, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .zset_remove(&key, &members)
         .await
@@ -70,7 +70,7 @@ pub async fn zsetCard(
     config: ConnectionConfig,
     key: String,
 ) -> Result<usize, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .zset_cardinality(&key)
         .await
@@ -83,7 +83,7 @@ pub async fn zsetScore(
     key: String,
     member: String,
 ) -> Result<Option<f64>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .zset_score(&key, &member)
         .await
@@ -97,7 +97,7 @@ pub async fn zsetRank(
     member: String,
     reverse: bool,
 ) -> Result<Option<usize>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .zset_rank(&key, &member, reverse)
         .await
@@ -111,7 +111,7 @@ pub async fn zsetCount(
     min: f64,
     max: f64,
 ) -> Result<usize, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .zset_count(&key, min, max)
         .await
@@ -125,7 +125,7 @@ pub async fn zsetRemRangeByScore(
     min: f64,
     max: f64,
 ) -> Result<usize, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .zset_remove_range_by_score(&key, min, max)
         .await

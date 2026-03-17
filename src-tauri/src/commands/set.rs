@@ -9,7 +9,7 @@ pub async fn setAdd(
     key: String,
     members: Vec<String>,
 ) -> Result<usize, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .set_add(&key, &members)
         .await
@@ -21,7 +21,7 @@ pub async fn setMembers(
     config: ConnectionConfig,
     key: String,
 ) -> Result<Vec<String>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .set_members(&key)
         .await
@@ -34,7 +34,7 @@ pub async fn setRemove(
     key: String,
     members: Vec<String>,
 ) -> Result<usize, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .set_remove(&key, &members)
         .await
@@ -46,7 +46,7 @@ pub async fn setCard(
     config: ConnectionConfig,
     key: String,
 ) -> Result<usize, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .set_cardinality(&key)
         .await
@@ -59,7 +59,7 @@ pub async fn setIsMember(
     key: String,
     member: String,
 ) -> Result<bool, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .set_is_member(&key, &member)
         .await
@@ -71,7 +71,7 @@ pub async fn setPop(
     config: ConnectionConfig,
     key: String,
 ) -> Result<Option<String>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .set_pop(&key)
         .await
@@ -83,7 +83,7 @@ pub async fn setRandomMember(
     config: ConnectionConfig,
     key: String,
 ) -> Result<Option<String>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .set_random_member(&key)
         .await
