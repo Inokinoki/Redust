@@ -7,31 +7,39 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 
+// Mock the connection store with proper getState method
+const mockGetActiveConnection = vi.fn(() => ({
+  id: "test-conn",
+  name: "Test Connection",
+  host: "localhost",
+  port: 6379,
+  tls: false,
+}));
+
+vi.mock("../stores/connectionStore", () => ({
+  useConnectionStore: Object.assign(
+    (selector: (state: unknown) => unknown) => {
+      const state = {
+        currentConnection: {
+          id: "test-conn",
+          name: "Test Connection",
+          host: "localhost",
+          port: 6379,
+          tls: false,
+        },
+        getActiveConnection: mockGetActiveConnection,
+      };
+      return selector ? selector(state) : state;
+    },
+    { getState: () => ({ getActiveConnection: mockGetActiveConnection }) }
+  ),
+}));
+
 // Mock the API
 vi.mock("../lib/api", () => ({
   llmChat: vi.fn(),
   llmRAG: vi.fn(),
   llmGenerateEmbedding: vi.fn(),
-}));
-
-// Mock the connection store
-const mockConnectionStore = {
-  getState: vi.fn(() => ({
-    currentConnection: {
-      id: "test-conn",
-      name: "Test Connection",
-      host: "localhost",
-      port: 6379,
-      tls: false,
-    },
-  })),
-};
-
-vi.mock("../stores/connectionStore", () => ({
-  useConnectionStore: vi.fn((selector) => {
-    const state = mockConnectionStore.getState();
-    return selector ? selector(state) : state;
-  }),
 }));
 
 import * as api from "../lib/api";
@@ -56,15 +64,6 @@ describe("JSON Analyzer Component", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockConnectionStore.getState.mockReturnValue({
-      currentConnection: {
-        id: "test-conn",
-        name: "Test Connection",
-        host: "localhost",
-        port: 6379,
-        tls: false,
-      },
-    });
   });
 
   it("should analyze JSON structure correctly", async () => {
@@ -139,15 +138,6 @@ describe("JSON Analyzer Component", () => {
 describe("Query Optimizer Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockConnectionStore.getState.mockReturnValue({
-      currentConnection: {
-        id: "test-conn",
-        name: "Test Connection",
-        host: "localhost",
-        port: 6379,
-        tls: false,
-      },
-    });
   });
 
   it("should detect KEYS command usage", async () => {

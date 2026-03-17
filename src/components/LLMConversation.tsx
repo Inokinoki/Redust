@@ -159,8 +159,9 @@ export function LLMConversation({ isOpen, onClose }: LLMConversationProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>LLM Provider</Label>
+                  <Label htmlFor="llmProvider">LLM Provider</Label>
                   <select
+                    id="llmProvider"
                     className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
                     value={ragConfig.provider}
                     onChange={(e) =>
@@ -183,8 +184,9 @@ export function LLMConversation({ isOpen, onClose }: LLMConversationProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Model</Label>
+                  <Label htmlFor="model">Model</Label>
                   <select
+                    id="model"
                     className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
                     value={ragConfig.model}
                     onChange={(e) => setRagConfig({ ...ragConfig, model: e.target.value as LLMModel })}

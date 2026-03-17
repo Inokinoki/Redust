@@ -31,33 +31,7 @@ describe("LLM Integration Tests", () => {
 
   describe("Complete RAG Pipeline", () => {
     it("should execute full RAG workflow end-to-end", async () => {
-      // Mock embedding generation
-      const mockEmbedding: api.EmbeddingResponse = {
-        embedding: Array.from({ length: 1536 }, () => Math.random()),
-        model: "text-embedding-ada-002",
-      };
-
-      // Mock vector search results
-      const mockSearchResults = [
-        {
-          key: "doc:redis:basics",
-          score: 0.92,
-          fields: {
-            content: "Redis is an in-memory data structure store...",
-            title: "Redis Basics",
-          },
-        },
-        {
-          key: "doc:redis:performance",
-          score: 0.88,
-          fields: {
-            content: "Redis achieves high performance through in-memory operations...",
-            title: "Redis Performance",
-          },
-        },
-      ];
-
-      // Mock RAG response
+      // Mock RAG response (llmRAG makes a single invoke call)
       const mockRAGResponse: api.RAGResponse = {
         answer: "Based on the documentation, Redis is an in-memory data structure store that achieves high performance through in-memory operations.",
         sources: [
@@ -79,11 +53,8 @@ describe("LLM Integration Tests", () => {
         },
       };
 
-      // Setup mock chain
-      mockInvoke
-        .mockResolvedValueOnce(mockEmbedding)
-        .mockResolvedValueOnce(mockSearchResults)
-        .mockResolvedValueOnce(mockRAGResponse);
+      // Setup mock - llmRAG makes a single invoke call
+      mockInvoke.mockResolvedValueOnce(mockRAGResponse);
 
       // Execute RAG pipeline
       const response = await api.llmRAG(mockConnection, {
@@ -99,19 +70,12 @@ describe("LLM Integration Tests", () => {
       // Verify the complete pipeline
       expect(response.answer).toContain("Redis");
       expect(response.answer).toContain("in-memory");
-      expect(response.sources).toHaveLength(2);
-      expect(response.sources[0].score).toBeGreaterThan(0.9);
+      expect(response.sources?.length).toBe(2);
+      expect(response.sources?.[0].score).toBeGreaterThan(0.9);
       expect(response.usage?.total_tokens).toBeGreaterThan(0);
     });
 
     it("should handle RAG with no relevant documents", async () => {
-      const mockEmbedding: api.EmbeddingResponse = {
-        embedding: Array.from({ length: 1536 }, () => Math.random()),
-        model: "text-embedding-ada-002",
-      };
-
-      const mockSearchResults: api.VectorSearchResult[] = [];
-
       const mockRAGResponse: api.RAGResponse = {
         answer: "I couldn't find any relevant information in the documents to answer your question.",
         sources: [],
@@ -122,10 +86,7 @@ describe("LLM Integration Tests", () => {
         },
       };
 
-      mockInvoke
-        .mockResolvedValueOnce(mockEmbedding)
-        .mockResolvedValueOnce(mockSearchResults)
-        .mockResolvedValueOnce(mockRAGResponse);
+      mockInvoke.mockResolvedValueOnce(mockRAGResponse);
 
       const response = await api.llmRAG(mockConnection, {
         query: "How to cook pasta?",
@@ -135,7 +96,7 @@ describe("LLM Integration Tests", () => {
         top_k: 5,
       });
 
-      expect(response.sources).toHaveLength(0);
+      expect(response.sources?.length).toBe(0);
       expect(response.answer).toContain("couldn't find");
     });
   });
@@ -155,11 +116,6 @@ describe("LLM Integration Tests", () => {
       mockInvoke
         .mockResolvedValueOnce(mockRAGResponse1)
         .mockResolvedValueOnce(mockRAGResponse2);
-
-      const conversationHistory: api.LLMMessage[] = [
-        { role: "user", content: "What is Redis?" },
-        { role: "assistant", content: "Redis is a key-value store." },
-      ];
 
       // First turn
       const response1 = await api.llmRAG(mockConnection, {

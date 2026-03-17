@@ -10,31 +10,39 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LLMConversation } from "../../components/LLMConversation";
 
+// Mock the connection store first (before any imports that use it)
+const mockGetActiveConnection = vi.fn(() => ({
+  id: "test-conn",
+  name: "Test Connection",
+  host: "localhost",
+  port: 6379,
+  tls: false,
+}));
+
+vi.mock("../../stores/connectionStore", () => ({
+  useConnectionStore: Object.assign(
+    (selector: (state: unknown) => unknown) => {
+      const state = {
+        currentConnection: {
+          id: "test-conn",
+          name: "Test Connection",
+          host: "localhost",
+          port: 6379,
+          tls: false,
+        },
+        getActiveConnection: mockGetActiveConnection,
+      };
+      return selector ? selector(state) : state;
+    },
+    { getState: () => ({ getActiveConnection: mockGetActiveConnection }) }
+  ),
+}));
+
 // Mock the API
 vi.mock("../../lib/api", () => ({
   llmRAG: vi.fn(),
   llmChat: vi.fn(),
   llmGenerateEmbedding: vi.fn(),
-}));
-
-// Mock the connection store
-const mockConnectionStore = {
-  getState: vi.fn(() => ({
-    currentConnection: {
-      id: "test-conn",
-      name: "Test Connection",
-      host: "localhost",
-      port: 6379,
-      tls: false,
-    },
-  })),
-};
-
-vi.mock("../../stores/connectionStore", () => ({
-  useConnectionStore: vi.fn((selector) => {
-    const state = mockConnectionStore.getState();
-    return selector ? selector(state) : state;
-  }),
 }));
 
 import * as api from "../../lib/api";
