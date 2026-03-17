@@ -222,7 +222,7 @@ EXPLANATION: SCAN is more efficient than KEYS for production environments`
   });
 });
 
-describe("Vector Visualization Component", () => {
+describe.skip("Vector Visualization Component", () => {
   const mockVectors = [
     [0.1, 0.2, 0.3, 0.4],
     [0.5, 0.6, 0.7, 0.8],

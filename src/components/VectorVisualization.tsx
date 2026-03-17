@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
@@ -31,34 +31,7 @@ export function VectorVisualization({
   const [hoveredPoint, setHoveredPoint] = useState<ProjectionPoint | null>(null);
   const [selectedPoint, setSelectedPoint] = useState<ProjectionPoint | null>(null);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const computeProjection = () => {
-    let points: ProjectionPoint[];
-
-    switch (projectionMethod) {
-      case "pca":
-        points = computePCA();
-        break;
-      case "tsne":
-        points = computeTSNE();
-        break;
-      case "random":
-        points = computeRandomProjection();
-        break;
-      default:
-        points = computePCA();
-    }
-
-    setProjection(points);
-  };
-
-  useEffect(() => {
-    if (isOpen && vectors.length > 0) {
-      computeProjection();
-    }
-  }, [isOpen, vectors, projectionMethod, computeProjection]);
-
-  const computePCA = (): ProjectionPoint[] => {
+  const computePCA = useCallback((): ProjectionPoint[] => {
     if (vectors.length === 0) return [];
 
     const numVectors = vectors.length;
@@ -75,33 +48,8 @@ export function VectorVisualization({
 
     const centered = vectors.map((vec) => vec.map((val, i) => val - means[i]));
 
-    // Compute covariance matrix
-    const cov = Array.from({ length: dimensions }, () => new Array(dimensions).fill(0));
-    centered.forEach((vec) => {
-      for (let i = 0; i < dimensions; i++) {
-        for (let j = 0; j < dimensions; j++) {
-          cov[i][j] += vec[i] * vec[j];
-        }
-      }
-    });
-    cov.forEach((row, i) => row.forEach((_, j) => (cov[i][j] /= numVectors)));
-
-    // Simple power iteration for first eigenvector
-    let eigenvector = new Array(dimensions).fill(1).map(() => Math.random());
-    for (let iter = 0; iter < 100; iter++) {
-      const newVec = new Array(dimensions).fill(0);
-      for (let i = 0; i < dimensions; i++) {
-        for (let j = 0; j < dimensions; j++) {
-          newVec[i] += cov[i][j] * eigenvector[j];
-        }
-      }
-      const norm = Math.sqrt(newVec.reduce((sum, val) => sum + val * val, 0));
-      eigenvector = newVec.map((val) => val / norm);
-    }
-
-    // Project onto first eigenvector (x-axis) and use second principal component (y-axis)
+    // Project onto first two dimensions (simplified PCA)
     const points: ProjectionPoint[] = vectors.map((vec, idx) => {
-      // Use first two dimensions as a simple approximation
       const x = vec.length > 0 ? vec[0] : 0;
       const y = vec.length > 1 ? vec[1] : 0;
 
@@ -116,12 +64,11 @@ export function VectorVisualization({
 
     // Normalize to canvas coordinates
     return normalizePoints(points);
-  };
+  }, [vectors, labels, colors]);
 
-  const computeTSNE = (): ProjectionPoint[] => {
+  const computeTSNE = useCallback((): ProjectionPoint[] => {
     // Simplified t-SNE-like embedding
     const points: ProjectionPoint[] = vectors.map((vec, idx) => {
-      // Use first few dimensions and apply some transformation
       const x = vec.length > 0 ? vec[0] + (vec.length > 2 ? vec[2] * 0.5 : 0) : 0;
       const y = vec.length > 1 ? vec[1] + (vec.length > 3 ? vec[3] * 0.5 : 0) : 0;
 
@@ -135,11 +82,10 @@ export function VectorVisualization({
     });
 
     return normalizePoints(points);
-  };
+  }, [vectors, labels, colors]);
 
-  const computeRandomProjection = (): ProjectionPoint[] => {
+  const computeRandomProjection = useCallback((): ProjectionPoint[] => {
     const points: ProjectionPoint[] = vectors.map((vec, idx) => {
-      // Simple random projection
       let x = 0,
         y = 0;
       vec.forEach((val, i) => {
@@ -157,12 +103,11 @@ export function VectorVisualization({
     });
 
     return normalizePoints(points);
-  };
+  }, [vectors, labels, colors]);
 
   const normalizePoints = (points: ProjectionPoint[]): ProjectionPoint[] => {
     if (points.length === 0) return points;
 
-    // Find min and max
     let minX = Infinity,
       maxX = -Infinity;
     let minY = Infinity,
@@ -175,7 +120,6 @@ export function VectorVisualization({
       maxY = Math.max(maxY, p.y);
     });
 
-    // Normalize to 0-1 range
     const rangeX = maxX - minX || 1;
     const rangeY = maxY - minY || 1;
 
@@ -186,8 +130,27 @@ export function VectorVisualization({
     }));
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const drawCanvas = () => {
+  const computeProjection = useCallback(() => {
+    let points: ProjectionPoint[];
+
+    switch (projectionMethod) {
+      case "pca":
+        points = computePCA();
+        break;
+      case "tsne":
+        points = computeTSNE();
+        break;
+      case "random":
+        points = computeRandomProjection();
+        break;
+      default:
+        points = computePCA();
+    }
+
+    setProjection(points);
+  }, [projectionMethod, computePCA, computeTSNE, computeRandomProjection]);
+
+  const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas || projection.length === 0) return;
 
@@ -197,10 +160,9 @@ export function VectorVisualization({
     const width = canvas.width;
     const height = canvas.height;
 
-    // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // Draw connections (if points are close)
+    // Draw connections
     ctx.strokeStyle = "rgba(239, 68, 68, 0.1)";
     ctx.lineWidth = 1;
     for (let i = 0; i < projection.length; i++) {
@@ -225,38 +187,39 @@ export function VectorVisualization({
       const isHovered = hoveredPoint?.originalIndex === point.originalIndex;
       const isSelected = selectedPoint?.originalIndex === point.originalIndex;
 
-      // Point size
       const radius = isHovered ? 8 : isSelected ? 6 : 4;
 
-      // Draw point
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, 2 * Math.PI);
 
       if (point.color) {
         ctx.fillStyle = point.color;
       } else {
-        // Color based on index
         const hue = (index / projection.length) * 360;
         ctx.fillStyle = `hsl(${hue}, 70%, 50%)`;
       }
 
       ctx.fill();
 
-      // Draw selection ring
       if (isSelected) {
         ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 2;
         ctx.stroke();
       }
 
-      // Draw label if hovered or selected
       if ((isHovered || isSelected) && point.label) {
         ctx.fillStyle = "#ffffff";
         ctx.font = "12px sans-serif";
         ctx.fillText(point.label, x + 10, y - 10);
       }
     });
-  };
+  }, [projection, hoveredPoint, selectedPoint]);
+
+  useEffect(() => {
+    if (isOpen && vectors.length > 0) {
+      computeProjection();
+    }
+  }, [isOpen, vectors, computeProjection]);
 
   useEffect(() => {
     if (projection.length > 0) {
@@ -272,9 +235,8 @@ export function VectorVisualization({
     const x = (e.clientX - rect.left) / canvas.width;
     const y = (e.clientY - rect.top) / canvas.height;
 
-    // Find closest point
     let closest: ProjectionPoint | null = null;
-    let minDist = 0.05; // Threshold for hover detection
+    let minDist = 0.05;
 
     projection.forEach((point) => {
       const dist = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2));
@@ -341,7 +303,7 @@ export function VectorVisualization({
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">Vector Similarity Visualization</h2>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={computeProjection}>
+            <Button variant="outline" onClick={() => computeProjection()}>
               Refresh
             </Button>
             <Button variant="outline" onClick={onClose}>
