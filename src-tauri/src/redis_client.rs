@@ -1,4 +1,8 @@
 use crate::commands::ConnectionConfig;
+use crate::commands::zset::SortedSetMember;
+use crate::commands::search::{SearchResult, SearchIndexField};
+use crate::commands::streams::StreamMessage;
+use crate::commands::timeseries::TimeSeriesDataPoint;
 use crate::commands::vector::{
     CreateVectorIndexRequest, VectorSearchRequest, VectorSearchResult, EmbeddingCacheItem,
     VectorIndexInfo, IndexFieldInfo, ClusterVisualization, ClusterPoint,
@@ -555,7 +559,7 @@ impl RedisManager {
     }
 
     // Sorted Set operations
-    pub async fn zset_add(&mut self, key: &str, members: &[(String, f64)]) -> Result<usize> {
+    pub async fn zset_add(&mut self, key: &str, members: &[SortedSetMember]) -> Result<usize> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
@@ -567,7 +571,7 @@ impl RedisManager {
             .arg(
                 members
                     .iter()
-                    .flat_map(|(m, s)| [s.to_string(), m.clone()])
+                    .flat_map(|m| [m.score.to_string(), m.member.clone()])
                     .collect::<Vec<_>>()
             )
             .query_async(&mut conn)
@@ -575,7 +579,7 @@ impl RedisManager {
         Ok(added)
     }
 
-    pub async fn zset_range(&mut self, key: &str, start: i64, stop: i64, with_scores: bool) -> Result<Vec<(String, f64)>> {
+    pub async fn zset_range(&mut self, key: &str, start: i64, stop: i64, with_scores: bool) -> Result<Vec<SortedSetMember>> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
@@ -589,14 +593,14 @@ impl RedisManager {
 
         if with_scores {
             let result: Vec<(String, f64)> = cmd.query_async(&mut conn).await?;
-            Ok(result)
+            Ok(result.into_iter().map(|(member, score)| SortedSetMember { member, score }).collect())
         } else {
             let result: Vec<String> = cmd.query_async(&mut conn).await?;
-            Ok(result.into_iter().map(|m| (m, 0.0)).collect())
+            Ok(result.into_iter().map(|m| SortedSetMember { member: m, score: 0.0 }).collect())
         }
     }
 
-    pub async fn zset_range_by_score(&mut self, key: &str, min: f64, max: f64, with_scores: bool) -> Result<Vec<(String, f64)>> {
+    pub async fn zset_range_by_score(&mut self, key: &str, min: f64, max: f64, with_scores: bool) -> Result<Vec<SortedSetMember>> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
@@ -610,10 +614,10 @@ impl RedisManager {
 
         if with_scores {
             let result: Vec<(String, f64)> = cmd.query_async(&mut conn).await?;
-            Ok(result)
+            Ok(result.into_iter().map(|(member, score)| SortedSetMember { member, score }).collect())
         } else {
             let result: Vec<String> = cmd.query_async(&mut conn).await?;
-            Ok(result.into_iter().map(|m| (m, 0.0)).collect())
+            Ok(result.into_iter().map(|m| SortedSetMember { member: m, score: 0.0 }).collect())
         }
     }
 
@@ -711,7 +715,7 @@ impl RedisManager {
         &mut self,
         index_name: &str,
         prefix: &str,
-        fields: &[(String, String, bool)],
+        fields: &[SearchIndexField],
     ) -> Result<String> {
         let client = self.get_client().await?;
         let mut conn = client
@@ -728,12 +732,12 @@ impl RedisManager {
             .arg(prefix)
             .arg("SCHEMA");
 
-        for (field_name, field_type, sortable) in fields {
-            let mut field_def = field_type.clone();
-            if *sortable {
+        for field in fields {
+            let mut field_def = field.field_type.clone();
+            if field.sortable {
                 field_def.push_str(" SORTABLE");
             }
-            cmd.arg(&format!("{} AS {}", field_name, field_def));
+            cmd.arg(&format!("{} AS {}", field.name, field_def));
         }
 
         let result: String = cmd.query_async(&mut conn).await?;
@@ -745,7 +749,7 @@ impl RedisManager {
         index_name: &str,
         query: &str,
         limit: usize,
-    ) -> Result<Vec<(String, f64)>> {
+    ) -> Result<Vec<SearchResult>> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
@@ -760,21 +764,23 @@ impl RedisManager {
             .arg(limit)
             .query_async(&mut conn)
             .await?;
-        Ok(results)
+
+        Ok(results.into_iter().map(|(key, score)| SearchResult { key, score, payload: String::new() }).collect())
     }
 
-    pub async fn drop_index(&mut self, index_name: &str) -> Result<()> {
+    pub async fn drop_index(&mut self, index_name: &str) -> Result<bool> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
             .await
             .context("Failed to get connection")?;
 
-        redis::cmd("FT.DROP")
+        let result: Result<String, redis::RedisError> = redis::cmd("FT.DROP")
             .arg(index_name)
-            .query_async::<_, ()>(&mut conn)
-            .await?;
-        Ok(())
+            .query_async(&mut conn)
+            .await;
+
+        Ok(result.is_ok())
     }
 
     pub async fn get_index_info(&mut self, index_name: &str) -> Result<String> {
@@ -1241,22 +1247,22 @@ impl RedisManager {
         key: &str,
         timestamp: i64,
         value: f64,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
             .await
             .context("Failed to get connection")?;
 
-        redis::cmd("TS.ADD")
+        let result: Result<String, redis::RedisError> = redis::cmd("TS.ADD")
             .arg(key)
             .arg("*")
             .arg(timestamp)
-            .arg("*")
             .arg(value)
-            .query_async::<_, ()>(&mut conn)
-            .await?;
-        Ok(())
+            .query_async(&mut conn)
+            .await;
+
+        Ok(result.is_ok())
     }
 
     pub async fn get_time_series_range(
@@ -1265,7 +1271,7 @@ impl RedisManager {
         from_ts: Option<i64>,
         to_ts: Option<i64>,
         count: Option<usize>,
-    ) -> Result<Vec<(i64, f64)>> {
+    ) -> Result<Vec<TimeSeriesDataPoint>> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
@@ -1274,17 +1280,21 @@ impl RedisManager {
 
         let mut cmd = redis::cmd("TS.RANGE").arg(key);
         if let Some(from) = from_ts {
-            cmd.arg("-").arg(from);
+            cmd.arg(from);
+        } else {
+            cmd.arg("-");
         }
         if let Some(to) = to_ts {
-            cmd.arg("+").arg(to);
+            cmd.arg(to);
+        } else {
+            cmd.arg("+");
         }
         if let Some(cnt) = count {
             cmd.arg("COUNT").arg(cnt);
         }
 
         let results: Vec<(i64, f64)> = cmd.query_async(&mut conn).await?;
-        Ok(results)
+        Ok(results.into_iter().map(|(timestamp, value)| TimeSeriesDataPoint { timestamp, value }).collect())
     }
 
     // Streams methods
@@ -1317,25 +1327,22 @@ impl RedisManager {
         start: &str,
         end: &str,
         count: Option<usize>,
-    ) -> Result<Vec<(String, String, String)>> {
+    ) -> Result<Vec<StreamMessage>> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("XRANGE").arg(key).arg(&stream_id);
-        if let Some(cnt) = count {
-            cmd.arg("COUNT").arg(cnt);
-        }
-        
         let results: Vec<(String, String, String)> = redis::cmd("XRANGE")
             .arg(key)
-            .arg(&stream_id)
             .arg(start)
             .arg(end)
+            .arg("COUNT")
+            .arg(count.unwrap_or(100))
             .query_async(&mut conn).await?;
-        Ok(results)
+
+        Ok(results.into_iter().map(|(id, field, value)| StreamMessage { id, field, value }).collect())
     }
 
     pub async fn xreadgroup(
@@ -1344,20 +1351,25 @@ impl RedisManager {
         group: &str,
         consumer: &str,
         count: Option<usize>,
-    ) -> Result<Vec<(String, String, String)>> {
+    ) -> Result<Vec<StreamMessage>> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("XREADGROUP").arg(key).arg(&group).arg(&consumer);
-        if let Some(cnt) = count {
-            cmd.arg("COUNT").arg(cnt);
- }
+        let results: Vec<(String, String, String)> = redis::cmd("XREADGROUP")
+            .arg("GROUP")
+            .arg(group)
+            .arg(consumer)
+            .arg("STREAMS")
+            .arg(key)
+            .arg(">")
+            .arg("COUNT")
+            .arg(count.unwrap_or(100))
+            .query_async(&mut conn).await?;
 
-        let results: Vec<(String, String, String)> = cmd.query_async(&mut conn).await?;
-        Ok(results)
+        Ok(results.into_iter().map(|(id, field, value)| StreamMessage { id, field, value }).collect())
     }
 
     pub async fn get_stream_info(&mut self, key: &str) -> Result<String> {
