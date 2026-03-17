@@ -5,13 +5,8 @@ export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
-    environment: "jsdom",
-    setupFiles: "./src/test/setup.ts",
-    exclude: [
-      "node_modules/",
-      "e2e/",
-      "**/redis-live.test.ts",
-    ],
+    environment: "node",
+    include: ["src/test/integration/redis-live.test.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],

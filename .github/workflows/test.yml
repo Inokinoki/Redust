@@ -11,10 +11,10 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  unit-and-integration-tests:
-    name: Unit and Integration Tests
+  unit-tests:
+    name: Unit Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
@@ -28,25 +28,28 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
-        run: npm test
+      - name: Run unit tests (stores, components, and utilities)
+        run: npm test -- --run src/test/store.test.ts src/test/themeStore.test.ts src/test/connectionStore.test.ts src/test/keyStore.test.ts src/test/splitPaneStore.test.ts src/test/commandPaletteStore.test.ts src/test/useDebounce.test.ts src/test/useEfficientUpdates.test.ts src/test/performance.test.ts src/test/apiErrorHandling.test.ts src/test/llm.test.ts src/test/integration/redis.test.ts src/test/components/
 
-      - name: Generate coverage report
-        run: npm run test:coverage
+  api-integration-tests:
+    name: API Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
         with:
-          files: ./coverage/coverage-final.json
-          flags: unittests
-          name: codecov-umbrella
+          node-version: "20"
 
-      - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: coverage/
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run API integration tests
+        run: npm test -- --run src/test/integration/api.test.ts src/test/integration/llm.integration.test.ts
 
   lint:
     name: Lint
@@ -129,34 +132,20 @@ jobs:
       - name: Install Redis CLI
         run: sudo apt-get update && sudo apt-get install -y redis-tools
 
-      - name: Wait for Redis to be ready
-        run: |
-          for i in {1..30}; do
-            if redis-cli -h localhost -p 6379 ping > /dev/null 2>&1; then
-              echo "✅ Redis is ready"
-              break
-            fi
-            echo "⏳ Waiting for Redis... ($i/30)"
-            sleep 1
-          done
-
       - name: Verify Redis connection
         run: |
           redis-cli -h localhost -p 6379 ping
-          redis-cli -h localhost -p 6379 INFO server
+          redis-cli -h localhost -p 6380 ping
 
-      - name: Run Redis integration tests
-        run: npm test src/test/integration/redis-live.test.ts
+      - name: Run Redis live integration tests
+        run: npx vitest --run --config vitest.config.redis.ts
         env:
           REDIS_HOST: localhost
           REDIS_PORT: 6379
           NODE_ENV: test
 
       - name: Run AI feature integration tests
-        run: npm test src/test/AIComponents.test.tsx
-
-      - name: Run LLM integration tests
-        run: npm test src/test/integration/llm.integration.test.ts
+        run: npm test -- --run src/test/AIComponents.test.tsx
 
   e2e-tests:
     name: E2E Tests
@@ -224,7 +213,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [unit-and-integration-tests, redis-integration-tests, lint, typecheck, e2e-tests]
+    needs: [unit-tests, api-integration-tests, redis-integration-tests, lint, typecheck, e2e-tests]
     if: always()
 
     steps:
