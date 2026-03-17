@@ -26,7 +26,7 @@ impl RedisManager {
         }
     }
 
-    async fn get_client(&mut self) -> Result<Client> {
+    pub async fn get_client(&mut self) -> Result<Client> {
         if self.client.is_none() {
             let connection_string = format!(
                 "redis://{}:{}{}",

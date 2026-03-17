@@ -93,7 +93,7 @@ pub async fn getClusterSlots(config: ConnectionConfig) -> Result<Vec<SlotInfo>, 
     let mut slots = Vec::new();
 
     for slot_value in result {
-        if let redis::Value::Array(parts) = slot_value {
+        if let redis::Value::Bulk(parts) = slot_value {
             if parts.len() >= 3 {
                 let start = if let redis::Value::Int(i) = parts[0] { i } else { 0 };
                 let end = if let redis::Value::Int(i) = parts[1] { i } else { 0 };
@@ -101,9 +101,9 @@ pub async fn getClusterSlots(config: ConnectionConfig) -> Result<Vec<SlotInfo>, 
                 // Parse master and replicas
                 let mut replicas = Vec::new();
                 let master = if parts.len() > 2 {
-                    if let redis::Value::Array(node_info) = &parts[2] {
+                    if let redis::Value::Bulk(node_info) = &parts[2] {
                         if node_info.len() >= 2 {
-                            if let redis::Value::BulkString(host) = &node_info[0] {
+                            if let redis::Value::Data(host) = &node_info[0] {
                                 if let redis::Value::Int(port) = node_info[1] {
                                     format!("{}:{}", String::from_utf8_lossy(host), port)
                                 } else {
@@ -124,9 +124,9 @@ pub async fn getClusterSlots(config: ConnectionConfig) -> Result<Vec<SlotInfo>, 
 
                 // Parse replicas
                 for i in 3..parts.len() {
-                    if let redis::Value::Array(node_info) = &parts[i] {
+                    if let redis::Value::Bulk(node_info) = &parts[i] {
                         if node_info.len() >= 2 {
-                            if let redis::Value::BulkString(host) = &node_info[0] {
+                            if let redis::Value::Data(host) = &node_info[0] {
                                 if let redis::Value::Int(port) = node_info[1] {
                                     replicas.push(format!("{}:{}", String::from_utf8_lossy(host), port));
                                 }
