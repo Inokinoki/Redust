@@ -5,7 +5,7 @@ use tauri::State;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PubSubMessage {
-    pub channel: String;
+    pub channel: String,
     pub message: String,
     pub pattern: Option<String>,
 }
