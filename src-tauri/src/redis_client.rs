@@ -944,7 +944,7 @@ impl RedisManager {
 
         let text = data.get("text")
             .and_then(|v| {
-                if let redis::Value::BulkString(s) = v {
+                if let redis::Value::Data(s) = v {
                     String::from_utf8_lossy(s).to_string().into()
                 } else {
                     None
@@ -954,7 +954,7 @@ impl RedisManager {
 
         let embedding = data.get("embedding")
             .and_then(|v| {
-                if let redis::Value::BulkString(bytes) = v {
+                if let redis::Value::Data(bytes) = v {
                     let vec: Vec<f64> = bytes
                         .chunks_exact(4)
                         .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]) as f64)
@@ -968,7 +968,7 @@ impl RedisManager {
 
         let metadata = data.get("metadata")
             .and_then(|v| {
-                if let redis::Value::BulkString(s) = v {
+                if let redis::Value::Data(s) = v {
                     serde_json::from_slice(s).ok()
                 } else {
                     None
@@ -996,7 +996,7 @@ impl RedisManager {
 
         let mut indexes = Vec::new();
         for val in result {
-            if let redis::Value::BulkString(s) = val {
+            if let redis::Value::Data(s) = val {
                 indexes.push(String::from_utf8_lossy(&s).to_string());
             }
         }
@@ -1033,11 +1033,11 @@ impl RedisManager {
             let key = &result[i];
             let value = &result[i + 1];
 
-            if let redis::Value::BulkString(k) = key {
+            if let redis::Value::Data(k) = key {
                 let key_str = String::from_utf8_lossy(k);
                 match key_str.as_ref() {
                     "index_status" => {
-                        if let redis::Value::BulkString(v) = value {
+                        if let redis::Value::Data(v) = value {
                             index_info.index_status = String::from_utf8_lossy(v).to_string();
                         }
                     }
@@ -1047,9 +1047,9 @@ impl RedisManager {
                         }
                     }
                     "schema" => {
-                        if let redis::Value::Array(fields) = value {
+                        if let redis::Value::Bulk(fields) = value {
                             for field in fields {
-                                if let redis::Value::Array(field_info) = field {
+                                if let redis::Value::Bulk(field_info) = field {
                                     let mut name = String::new();
                                     let mut field_type = String::new();
                                     let mut sortable = false;
@@ -1058,7 +1058,7 @@ impl RedisManager {
 
                                     for chunk in field_info.chunks(2) {
                                         if chunk.len() == 2 {
-                                            if let (redis::Value::BulkString(k), redis::Value::BulkString(v)) = (&chunk[0], &chunk[1]) {
+                                            if let (redis::Value::Data(k), redis::Value::Data(v)) = (&chunk[0], &chunk[1]) {
                                                 let k_str = String::from_utf8_lossy(k);
                                                 match k_str.as_ref() {
                                                     "name" => name = String::from_utf8_lossy(v).to_string(),
@@ -1076,7 +1076,7 @@ impl RedisManager {
                                     if is_vector {
                                         index_info.vector_field = Some(name.clone());
                                         for chunk in field_info.chunks(2) {
-                                            if let (redis::Value::BulkString(k), redis::Value::Int(v)) = (&chunk[0], &chunk[1]) {
+                                            if let (redis::Value::Data(k), redis::Value::Int(v)) = (&chunk[0], &chunk[1]) {
                                                 if String::from_utf8_lossy(k) == "dim" {
                                                     dimensions = Some(*v as usize);
                                                 }
@@ -1149,13 +1149,13 @@ impl RedisManager {
 
         let mut embeddings: Vec<(String, Vec<f64>, Option<String>)> = Vec::new();
         
-        if let redis::Value::Array(results) = result {
+        if let redis::Value::Bulk(results) = result {
             let mut i = 0;
             while i + 2 < results.len() {
                 let key = &results[i];
                 let fields = &results[i + 1];
                 
-                let key_str = if let redis::Value::BulkString(k) = key {
+                let key_str = if let redis::Value::Data(k) = key {
                     String::from_utf8_lossy(k).to_string()
                 } else {
                     i += 2;
@@ -1165,10 +1165,10 @@ impl RedisManager {
                 let mut embedding = Vec::new();
                 let mut text = None;
 
-                if let redis::Value::Array(field_pairs) = fields {
+                if let redis::Value::Bulk(field_pairs) = fields {
                     for chunk in field_pairs.chunks(2) {
                         if chunk.len() == 2 {
-                            if let (redis::Value::BulkString(k), redis::Value::BulkString(v)) = (&chunk[0], &chunk[1]) {
+                            if let (redis::Value::Data(k), redis::Value::Data(v)) = (&chunk[0], &chunk[1]) {
                                 match String::from_utf8_lossy(k).as_ref() {
                                     "embedding" | vector_field => {
                                         embedding = v.chunks_exact(4)
@@ -1381,7 +1381,7 @@ fn parse_vector_search_result(
 ) -> Vec<VectorSearchResult> {
     let mut results = Vec::new();
 
-    if let redis::Value::Array(data) = result {
+    if let redis::Value::Bulk(data) = result {
         if data.is_empty() {
             return results;
         }
@@ -1397,7 +1397,7 @@ fn parse_vector_search_result(
             let key_val = &data[i];
             let fields_val = &data[i + 1];
 
-            let key = if let redis::Value::BulkString(k) = key_val {
+            let key = if let redis::Value::Data(k) = key_val {
                 String::from_utf8_lossy(k).to_string()
             } else {
                 i += 2;
@@ -1407,19 +1407,19 @@ fn parse_vector_search_result(
             let mut score = 0.0;
             let mut fields = None;
 
-            if let redis::Value::Array(field_pairs) = fields_val {
+            if let redis::Value::Bulk(field_pairs) = fields_val {
                 let mut field_map = serde_json::Map::new();
-                
+
                 for chunk in field_pairs.chunks(2) {
                     if chunk.len() == 2 {
-                        let field_name = if let redis::Value::BulkString(n) = &chunk[0] {
+                        let field_name = if let redis::Value::Data(n) = &chunk[0] {
                             String::from_utf8_lossy(n).to_string()
                         } else {
                             continue;
                         };
 
                         let field_value = match &chunk[1] {
-                            redis::Value::BulkString(v) => {
+                            redis::Value::Data(v) => {
                                 let s = String::from_utf8_lossy(v);
                                 if field_name == "__embedding_score" || field_name == "embedding_score" {
                                     if let Ok(s) = s.parse::<f64>() {
@@ -1429,14 +1429,6 @@ fn parse_vector_search_result(
                                 serde_json::Value::String(s.to_string())
                             }
                             redis::Value::Int(v) => serde_json::Value::Number((*v).into()),
-                            redis::Value::Double(v) => {
-                                if let Some(n) = serde_json::Number::from_f64(*v) {
-                                    serde_json::Value::Number(n)
-                                } else {
-                                    serde_json::Value::Null
-                                }
-                            }
-                            _ => serde_json::Value::Null,
                         };
 
                         if return_fields.is_none() || return_fields.unwrap().contains(&field_name) {
