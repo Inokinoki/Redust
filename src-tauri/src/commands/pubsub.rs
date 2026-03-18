@@ -5,7 +5,7 @@ use tauri::State;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PubSubMessage {
-    pub channel: String;
+    pub channel: String,
     pub message: String,
     pub pattern: Option<String>,
 }
@@ -77,7 +77,7 @@ pub async fn getChannelSubscribers(
 }
 
 #[tauri::command]
-pub async fn getActivePatterns(config: ConnectionConfig) -> Result<Vec<String>, String> {
+pub async fn getActivePatterns(config: ConnectionConfig) -> Result<i64, String> {
     let mut manager = RedisManager::new(config);
     let client = manager.get_client().await.map_err(|e| e.to_string())?;
     let mut conn = client
@@ -85,13 +85,12 @@ pub async fn getActivePatterns(config: ConnectionConfig) -> Result<Vec<String>, 
         .await
         .map_err(|e| e.to_string())?;
 
-    let patterns: Vec<String> = redis::cmd("PUBSUB")
+    let count: i64 = redis::cmd("PUBSUB")
         .arg("NUMPAT")
-        .query_async::<_, i64>(&mut conn)
+        .query_async(&mut conn)
         .await
         .map_err(|e| e.to_string())?;
 
-    // PUBSUB NUMPAT returns just the count, not the patterns themselves
-    // For patterns, we would need to track them separately
-    Ok(vec![])
+    // PUBSUB NUMPAT returns the count of pattern subscriptions
+    Ok(count)
 }

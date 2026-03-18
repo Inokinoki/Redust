@@ -1,4 +1,5 @@
 use crate::redis_client::RedisManager;
+use crate::ConnectionConfig;
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
@@ -16,7 +17,7 @@ pub async fn get_keys(
     pattern: Option<String>,
     count: Option<u64>,
 ) -> Result<Vec<KeyInfo>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .get_keys(pattern.unwrap_or_else(|| "*".to_string()), count.unwrap_or(100))
         .await
@@ -25,12 +26,12 @@ pub async fn get_keys(
 
 #[tauri::command]
 pub async fn get_key(config: ConnectionConfig, key: String) -> Result<KeyInfo, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager.get_key_info(&key).await.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub async fn delete_key(config: ConnectionConfig, key: String) -> Result<bool, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager.delete_key(&key).await.map_err(|e| e.to_string())
 }

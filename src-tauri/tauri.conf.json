@@ -1,11 +1,10 @@
 {
-  "name": "redust",
   "productName": "Redust",
-  "version": "0.1.0",
   "identifier": "com.redust.app",
+  "version": "0.1.0",
   "build": {
-    "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
     "frontendDist": "../dist"
   },
@@ -28,7 +27,6 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -36,30 +34,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "macOS": {
-      "dmg": {
-        "background": "#ffffff",
-        "appPosition": { "x": 180, "y": 170 },
-        "applicationFolderPosition": { "x": 480, "y": 170 }
-      },
-      "minimumSystemVersion": "10.15"
-    },
-    "windows": {
-      "nsis": {
-        "installerIcon": "icons/icon.ico",
-        "headerImage": null,
-        "sidebarImage": null
-      },
-      "wix": null
-    },
-    "linux": {
-      "deb": {
-        "depends": ["libwebkit2gtk-4.0-dev", "libssl-dev", "libgtk-3-dev"]
-      },
-      "appimage": {
-        "bundleMediaFramework": true
-      }
-    }
+    "targets": "all"
   },
   "plugins": {}
 }

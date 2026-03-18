@@ -1,4 +1,8 @@
 use crate::commands::ConnectionConfig;
+use crate::commands::zset::SortedSetMember;
+use crate::commands::search::{SearchResult, SearchIndexField};
+use crate::commands::streams::StreamMessage;
+use crate::commands::timeseries::TimeSeriesDataPoint;
 use crate::commands::vector::{
     CreateVectorIndexRequest, VectorSearchRequest, VectorSearchResult, EmbeddingCacheItem,
     VectorIndexInfo, IndexFieldInfo, ClusterVisualization, ClusterPoint,
@@ -6,7 +10,7 @@ use crate::commands::vector::{
 use anyhow::{Context, Result};
 use redis::AsyncCommands;
 use redis::aio::{ConnectionManager, MultiplexedConnection};
-use redis::{Client, ProtocolVersion};
+use redis::{Client};
 use std::time::Duration;
 
 pub struct RedisManager {
@@ -22,7 +26,7 @@ impl RedisManager {
         }
     }
 
-    async fn get_client(&mut self) -> Result<Client> {
+    pub async fn get_client(&mut self) -> Result<Client> {
         if self.client.is_none() {
             let connection_string = format!(
                 "redis://{}:{}{}",
@@ -39,7 +43,7 @@ impl RedisManager {
                 .context("Failed to create Redis client")?;
 
             // Configure connection settings
-            client.set_protocol_version(ProtocolVersion::RESP3);
+            // Note: ProtocolVersion configuration removed in redis-rs 0.25
 
             self.client = Some(client);
         }
@@ -240,19 +244,18 @@ impl RedisManager {
                 .arg(value)
                 .arg("EX")
                 .arg(expiry)
-                .query_async(&mut conn)
+                .query_async::<_, ()>(&mut conn)
                 .await?;
         } else {
             redis::cmd("SET")
                 .arg(key)
                 .arg(value)
-                .query_async(&mut conn)
+                .query_async::<_, ()>(&mut conn)
                 .await?;
         }
 
         Ok(true)
     }
-}
 
     pub async fn hash_get(&mut self, key: &str, field: &str) -> Result<Option<String>> {
         let client = self.get_client().await?;
@@ -556,7 +559,7 @@ impl RedisManager {
     }
 
     // Sorted Set operations
-    pub async fn zset_add(&mut self, key: &str, members: &[(String, f64)]) -> Result<usize> {
+    pub async fn zset_add(&mut self, key: &str, members: &[SortedSetMember]) -> Result<usize> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
@@ -568,7 +571,7 @@ impl RedisManager {
             .arg(
                 members
                     .iter()
-                    .flat_map(|(m, s)| [s.to_string(), m.clone()])
+                    .flat_map(|m| [m.score.to_string(), m.member.clone()])
                     .collect::<Vec<_>>()
             )
             .query_async(&mut conn)
@@ -576,45 +579,53 @@ impl RedisManager {
         Ok(added)
     }
 
-    pub async fn zset_range(&mut self, key: &str, start: i64, stop: i64, with_scores: bool) -> Result<Vec<(String, f64)>> {
+    pub async fn zset_range(&mut self, key: &str, start: i64, stop: i64, with_scores: bool) -> Result<Vec<SortedSetMember>> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("ZRANGE").arg(key).arg(start).arg(stop);
         if with_scores {
-            cmd.arg("WITHSCORES");
-        }
-
-        if with_scores {
-            let result: Vec<(String, f64)> = cmd.query_async(&mut conn).await?;
-            Ok(result)
+            let result: Vec<(String, f64)> = redis::cmd("ZRANGE")
+                .arg(key)
+                .arg(start)
+                .arg(stop)
+                .arg("WITHSCORES")
+                .query_async(&mut conn).await?;
+            Ok(result.into_iter().map(|(member, score)| SortedSetMember { member, score }).collect())
         } else {
-            let result: Vec<String> = cmd.query_async(&mut conn).await?;
-            Ok(result.into_iter().map(|m| (m, 0.0)).collect())
+            let result: Vec<String> = redis::cmd("ZRANGE")
+                .arg(key)
+                .arg(start)
+                .arg(stop)
+                .query_async(&mut conn).await?;
+            Ok(result.into_iter().map(|m| SortedSetMember { member: m, score: 0.0 }).collect())
         }
     }
 
-    pub async fn zset_range_by_score(&mut self, key: &str, min: f64, max: f64, with_scores: bool) -> Result<Vec<(String, f64)>> {
+    pub async fn zset_range_by_score(&mut self, key: &str, min: f64, max: f64, with_scores: bool) -> Result<Vec<SortedSetMember>> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("ZRANGEBYSCORE").arg(key).arg(min).arg(max);
         if with_scores {
-            cmd.arg("WITHSCORES");
-        }
-
-        if with_scores {
-            let result: Vec<(String, f64)> = cmd.query_async(&mut conn).await?;
-            Ok(result)
+            let result: Vec<(String, f64)> = redis::cmd("ZRANGEBYSCORE")
+                .arg(key)
+                .arg(min)
+                .arg(max)
+                .arg("WITHSCORES")
+                .query_async(&mut conn).await?;
+            Ok(result.into_iter().map(|(member, score)| SortedSetMember { member, score }).collect())
         } else {
-            let result: Vec<String> = cmd.query_async(&mut conn).await?;
-            Ok(result.into_iter().map(|m| (m, 0.0)).collect())
+            let result: Vec<String> = redis::cmd("ZRANGEBYSCORE")
+                .arg(key)
+                .arg(min)
+                .arg(max)
+                .query_async(&mut conn).await?;
+            Ok(result.into_iter().map(|m| SortedSetMember { member: m, score: 0.0 }).collect())
         }
     }
 
@@ -712,7 +723,7 @@ impl RedisManager {
         &mut self,
         index_name: &str,
         prefix: &str,
-        fields: &[(String, String, bool)],
+        fields: &[SearchIndexField],
     ) -> Result<String> {
         let client = self.get_client().await?;
         let mut conn = client
@@ -720,8 +731,8 @@ impl RedisManager {
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("FT.CREATE")
-            .arg(index_name)
+        let mut cmd = redis::cmd("FT.CREATE");
+        cmd.arg(index_name)
             .arg("ON")
             .arg("HASH")
             .arg("PREFIX")
@@ -729,12 +740,12 @@ impl RedisManager {
             .arg(prefix)
             .arg("SCHEMA");
 
-        for (field_name, field_type, sortable) in fields {
-            let mut field_def = field_type.clone();
-            if *sortable {
+        for field in fields {
+            let mut field_def = field.field_type.clone();
+            if field.sortable {
                 field_def.push_str(" SORTABLE");
             }
-            cmd.arg(&format!("{} AS {}", field_name, field_def));
+            cmd.arg(&format!("{} AS {}", field.name, field_def));
         }
 
         let result: String = cmd.query_async(&mut conn).await?;
@@ -746,7 +757,7 @@ impl RedisManager {
         index_name: &str,
         query: &str,
         limit: usize,
-    ) -> Result<Vec<(String, f64)>> {
+    ) -> Result<Vec<SearchResult>> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
@@ -761,21 +772,23 @@ impl RedisManager {
             .arg(limit)
             .query_async(&mut conn)
             .await?;
-        Ok(results)
+
+        Ok(results.into_iter().map(|(key, score)| SearchResult { key, score, payload: String::new() }).collect())
     }
 
-    pub async fn drop_index(&mut self, index_name: &str) -> Result<()> {
+    pub async fn drop_index(&mut self, index_name: &str) -> Result<bool> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
             .await
             .context("Failed to get connection")?;
 
-        redis::cmd("FT.DROP")
+        let result: Result<String, redis::RedisError> = redis::cmd("FT.DROP")
             .arg(index_name)
-            .query_async::<_, ()>(&mut conn)
-            .await?;
-        Ok(())
+            .query_async(&mut conn)
+            .await;
+
+        Ok(result.is_ok())
     }
 
     pub async fn get_index_info(&mut self, index_name: &str) -> Result<String> {
@@ -802,8 +815,8 @@ impl RedisManager {
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("FT.CREATE")
-            .arg(&request.index_name)
+        let mut cmd = redis::cmd("FT.CREATE");
+        cmd.arg(&request.index_name)
             .arg("ON")
             .arg("HASH")
             .arg("PREFIX")
@@ -857,8 +870,8 @@ impl RedisManager {
             top_k, request.vector_field
         );
 
-        let mut cmd = redis::cmd("FT.SEARCH")
-            .arg(&request.index_name)
+        let mut cmd = redis::cmd("FT.SEARCH");
+        cmd.arg(&request.index_name)
             .arg(&query)
             .arg("PARAMS")
             .arg(2)
@@ -873,7 +886,7 @@ impl RedisManager {
         }
 
         let result: redis::Value = cmd.query_async(&mut conn).await?;
-        
+
         let results = parse_vector_search_result(&result, request.return_fields.as_ref());
         Ok(results)
     }
@@ -945,7 +958,7 @@ impl RedisManager {
 
         let text = data.get("text")
             .and_then(|v| {
-                if let redis::Value::BulkString(s) = v {
+                if let redis::Value::Data(s) = v {
                     String::from_utf8_lossy(s).to_string().into()
                 } else {
                     None
@@ -955,7 +968,7 @@ impl RedisManager {
 
         let embedding = data.get("embedding")
             .and_then(|v| {
-                if let redis::Value::BulkString(bytes) = v {
+                if let redis::Value::Data(bytes) = v {
                     let vec: Vec<f64> = bytes
                         .chunks_exact(4)
                         .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]) as f64)
@@ -969,7 +982,7 @@ impl RedisManager {
 
         let metadata = data.get("metadata")
             .and_then(|v| {
-                if let redis::Value::BulkString(s) = v {
+                if let redis::Value::Data(s) = v {
                     serde_json::from_slice(s).ok()
                 } else {
                     None
@@ -997,7 +1010,7 @@ impl RedisManager {
 
         let mut indexes = Vec::new();
         for val in result {
-            if let redis::Value::BulkString(s) = val {
+            if let redis::Value::Data(s) = val {
                 indexes.push(String::from_utf8_lossy(&s).to_string());
             }
         }
@@ -1034,11 +1047,11 @@ impl RedisManager {
             let key = &result[i];
             let value = &result[i + 1];
 
-            if let redis::Value::BulkString(k) = key {
+            if let redis::Value::Data(k) = key {
                 let key_str = String::from_utf8_lossy(k);
                 match key_str.as_ref() {
                     "index_status" => {
-                        if let redis::Value::BulkString(v) = value {
+                        if let redis::Value::Data(v) = value {
                             index_info.index_status = String::from_utf8_lossy(v).to_string();
                         }
                     }
@@ -1048,9 +1061,9 @@ impl RedisManager {
                         }
                     }
                     "schema" => {
-                        if let redis::Value::Array(fields) = value {
+                        if let redis::Value::Bulk(fields) = value {
                             for field in fields {
-                                if let redis::Value::Array(field_info) = field {
+                                if let redis::Value::Bulk(field_info) = field {
                                     let mut name = String::new();
                                     let mut field_type = String::new();
                                     let mut sortable = false;
@@ -1059,7 +1072,7 @@ impl RedisManager {
 
                                     for chunk in field_info.chunks(2) {
                                         if chunk.len() == 2 {
-                                            if let (redis::Value::BulkString(k), redis::Value::BulkString(v)) = (&chunk[0], &chunk[1]) {
+                                            if let (redis::Value::Data(k), redis::Value::Data(v)) = (&chunk[0], &chunk[1]) {
                                                 let k_str = String::from_utf8_lossy(k);
                                                 match k_str.as_ref() {
                                                     "name" => name = String::from_utf8_lossy(v).to_string(),
@@ -1077,7 +1090,7 @@ impl RedisManager {
                                     if is_vector {
                                         index_info.vector_field = Some(name.clone());
                                         for chunk in field_info.chunks(2) {
-                                            if let (redis::Value::BulkString(k), redis::Value::Int(v)) = (&chunk[0], &chunk[1]) {
+                                            if let (redis::Value::Data(k), redis::Value::Int(v)) = (&chunk[0], &chunk[1]) {
                                                 if String::from_utf8_lossy(k) == "dim" {
                                                     dimensions = Some(*v as usize);
                                                 }
@@ -1150,13 +1163,13 @@ impl RedisManager {
 
         let mut embeddings: Vec<(String, Vec<f64>, Option<String>)> = Vec::new();
         
-        if let redis::Value::Array(results) = result {
+        if let redis::Value::Bulk(results) = result {
             let mut i = 0;
             while i + 2 < results.len() {
                 let key = &results[i];
                 let fields = &results[i + 1];
                 
-                let key_str = if let redis::Value::BulkString(k) = key {
+                let key_str = if let redis::Value::Data(k) = key {
                     String::from_utf8_lossy(k).to_string()
                 } else {
                     i += 2;
@@ -1166,20 +1179,17 @@ impl RedisManager {
                 let mut embedding = Vec::new();
                 let mut text = None;
 
-                if let redis::Value::Array(field_pairs) = fields {
+                if let redis::Value::Bulk(field_pairs) = fields {
                     for chunk in field_pairs.chunks(2) {
                         if chunk.len() == 2 {
-                            if let (redis::Value::BulkString(k), redis::Value::BulkString(v)) = (&chunk[0], &chunk[1]) {
-                                match String::from_utf8_lossy(k).as_ref() {
-                                    "embedding" | vector_field => {
-                                        embedding = v.chunks_exact(4)
-                                            .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]) as f64)
-                                            .collect();
-                                    }
-                                    "text" => {
-                                        text = Some(String::from_utf8_lossy(v).to_string());
-                                    }
-                                    _ => {}
+                            if let (redis::Value::Data(k), redis::Value::Data(v)) = (&chunk[0], &chunk[1]) {
+                                let field_name = String::from_utf8_lossy(k);
+                                if field_name == "embedding" || field_name == vector_field {
+                                    embedding = v.chunks_exact(4)
+                                        .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]) as f64)
+                                        .collect();
+                                } else if field_name == "text" {
+                                    text = Some(String::from_utf8_lossy(v).to_string());
                                 }
                             }
                         }
@@ -1231,7 +1241,8 @@ impl RedisManager {
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("TS.CREATE").arg(key);
+        let mut cmd = redis::cmd("TS.CREATE");
+        cmd.arg(key);
         if let Some(retention) = retention_ms {
             cmd.arg("RETENTION").arg(retention);
         }
@@ -1245,22 +1256,22 @@ impl RedisManager {
         key: &str,
         timestamp: i64,
         value: f64,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
             .await
             .context("Failed to get connection")?;
 
-        redis::cmd("TS.ADD")
+        let result: Result<String, redis::RedisError> = redis::cmd("TS.ADD")
             .arg(key)
             .arg("*")
             .arg(timestamp)
-            .arg("*")
             .arg(value)
-            .query_async::<_, ()>(&mut conn)
-            .await?;
-        Ok(())
+            .query_async(&mut conn)
+            .await;
+
+        Ok(result.is_ok())
     }
 
     pub async fn get_time_series_range(
@@ -1269,26 +1280,31 @@ impl RedisManager {
         from_ts: Option<i64>,
         to_ts: Option<i64>,
         count: Option<usize>,
-    ) -> Result<Vec<(i64, f64)>> {
+    ) -> Result<Vec<TimeSeriesDataPoint>> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("TS.RANGE").arg(key);
+        let mut cmd = redis::cmd("TS.RANGE");
+        cmd.arg(key);
         if let Some(from) = from_ts {
-            cmd.arg("-").arg(from);
+            cmd.arg(from);
+        } else {
+            cmd.arg("-");
         }
         if let Some(to) = to_ts {
-            cmd.arg("+").arg(to);
+            cmd.arg(to);
+        } else {
+            cmd.arg("+");
         }
         if let Some(cnt) = count {
             cmd.arg("COUNT").arg(cnt);
         }
 
         let results: Vec<(i64, f64)> = cmd.query_async(&mut conn).await?;
-        Ok(results)
+        Ok(results.into_iter().map(|(timestamp, value)| TimeSeriesDataPoint { timestamp, value }).collect())
     }
 
     // Streams methods
@@ -1321,25 +1337,22 @@ impl RedisManager {
         start: &str,
         end: &str,
         count: Option<usize>,
-    ) -> Result<Vec<(String, String, String)>> {
+    ) -> Result<Vec<StreamMessage>> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("XRANGE").arg(key).arg(&stream_id);
-        if let Some(cnt) = count {
-            cmd.arg("COUNT").arg(cnt);
-        }
-        
         let results: Vec<(String, String, String)> = redis::cmd("XRANGE")
             .arg(key)
-            .arg(&stream_id)
             .arg(start)
             .arg(end)
+            .arg("COUNT")
+            .arg(count.unwrap_or(100))
             .query_async(&mut conn).await?;
-        Ok(results)
+
+        Ok(results.into_iter().map(|(id, field, value)| StreamMessage { id, field, value }).collect())
     }
 
     pub async fn xreadgroup(
@@ -1348,20 +1361,25 @@ impl RedisManager {
         group: &str,
         consumer: &str,
         count: Option<usize>,
-    ) -> Result<Vec<(String, String, String)>> {
+    ) -> Result<Vec<StreamMessage>> {
         let client = self.get_client().await?;
         let mut conn = client
             .get_multiplexed_async_connection()
             .await
             .context("Failed to get connection")?;
 
-        let mut cmd = redis::cmd("XREADGROUP").arg(key).arg(&group).arg(&consumer);
-        if let Some(cnt) = count {
-            cmd.arg("COUNT").arg(cnt);
- }
+        let results: Vec<(String, String, String)> = redis::cmd("XREADGROUP")
+            .arg("GROUP")
+            .arg(group)
+            .arg(consumer)
+            .arg("STREAMS")
+            .arg(key)
+            .arg(">")
+            .arg("COUNT")
+            .arg(count.unwrap_or(100))
+            .query_async(&mut conn).await?;
 
-        let results: Vec<(String, String, String)> = cmd.query_async(&mut conn).await?;
-        Ok(results)
+        Ok(results.into_iter().map(|(id, field, value)| StreamMessage { id, field, value }).collect())
     }
 
     pub async fn get_stream_info(&mut self, key: &str) -> Result<String> {
@@ -1382,7 +1400,7 @@ fn parse_vector_search_result(
 ) -> Vec<VectorSearchResult> {
     let mut results = Vec::new();
 
-    if let redis::Value::Array(data) = result {
+    if let redis::Value::Bulk(data) = result {
         if data.is_empty() {
             return results;
         }
@@ -1398,7 +1416,7 @@ fn parse_vector_search_result(
             let key_val = &data[i];
             let fields_val = &data[i + 1];
 
-            let key = if let redis::Value::BulkString(k) = key_val {
+            let key = if let redis::Value::Data(k) = key_val {
                 String::from_utf8_lossy(k).to_string()
             } else {
                 i += 2;
@@ -1408,19 +1426,19 @@ fn parse_vector_search_result(
             let mut score = 0.0;
             let mut fields = None;
 
-            if let redis::Value::Array(field_pairs) = fields_val {
+            if let redis::Value::Bulk(field_pairs) = fields_val {
                 let mut field_map = serde_json::Map::new();
-                
+
                 for chunk in field_pairs.chunks(2) {
                     if chunk.len() == 2 {
-                        let field_name = if let redis::Value::BulkString(n) = &chunk[0] {
+                        let field_name = if let redis::Value::Data(n) = &chunk[0] {
                             String::from_utf8_lossy(n).to_string()
                         } else {
                             continue;
                         };
 
                         let field_value = match &chunk[1] {
-                            redis::Value::BulkString(v) => {
+                            redis::Value::Data(v) => {
                                 let s = String::from_utf8_lossy(v);
                                 if field_name == "__embedding_score" || field_name == "embedding_score" {
                                     if let Ok(s) = s.parse::<f64>() {
@@ -1430,13 +1448,6 @@ fn parse_vector_search_result(
                                 serde_json::Value::String(s.to_string())
                             }
                             redis::Value::Int(v) => serde_json::Value::Number((*v).into()),
-                            redis::Value::Double(v) => {
-                                if let Some(n) = serde_json::Number::from_f64(*v) {
-                                    serde_json::Value::Number(n)
-                                } else {
-                                    serde_json::Value::Null
-                                }
-                            }
                             _ => serde_json::Value::Null,
                         };
 

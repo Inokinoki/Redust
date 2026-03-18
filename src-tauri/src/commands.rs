@@ -14,6 +14,7 @@ pub mod cluster;
 pub mod pubsub;
 pub mod import_export;
 pub mod script;
+pub mod llm;
 
 pub use connection::*;
 pub use keys::*;
@@ -31,3 +32,4 @@ pub use cluster::*;
 pub use pubsub::*;
 pub use import_export::*;
 pub use script::*;
+pub use llm::*;

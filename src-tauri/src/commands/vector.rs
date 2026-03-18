@@ -89,7 +89,7 @@ pub async fn createVectorIndex(
     config: ConnectionConfig,
     request: CreateVectorIndexRequest,
 ) -> Result<String, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .create_vector_index(&request)
         .await
@@ -101,7 +101,7 @@ pub async fn vectorSearch(
     config: ConnectionConfig,
     request: VectorSearchRequest,
 ) -> Result<Vec<VectorSearchResult>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .vector_search(&request)
         .await
@@ -113,7 +113,7 @@ pub async fn uploadEmbeddings(
     config: ConnectionConfig,
     request: UploadEmbeddingsRequest,
 ) -> Result<usize, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .upload_embeddings(&request.index_name, &request.embeddings)
         .await
@@ -125,7 +125,7 @@ pub async fn getCachedEmbedding(
     config: ConnectionConfig,
     key: String,
 ) -> Result<Option<EmbeddingCacheItem>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .get_cached_embedding(&key)
         .await
@@ -134,7 +134,7 @@ pub async fn getCachedEmbedding(
 
 #[tauri::command]
 pub async fn listVectorIndexes(config: ConnectionConfig) -> Result<Vec<String>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .list_vector_indexes()
         .await
@@ -146,7 +146,7 @@ pub async fn getVectorIndexInfo(
     config: ConnectionConfig,
     index_name: String,
 ) -> Result<VectorIndexInfo, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .get_vector_index_info(&index_name)
         .await
@@ -155,7 +155,7 @@ pub async fn getVectorIndexInfo(
 
 #[tauri::command]
 pub async fn deleteVectorIndex(config: ConnectionConfig, index_name: String) -> Result<bool, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .delete_vector_index(&index_name)
         .await
@@ -170,7 +170,7 @@ pub async fn getEmbeddingClusters(
     num_clusters: usize,
     sample_size: Option<usize>,
 ) -> Result<ClusterVisualization, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .get_embedding_clusters(&index_name, &vector_field, num_clusters, sample_size)
         .await
@@ -182,7 +182,7 @@ pub async fn batchVectorSearch(
     config: ConnectionConfig,
     requests: Vec<VectorSearchRequest>,
 ) -> Result<Vec<Vec<VectorSearchResult>>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     let mut results = Vec::new();
     for request in requests {
         match manager.vector_search(&request).await {

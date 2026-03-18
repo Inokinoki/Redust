@@ -20,7 +20,7 @@ pub async fn createTimeSeries(
     config: ConnectionConfig,
     request: CreateTimeSeriesRequest,
 ) -> Result<String, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .create_time_series(&request.key, request.retention_ms)
         .await
@@ -34,7 +34,7 @@ pub async fn addTimeSeriesData(
     timestamp: i64,
     value: f64,
 ) -> Result<bool, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .add_time_series_data(&key, timestamp, value)
         .await
@@ -49,7 +49,7 @@ pub async fn getTimeSeriesRange(
     to_ts: Option<i64>,
     count: Option<usize>,
 ) -> Result<Vec<TimeSeriesDataPoint>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .get_time_series_range(&key, from_ts, to_ts, count)
         .await

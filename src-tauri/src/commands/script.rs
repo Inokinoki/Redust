@@ -151,7 +151,8 @@ pub async fn scriptExists(
         .await
         .map_err(|e| e.to_string())?;
 
-    let mut cmd = redis::cmd("SCRIPT").arg("EXISTS");
+    let mut cmd = redis::cmd("SCRIPT");
+    cmd.arg("EXISTS");
     for sha in shas {
         cmd.arg(&sha);
     }

@@ -16,7 +16,7 @@ pub async fn hashGet(
     key: String,
     field: String,
 ) -> Result<Option<String>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .hash_get(&key, &field)
         .await
@@ -28,7 +28,7 @@ pub async fn hashGetAll(
     config: ConnectionConfig,
     key: String,
 ) -> Result<HashMap<String, String>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .hash_get_all(&key)
         .await
@@ -42,7 +42,7 @@ pub async fn hashSet(
     field: String,
     value: String,
 ) -> Result<bool, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .hash_set(&key, &field, &value)
         .await
@@ -55,7 +55,7 @@ pub async fn hashDelete(
     key: String,
     field: String,
 ) -> Result<bool, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .hash_delete(&key, &field)
         .await
@@ -68,7 +68,7 @@ pub async fn hashExists(
     key: String,
     field: String,
 ) -> Result<bool, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .hash_exists(&key, &field)
         .await
@@ -80,7 +80,7 @@ pub async fn hashLen(
     config: ConnectionConfig,
     key: String,
 ) -> Result<usize, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .hash_len(&key)
         .await
@@ -92,7 +92,7 @@ pub async fn hashKeys(
     config: ConnectionConfig,
     key: String,
 ) -> Result<Vec<String>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .hash_keys(&key)
         .await
@@ -104,7 +104,7 @@ pub async fn hashValues(
     config: ConnectionConfig,
     key: String,
 ) -> Result<Vec<String>, String> {
-    let manager = RedisManager::new(config);
+    let mut manager = RedisManager::new(config);
     manager
         .hash_values(&key)
         .await
