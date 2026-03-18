@@ -127,6 +127,7 @@ pub struct EmbeddingRequest {
     pub model: Option<String>, // e.g., "text-embedding-ada-002"
     pub provider: LLMProvider,
     pub api_key: Option<String>,
+    pub api_endpoint: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -202,7 +203,8 @@ struct AnthropicResponse {
 
 #[derive(Debug, Deserialize)]
 struct AnthropicContent {
-    type: String,
+    #[serde(rename = "type")]
+    r#type: String,
     text: String,
 }
 
@@ -386,7 +388,7 @@ impl LLMClient {
         let content = anthropic_response
             .content
             .iter()
-            .filter(|c| c.type == "text")
+            .filter(|c| c.r#type == "text")
             .map(|c| c.text.clone())
             .collect::<Vec<_>>()
             .join("\n");
@@ -593,7 +595,7 @@ pub async fn llm_rag(
         .map_err(|e| format!("Failed to generate embedding: {}", e))?;
 
     // Step 2: Search Redis for similar documents
-    let redis_manager = RedisManager::new(config);
+    let mut redis_manager = RedisManager::new(config);
     let vector_search_request = VectorSearchRequest {
         index_name: request.index_name.clone(),
         query_vector: embedding_response.embedding,
