@@ -244,13 +244,13 @@ impl RedisManager {
                 .arg(value)
                 .arg("EX")
                 .arg(expiry)
-                .query_async(&mut conn)
+                .query_async::<_, ()>(&mut conn)
                 .await?;
         } else {
             redis::cmd("SET")
                 .arg(key)
                 .arg(value)
-                .query_async(&mut conn)
+                .query_async::<_, ()>(&mut conn)
                 .await?;
         }
 
