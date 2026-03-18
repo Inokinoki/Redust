@@ -26,7 +26,7 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run unit tests (stores, components, and utilities)
         run: npm test -- --run src/test/store.test.ts src/test/themeStore.test.ts src/test/connectionStore.test.ts src/test/keyStore.test.ts src/test/splitPaneStore.test.ts src/test/commandPaletteStore.test.ts src/test/useDebounce.test.ts src/test/useEfficientUpdates.test.ts src/test/performance.test.ts src/test/apiErrorHandling.test.ts src/test/llm.test.ts src/test/integration/redis.test.ts src/test/components/
@@ -46,7 +46,7 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run API integration tests
         run: npm test -- --run src/test/integration/api.test.ts src/test/integration/llm.integration.test.ts
@@ -65,7 +65,7 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run linter
         run: npm run lint
@@ -84,7 +84,7 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run TypeScript type check
         run: npx tsc --noEmit --skipLibCheck
@@ -127,7 +127,7 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Install Redis CLI
         run: sudo apt-get update && sudo apt-get install -y redis-tools
@@ -162,7 +162,7 @@ jobs:
           node-version: "20"
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
