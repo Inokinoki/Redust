@@ -587,6 +587,7 @@ pub async fn llm_rag(
         model: Some("text-embedding-ada-002".to_string()),
         provider: request.model.provider(),
         api_key: request.api_key.clone(),
+        api_endpoint: request.api_endpoint.clone(),
     };
 
     let embedding_response = llm_client
