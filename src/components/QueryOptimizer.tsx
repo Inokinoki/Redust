@@ -18,12 +18,13 @@ interface QueryOptimizationResult {
 }
 
 interface QueryAnalyzerProps {
-  isOpen: boolean;
-  onClose: () => void;
+  variant?: "panel" | "modal";
+  isOpen?: boolean;
+  onClose?: () => void;
   initialQuery?: string;
 }
 
-export function QueryOptimizer({ isOpen, onClose, initialQuery = "" }: QueryAnalyzerProps) {
+export function QueryOptimizer({ variant = "modal", isOpen = true, onClose, initialQuery = "" }: QueryAnalyzerProps) {
   const [query, setQuery] = useState(initialQuery);
   const [queryType, setQueryType] = useState<"redis" | "sql" | "generic">("redis");
   const [analyzing, setAnalyzing] = useState(false);
@@ -203,26 +204,12 @@ EXPLANATION: [detailed explanation]`;
     return optimizations;
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && variant === "modal") return null;
 
   const quickOptimizations = getQuickOptimizations();
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative z-50 w-full max-w-5xl h-[85vh] rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl overflow-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">AI Query Optimizer</h2>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={analyzeQuery} disabled={analyzing || !query.trim()}>
-              {analyzing ? "Analyzing..." : "Optimize Query"}
-            </Button>
-            <Button variant="outline" onClick={onClose}>
-              Close
-            </Button>
-          </div>
-        </div>
-
-        <Tabs defaultValue="input" className="w-full">
+  const content = (
+    <Tabs defaultValue="input" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="input">Input Query</TabsTrigger>
             <TabsTrigger value="results" disabled={!result}>
@@ -501,6 +488,35 @@ EXPLANATION: [detailed explanation]`;
             </Card>
           </TabsContent>
         </Tabs>
+  );
+
+  if (variant === "panel") {
+    return (
+      <div className="h-full overflow-auto">
+        <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
+          <h3 className="text-sm font-semibold">Query Optimizer</h3>
+        </div>
+        {content}
+      </div>
+    );
+  }
+
+  // Modal variant (fallback)
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="relative z-50 w-full max-w-5xl h-[85vh] rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl overflow-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">AI Query Optimizer</h2>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+            <Button variant="outline" onClick={analyzeQuery} disabled={analyzing || !query.trim()}>
+              {analyzing ? "Analyzing..." : "Optimize Query"}
+            </Button>
+          </div>
+        </div>
+        {content}
       </div>
     </div>
   );
