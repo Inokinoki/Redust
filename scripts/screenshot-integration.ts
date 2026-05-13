@@ -182,20 +182,32 @@ async function main() {
     return page;
   }
 
-  /** Screenshot only the right sidebar panel region (clean, focused capture) */
-  async function screenshotRightPanel(page: any, filePath: string) {
-    const rect = await page.evaluate(() => {
-      const el = document.getElementById("right-sidebar");
-      if (el) {
-        const r = el.getBoundingClientRect();
-        return { x: r.x, y: r.y, width: r.width, height: r.height };
+  /** Screenshot a specific panel element — clean, focused, no overlap */
+  async function screenshotPanel(page: any, panelId: string, filePath: string) {
+    // Inject IDs onto the specific panel containers
+    await page.evaluate(() => {
+      // Bottom panel group: has fixed 320px height
+      for (const el of document.querySelectorAll('[style]')) {
+        if ((el as HTMLElement).style.height === '320px') {
+          el.id = 'screenshot-target-bottom';
+          break;
+        }
       }
-      return null;
+      // Right panel group: last child of #right-sidebar (after MetricsBar)
+      const rs = document.getElementById('right-sidebar');
+      if (rs && rs.lastElementChild) {
+        rs.lastElementChild.id = 'screenshot-target-right';
+      }
     });
-    if (rect && rect.width > 0 && rect.height > 0) {
-      await page.screenshot({ path: filePath, clip: rect });
+
+    const isBottom = BOTTOM_PANELS.includes(panelId);
+    const selector = isBottom ? '#screenshot-target-bottom' : '#screenshot-target-right';
+    const el = page.locator(selector);
+
+    if (await el.count() > 0) {
+      await el.screenshot({ path: filePath });
     } else {
-      console.warn("[CLIP] right-sidebar element not found, falling back to full page");
+      console.warn(`[SCREENSHOT] ${selector} not found, full page fallback`);
       await page.screenshot({ path: filePath });
     }
   }
@@ -241,19 +253,19 @@ async function main() {
     await queryInput.fill("Redis vector search best practices");
     await page.waitForTimeout(300);
   }
-  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, "02-vector-search.png") });
+  await screenshotPanel(page, "vectorSearch", path.join(SCREENSHOTS_DIR, "02-vector-search.png"));
   console.log("2. Vector Search with query");
   await page.close();
 
   // 3. Monitoring panel — real metrics from Redis
   page = await freshPage("monitoring");
-  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, "03-monitoring.png") });
+  await screenshotPanel(page, "monitoring", path.join(SCREENSHOTS_DIR, "03-monitoring.png"));
   console.log("3. Monitoring metrics");
   await page.close();
 
   // 4. Embedding Cache panel
   page = await freshPage("embeddingCache");
-  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, "04-embedding-cache.png") });
+  await screenshotPanel(page, "embeddingCache", path.join(SCREENSHOTS_DIR, "04-embedding-cache.png"));
   console.log("4. Embedding Cache");
   await page.close();
 
@@ -266,14 +278,14 @@ async function main() {
     await channelItem.click();
     await page.waitForTimeout(300);
   }
-  await screenshotRightPanel(page, path.join(SCREENSHOTS_DIR, "05-pubsub.png"));
+  await screenshotPanel(page, "pubsub", path.join(SCREENSHOTS_DIR, "05-pubsub.png"));
   console.log("5. Pub/Sub with channels");
   await page.close();
 
   // 6. Cluster Topology panel — node table from Redis
   page = await freshPage("cluster");
   await page.waitForTimeout(1000);
-  await screenshotRightPanel(page, path.join(SCREENSHOTS_DIR, "06-cluster-topology.png"));
+  await screenshotPanel(page, "cluster", path.join(SCREENSHOTS_DIR, "06-cluster-topology.png"));
   console.log("6. Cluster Topology");
   await page.close();
 
@@ -289,7 +301,7 @@ async function main() {
     await sendBtn.click();
     await page.waitForTimeout(1000);
   }
-  await screenshotRightPanel(page, path.join(SCREENSHOTS_DIR, "07-ai-chat.png"));
+  await screenshotPanel(page, "llmChat", path.join(SCREENSHOTS_DIR, "07-ai-chat.png"));
   console.log("7. AI Chat with message");
   await page.close();
 
