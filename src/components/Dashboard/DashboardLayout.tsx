@@ -65,9 +65,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Main Content Area (Key Browser) */}
         <Panel id="main-content" defaultSize={loadLayout()?.["main-content"] || 65} minSize={40} className="flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-auto">
-            <div className="h-full p-6">{children}</div>
-          </div>
+          <div className="flex-1 overflow-auto p-6">{children}</div>
 
           {/* Bottom Panels with tabs */}
           <BottomPanelGroup />

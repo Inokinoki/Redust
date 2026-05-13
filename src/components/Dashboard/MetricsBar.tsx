@@ -131,7 +131,7 @@ export function MetricsBar({ collapsed, onToggle }: MetricsBarProps) {
             <MetricCard
               label="Memory"
               value={formatBytes(data.usedMemory)}
-              subValue={data.memory > 0 ? `${((data.usedMemory / data.memory) * 100).toFixed(1)}% of ${formatBytes(data.memory)}` : undefined}
+              subValue={data.memory > 0 ? `${data.memory.toFixed(1)}% used` : undefined}
               color="text-yellow-400"
               icon="💾"
             />

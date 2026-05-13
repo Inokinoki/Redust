@@ -15,6 +15,13 @@ interface MonitoringData {
   uptime: number;
 }
 
+function formatBytes(bytes: number): string {
+  if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes >= 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${bytes} B`;
+}
+
 function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
@@ -96,10 +103,10 @@ export function MonitoringDashboard({ variant = "modal", isOpen = true, onClose 
           <CardContent>
             <div className="text-center">
               <div className="mb-2 text-3xl font-bold text-yellow-400">
-                {(data.usedMemory / 1024 / 1024 / 1024).toFixed(2)} GB
+                {formatBytes(data.usedMemory)}
               </div>
               <div className="text-sm text-zinc-400">
-                {data.memory > 0 ? ((data.usedMemory / data.memory) * 100).toFixed(1) : 0}% Used
+                {data.memory > 0 ? `${data.memory.toFixed(1)}%` : "0%"} Used
               </div>
             </div>
           </CardContent>
@@ -150,20 +157,21 @@ export function MonitoringDashboard({ variant = "modal", isOpen = true, onClose 
           </div>
         </div>
 
-        <h3 className="mb-4 mt-6 text-lg font-medium">Performance History</h3>
-        <div className="h-64 overflow-auto rounded-lg border border-zinc-800 bg-zinc-950 p-4">
+        <h3 className="mb-4 mt-6 text-lg font-medium">Operations History</h3>
+        <div className="h-48 overflow-auto rounded-lg border border-zinc-800 bg-zinc-950 p-4">
           <div className="space-y-2">
-            {[...Array(20).fill(null)].map((_, i) => (
-              <div key={i} className="flex items-center justify-between text-sm">
-                <span className="text-zinc-500">
-                  {new Date(Date.now() - i * 30000).toLocaleTimeString()}
-                </span>
-                <span className="text-zinc-400">
-                  GET keys: {(Math.random() * 100).toFixed(0)}ms
-                </span>
-                <span className="text-green-400">OK</span>
-              </div>
-            ))}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">Commands/sec</span>
+              <span className="text-lg font-semibold text-purple-400">{data.commandsPerSecond}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">Connected Clients</span>
+              <span className="text-lg font-semibold text-blue-400">{data.connections}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">Total Keys</span>
+              <span className="text-lg font-semibold text-red-400">{data.keys.toLocaleString()}</span>
+            </div>
           </div>
         </div>
       </div>

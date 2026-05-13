@@ -82,7 +82,7 @@ export function BottomPanelGroup() {
   };
 
   return (
-    <div className="flex h-full flex-col bg-zinc-100 dark:bg-zinc-950">
+    <div className="flex min-h-0 flex-shrink-0 flex-col border-t border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950" style={{ height: '320px' }}>
       {/* Tab Bar */}
       <div className="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/90 px-2 dark:border-zinc-800 dark:bg-zinc-900/50">
           <div className="flex">
