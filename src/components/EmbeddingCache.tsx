@@ -64,12 +64,14 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
     if (isOpen && activeConnection) {
       loadIndexes();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, activeConnection]);
 
   useEffect(() => {
     if (selectedIndex && activeConnection) {
       loadIndexInfo();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIndex, activeConnection]);
 
   const handleUpload = async () => {

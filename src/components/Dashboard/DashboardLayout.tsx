@@ -61,7 +61,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <Sidebar collapsed={leftSidebarCollapsed} onToggle={toggleLeftSidebar} />
         </Panel>
 
-        <Separator className="w-1 bg-zinc-800 hover:bg-red-600 transition-colors" />
+        <Separator className="w-1 bg-zinc-200 transition-colors hover:bg-red-600 dark:bg-zinc-800" />
 
         {/* Main Content Area (Key Browser) */}
         <Panel id="main-content" defaultSize={loadLayout()?.["main-content"] || 65} minSize={40} className="flex flex-col overflow-hidden">
@@ -73,7 +73,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <BottomPanelGroup />
         </Panel>
 
-        <Separator className="w-1 bg-zinc-800 hover:bg-red-600 transition-colors" />
+        <Separator className="w-1 bg-zinc-200 transition-colors hover:bg-red-600 dark:bg-zinc-800" />
 
         {/* Right Sidebar - Metrics + Panels */}
         <Panel

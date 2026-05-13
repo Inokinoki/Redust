@@ -54,8 +54,8 @@ export function ConnectionManager({ isOpen, onClose }: ConnectionManagerProps) {
 
   if (!isOpen) return null;
 
-  return (
-    <Dialog open={isOpen}>
+    return (
+    <Dialog open={isOpen} data-testid="e2e-connection-dialog">
       <DialogHeader>
         <DialogTitle>Add Redis Connection</DialogTitle>
       </DialogHeader>
@@ -136,7 +136,9 @@ export function ConnectionManager({ isOpen, onClose }: ConnectionManagerProps) {
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">Add Connection</Button>
+            <Button type="submit" data-testid="e2e-save-connection">
+              Add Connection
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -350,9 +350,8 @@ test.describe("Keyboard Navigation", () => {
     await page.keyboard.press("Meta+Shift+S");
     await page.waitForTimeout(500);
 
-    // Split view should be active - look for split pane indicators
-    const splitPane = page.locator('[class*="split"], [data-split]').first();
-    // The split pane should either be visible or have some indicator
+    // Split view should be active - look for split pane indicators (optional)
+    await page.locator('[class*="split"], [data-split]').first().waitFor({ state: "visible", timeout: 2000 }).catch(() => {});
     await expect(page.locator("body")).toBeVisible();
   });
 });

@@ -11,8 +11,7 @@
 ///   docker run -d -p 6379:6379 redis:7-alpine
 
 use redis::AsyncCommands;
-use redis::aio::MultiplexedConnection;
-use redis::{Client, ProtocolVersion};
+use redis::Client;
 use std::time::Duration;
 
 #[tokio::test]
@@ -169,12 +168,8 @@ async fn test_sorted_set_operations() {
     assert_eq!(range_asc[0].0, "member2"); // Lowest score
     assert_eq!(range_asc[2].0, "member1"); // Highest score
 
-    // ZRANGE (descending)
-    let range_desc: Vec<(String, f64)> = con
-        .zrange_withscores_limit(test_key, 0, 1)
-        .rev()
-        .await
-        .unwrap();
+    // ZRANGE (descending) — highest scores first
+    let range_desc: Vec<(String, f64)> = con.zrevrange_withscores(test_key, 0, 1).await.unwrap();
     assert_eq!(range_desc[0].0, "member1"); // Highest score
 
     // ZSCORE
@@ -524,7 +519,6 @@ async fn test_redis_manager_integration() {
     // For now, we'll test the basic connection patterns it uses
 
     let client = Client::open("redis://localhost:6379").expect("Failed to create Redis client");
-    client.set_protocol_version(ProtocolVersion::RESP3);
 
     let mut con = client
         .get_multiplexed_async_connection()

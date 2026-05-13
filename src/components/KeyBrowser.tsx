@@ -52,7 +52,7 @@ export function KeyBrowser({
         e.preventDefault();
         onRightClick?.(keyInfo.key, keyInfo.type);
       }}
-      className="cursor-pointer border-b border-zinc-800 transition-colors hover:bg-zinc-900"
+      className="cursor-pointer border-b border-zinc-200 transition-colors hover:bg-zinc-100 dark:border-zinc-800 dark:hover:bg-zinc-900"
     >
       <td className="px-4 py-2 font-mono text-sm">{keyInfo.key}</td>
       <td className="px-4 py-2 text-sm">
@@ -60,10 +60,10 @@ export function KeyBrowser({
           {keyInfo.type.toUpperCase()}
         </span>
       </td>
-      <td className="px-4 py-2 text-sm text-zinc-400">
+      <td className="px-4 py-2 text-sm text-zinc-600 dark:text-zinc-400">
         {keyInfo.ttl === -1 ? "Persistent" : keyInfo.ttl}
       </td>
-      <td className="px-4 py-2 text-right text-sm text-zinc-400">
+      <td className="px-4 py-2 text-right text-sm text-zinc-600 dark:text-zinc-400">
         {keyInfo.size !== undefined ? keyInfo.size.toLocaleString() : "-"}
       </td>
     </tr>
@@ -71,7 +71,7 @@ export function KeyBrowser({
 
   if (!activeConnection) {
     return (
-      <div className="flex h-full items-center justify-center text-zinc-400">
+      <div className="flex h-full items-center justify-center text-zinc-600 dark:text-zinc-400">
         <p>Connect to a Redis instance to view keys</p>
       </div>
     );
@@ -94,21 +94,21 @@ export function KeyBrowser({
 
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
-          <p className="text-zinc-400">Loading keys...</p>
+          <p className="text-zinc-600 dark:text-zinc-400">Loading keys...</p>
         </div>
       ) : keys.length === 0 ? (
         <div className="flex items-center justify-center py-8">
-          <p className="text-zinc-400">No keys found</p>
+          <p className="text-zinc-600 dark:text-zinc-400">No keys found</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-hidden rounded-lg border border-zinc-800">
+        <div className="flex-1 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
           <table className="w-full">
-            <thead className="sticky top-0 z-10 bg-zinc-950">
-              <tr className="border-b border-zinc-800">
-                <th className="px-4 py-2 text-left text-sm font-medium text-zinc-400">Key</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-zinc-400">Type</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-zinc-400">TTL</th>
-                <th className="px-4 py-2 text-right text-sm font-medium text-zinc-400">Size</th>
+            <thead className="sticky top-0 z-10 bg-zinc-50 dark:bg-zinc-950">
+              <tr className="border-b border-zinc-200 dark:border-zinc-800">
+                <th className="px-4 py-2 text-left text-sm font-medium text-zinc-600 dark:text-zinc-400">Key</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-zinc-600 dark:text-zinc-400">Type</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-zinc-600 dark:text-zinc-400">TTL</th>
+                <th className="px-4 py-2 text-right text-sm font-medium text-zinc-600 dark:text-zinc-400">Size</th>
               </tr>
             </thead>
           </table>

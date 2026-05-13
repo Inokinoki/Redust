@@ -1,15 +1,18 @@
 import * as React from "react";
 
-export interface DialogProps {
+export interface DialogProps extends React.HTMLAttributes<HTMLDivElement> {
   open?: boolean;
   children: React.ReactNode;
 }
 
-export function Dialog({ open, children }: DialogProps) {
+export function Dialog({ open, children, className, ...props }: DialogProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 ${className ?? ""}`}
+      {...props}
+    >
       <div className="relative z-50 w-full max-w-lg rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl">
         {children}
       </div>

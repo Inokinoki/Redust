@@ -53,8 +53,11 @@ npm run test:ui
 # Run tests with coverage report
 npm run test:coverage
 
-# Run E2E tests (requires dev server running)
+# Run E2E tests (Playwright; starts dev server via config)
 npm run test:e2e
+
+# Tauri desktop + real Redis (Linux / WSL2; no-op skip on macOS — see docs/INTEGRATION_TESTS.md)
+npm run test:e2e-tauri
 ```
 
 ### Test Structure
@@ -62,7 +65,8 @@ npm run test:e2e
 - **Unit Tests**: `src/test/` - Tests for stores, hooks, and utilities
 - **Integration Tests**: `src/test/integration/` - Tests for API integration
 - **Component Tests**: `src/test/components/` - React component tests
-- **E2E Tests**: `e2e/` - Playwright end-to-end tests
+- **E2E Tests**: `e2e/` - Playwright against the Vite dev server
+- **Tauri WebDriver E2E**: `e2e-tauri/run.mjs` - Selenium + `tauri-driver` against a **debug** desktop build and live Redis (Linux CI)
 
 ### Coverage
 
@@ -204,7 +208,7 @@ redust/
 │   │   │   ├── keyStore.test.ts
 │   │   │   ├── integration/         # Integration tests
 │   │   │   │   ├── api.test.ts
-│   │   │   │   └── redis.test.ts
+│   │   │   │   └── redis-live.test.ts
 │   ├── styles/               # Global styles
 │   ├── index.css
 │   └── tsconfig.json

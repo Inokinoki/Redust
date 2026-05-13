@@ -268,12 +268,12 @@ function App() {
   }, [open, close]);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-50">
-      <header className="border-b border-zinc-800 bg-zinc-950">
+    <div className="min-h-screen bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
+      <header className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <div className="flex items-center space-x-2">
             <h1 className="text-2xl font-bold text-red-500">Redust</h1>
-            <span className="text-sm text-zinc-400">v0.1.0</span>
+            <span className="text-sm text-zinc-600 dark:text-zinc-400">v0.1.0</span>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -282,7 +282,7 @@ function App() {
             </Button>
             <SplitButton />
             <Button variant="ghost" onClick={open}>
-              <kbd className="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-400">
+              <kbd className="rounded border border-zinc-300 bg-zinc-200 px-2 py-1 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
                 ⌘K
               </kbd>
             </Button>

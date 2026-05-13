@@ -7,11 +7,8 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: "./src/test/setup.ts",
-    exclude: [
-      "node_modules/",
-      "e2e/",
-      "**/redis-live.test.ts",
-    ],
+    environmentMatchGlobs: [["**/redis-live.test.ts", "node"]],
+    exclude: ["node_modules/", "e2e/"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],

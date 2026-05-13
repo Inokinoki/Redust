@@ -69,16 +69,11 @@ test.describe("Key Browser", () => {
   });
 
   test("should display Key Browser section", async ({ page }) => {
-    // Look for key browser related elements
-    const keyBrowser = page.locator('[class*="key"], [class*="Key"]').first();
-    await expect(page.locator("body")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Keys" })).toBeVisible();
   });
 
   test("should display search/filter input", async ({ page }) => {
-    // Look for search input in key browser area
-    const searchInput = page.locator('input[placeholder*="Search"], input[placeholder*="Filter"]').first();
-    // May not exist if no keys, so just check page is functional
-    await expect(page.locator("body")).toBeVisible();
+    await expect(page.getByPlaceholder(/Search keys/i)).toBeVisible();
   });
 });
 

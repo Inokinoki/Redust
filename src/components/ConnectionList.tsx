@@ -31,14 +31,14 @@ export function ConnectionList() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Connections</h2>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
           {connections.length} connection
           {connections.length !== 1 ? "s" : ""}
         </p>
       </div>
 
       {connections.length === 0 ? (
-        <Card className="p-6 text-center text-zinc-400">
+        <Card className="p-6 text-center text-zinc-600 dark:text-zinc-400">
           <p>No connections yet. Click "Add Connection" to get started.</p>
         </Card>
       ) : (
@@ -48,14 +48,14 @@ export function ConnectionList() {
               key={conn.id}
               className={`p-4 transition-colors ${
                 activeConnectionId === conn.id
-                  ? "border-red-600 bg-zinc-900"
-                  : "hover:bg-zinc-900"
+                  ? "border-red-600 bg-zinc-100 dark:bg-zinc-900"
+                  : "hover:bg-zinc-100 dark:hover:bg-zinc-900"
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <h3 className="font-medium">{conn.name}</h3>
-                  <p className="text-sm text-zinc-400">
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     {conn.host}:{conn.port}
                     {conn.database !== undefined && ` [db${conn.database}]`}
                     {conn.tls && " 🔒"}

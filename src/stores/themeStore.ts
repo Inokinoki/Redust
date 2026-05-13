@@ -2,6 +2,16 @@ import { create } from "zustand";
 
 export type Theme = "dark" | "light" | "system";
 
+/** Tailwind `darkMode: "class"` — only the `dark` class on <html> drives `dark:` variants. */
+function applyEffectiveThemeToDocument(effective: "dark" | "light") {
+  const root = document.documentElement;
+  root.classList.remove("dark", "light");
+  if (effective === "dark") {
+    root.classList.add("dark");
+  }
+  root.style.colorScheme = effective;
+}
+
 interface ThemeStore {
   theme: Theme;
   effectiveTheme: "dark" | "light";
@@ -26,9 +36,7 @@ export const useThemeStore = create<ThemeStore>((set, get) => ({
 
     set({ effectiveTheme: effective as "dark" | "light" });
 
-    // Apply theme to document
-    document.documentElement.classList.remove("dark", "light");
-    document.documentElement.classList.add(effective);
+    applyEffectiveThemeToDocument(effective as "dark" | "light");
   },
   toggleTheme: () => {
     const state = get();
@@ -48,7 +56,7 @@ if (typeof window !== "undefined") {
         ? "dark"
         : "light"
       : theme;
-  document.documentElement.classList.add(effective);
+  applyEffectiveThemeToDocument(effective as "dark" | "light");
   useThemeStore.setState({
     theme,
     effectiveTheme: effective as "dark" | "light",
@@ -59,8 +67,7 @@ if (typeof window !== "undefined") {
     if (useThemeStore.getState().theme === "system") {
       const effective = e.matches ? "dark" : "light";
       useThemeStore.setState({ effectiveTheme: effective });
-      document.documentElement.classList.remove("dark", "light");
-      document.documentElement.classList.add(effective);
+      applyEffectiveThemeToDocument(effective);
     }
   });
 }

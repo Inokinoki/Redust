@@ -58,10 +58,10 @@ export function MetricsBar({ collapsed, onToggle }: MetricsBarProps) {
 
   if (collapsed) {
     return (
-      <div className="flex w-16 flex-col items-center border-l border-zinc-800 bg-zinc-950 py-4">
+      <div className="flex w-16 flex-col items-center border-l border-zinc-200 bg-zinc-50 py-4 dark:border-zinc-800 dark:bg-zinc-950">
         <button
           onClick={onToggle}
-          className="mb-4 flex h-10 w-10 items-center justify-center rounded text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+          className="mb-4 flex h-10 w-10 items-center justify-center rounded text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
           title="Expand metrics"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -96,13 +96,13 @@ export function MetricsBar({ collapsed, onToggle }: MetricsBarProps) {
   }
 
   return (
-    <div className="flex w-72 flex-col border-l border-zinc-800 bg-zinc-950">
+    <div className="flex w-72 flex-col border-l border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950">
       {/* Header */}
-      <div className="flex h-14 items-center justify-between border-b border-zinc-800 px-4">
-        <h2 className="text-sm font-semibold text-zinc-200">Metrics</h2>
+      <div className="flex h-14 items-center justify-between border-b border-zinc-200 px-4 dark:border-zinc-800">
+        <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Metrics</h2>
         <button
           onClick={onToggle}
-          className="flex h-7 w-7 items-center justify-center rounded text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+          className="flex h-7 w-7 items-center justify-center rounded text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
           title="Collapse metrics"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -114,9 +114,9 @@ export function MetricsBar({ collapsed, onToggle }: MetricsBarProps) {
       {/* Metrics Content */}
       <div className="flex-1 overflow-auto p-4">
         {loading ? (
-          <div className="flex h-full items-center justify-center text-zinc-500">Loading...</div>
+          <div className="flex h-full items-center justify-center text-zinc-500 dark:text-zinc-500">Loading...</div>
         ) : !data ? (
-          <div className="text-center text-sm text-zinc-500">No connection</div>
+          <div className="text-center text-sm text-zinc-500 dark:text-zinc-500">No connection</div>
         ) : (
           <div className="space-y-3">
             {/* CPU */}
@@ -161,18 +161,18 @@ export function MetricsBar({ collapsed, onToggle }: MetricsBarProps) {
             />
 
             {/* Server Info */}
-            <div className="mt-4 space-y-2 border-t border-zinc-800 pt-4">
+            <div className="mt-4 space-y-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
               <div className="flex justify-between text-xs">
-                <span className="text-zinc-500">Redis Version</span>
-                <span className="text-zinc-300">{data.redisVersion}</span>
+                <span className="text-zinc-500 dark:text-zinc-500">Redis Version</span>
+                <span className="text-zinc-800 dark:text-zinc-300">{data.redisVersion}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-zinc-500">Uptime</span>
-                <span className="text-zinc-300">{formatUptime(data.uptime)}</span>
+                <span className="text-zinc-500 dark:text-zinc-500">Uptime</span>
+                <span className="text-zinc-800 dark:text-zinc-300">{formatUptime(data.uptime)}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-zinc-500">Last Updated</span>
-                <span className="text-zinc-400">{new Date().toLocaleTimeString()}</span>
+                <span className="text-zinc-500 dark:text-zinc-500">Last Updated</span>
+                <span className="text-zinc-600 dark:text-zinc-400">{new Date().toLocaleTimeString()}</span>
               </div>
             </div>
           </div>
@@ -192,14 +192,14 @@ interface MetricCardProps {
 
 function MetricCard({ label, value, subValue, color, icon }: MetricCardProps) {
   return (
-    <Card className="bg-zinc-900/50 border-zinc-800">
+    <Card className="border-zinc-200 bg-zinc-100/80 dark:border-zinc-800 dark:bg-zinc-900/50">
       <CardContent className="p-3">
         <div className="flex items-center gap-2">
           <span className="text-lg">{icon}</span>
           <div className="flex-1 min-w-0">
-            <div className="text-xs text-zinc-500">{label}</div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-500">{label}</div>
             <div className={`text-lg font-bold ${color}`}>{value}</div>
-            {subValue && <div className="text-xs text-zinc-500">{subValue}</div>}
+            {subValue && <div className="text-xs text-zinc-500 dark:text-zinc-500">{subValue}</div>}
           </div>
         </div>
       </CardContent>
@@ -211,7 +211,7 @@ function MetricIcon({ label, value, color }: { label: string; value: string; col
   return (
     <div className="flex flex-col items-center" title={label}>
       <div className={`text-sm font-bold ${color}`}>{value}</div>
-      <div className="text-xs text-zinc-500">{label.substring(0, 3)}</div>
+      <div className="text-xs text-zinc-500 dark:text-zinc-500">{label.substring(0, 3)}</div>
     </div>
   );
 }
