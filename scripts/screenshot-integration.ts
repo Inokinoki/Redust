@@ -170,10 +170,10 @@ async function main() {
           "right-sidebar": 60,
         }));
       });
-      // Collapse left sidebar for right panel screenshots
+      // Collapse left sidebar and MetricsBar for right panel screenshots
       await page.evaluate((s) => {
         const current = JSON.parse(localStorage.getItem("redust-dashboard-layout") || "{}");
-        current.state = { ...current.state, leftSidebarCollapsed: true };
+        current.state = { ...current.state, leftSidebarCollapsed: true, rightSidebarCollapsed: true };
         localStorage.setItem("redust-dashboard-layout", JSON.stringify(current));
       }, layout);
     }
@@ -182,32 +182,46 @@ async function main() {
     return page;
   }
 
-  /** Screenshot a specific panel element — clean, focused, no overlap */
+  /** Screenshot only the panel content area — no tabs, no headers, no other panels */
   async function screenshotPanel(page: any, panelId: string, filePath: string) {
-    // Inject IDs onto the specific panel containers
-    await page.evaluate(() => {
-      // Bottom panel group: has fixed 320px height
-      for (const el of document.querySelectorAll('[style]')) {
-        if ((el as HTMLElement).style.height === '320px') {
-          el.id = 'screenshot-target-bottom';
-          break;
+    const isBottom = BOTTOM_PANELS.includes(panelId);
+    await page.evaluate((isBottom) => {
+      if (isBottom) {
+        // Bottom panel: find 320px container, hide its tab bar (first child with border-b)
+        for (const el of document.querySelectorAll('[style]')) {
+          if ((el as HTMLElement).style.height === '320px') {
+            const tabBar = el.firstElementChild;
+            if (tabBar) (tabBar as HTMLElement).style.display = 'none';
+            (el as HTMLElement).id = 'screenshot-panel-target';
+            break;
+          }
+        }
+      } else {
+        // Right panel: find RightPanelGroup (border-t), hide its tab bar and header
+        const rs = document.getElementById('right-sidebar');
+        if (rs) {
+          const wrapper = rs.firstElementChild || rs;
+          for (const child of wrapper.children) {
+            if (child.classList.contains('border-t')) {
+              // Hide all children that have border-b (tab bar + header)
+              for (const gc of child.children) {
+                if (gc.classList.contains('border-b')) {
+                  (gc as HTMLElement).style.display = 'none';
+                }
+              }
+              (child as HTMLElement).id = 'screenshot-panel-target';
+              break;
+            }
+          }
         }
       }
-      // Right panel group: last child of #right-sidebar (after MetricsBar)
-      const rs = document.getElementById('right-sidebar');
-      if (rs && rs.lastElementChild) {
-        rs.lastElementChild.id = 'screenshot-target-right';
-      }
-    });
+    }, isBottom);
 
-    const isBottom = BOTTOM_PANELS.includes(panelId);
-    const selector = isBottom ? '#screenshot-target-bottom' : '#screenshot-target-right';
-    const el = page.locator(selector);
-
+    const el = page.locator('#screenshot-panel-target');
     if (await el.count() > 0) {
       await el.screenshot({ path: filePath });
     } else {
-      console.warn(`[SCREENSHOT] ${selector} not found, full page fallback`);
+      console.warn(`[SCREENSHOT] panel target not found, full page fallback`);
       await page.screenshot({ path: filePath });
     }
   }
