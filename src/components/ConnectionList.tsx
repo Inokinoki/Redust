@@ -52,8 +52,8 @@ export function ConnectionList() {
                   : "hover:bg-zinc-100 dark:hover:bg-zinc-900"
               }`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
                   <h3 className="font-medium">{conn.name}</h3>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
                     {conn.host}:{conn.port}
@@ -62,7 +62,7 @@ export function ConnectionList() {
                   </p>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-1.5">
                   <Button
                     size="sm"
                     variant="ghost"
