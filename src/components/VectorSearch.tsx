@@ -36,11 +36,11 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
   const [indexInfo, setIndexInfo] = useState<VectorIndexInfo | null>(null);
 
   // Search state
-  const [searchMode, setSearchMode] = useState<"vector" | "text">("vector");
-  const [queryVector, setQueryVector] = useState("");
   const [queryText, setQueryText] = useState("");
   const [embeddingProvider, setEmbeddingProvider] = useState<LLMProvider>("OpenAI");
+  const [embeddingModel, setEmbeddingModel] = useState("");
   const [embeddingApiKey, setEmbeddingApiKey] = useState("");
+  const [embeddingEndpoint, setEmbeddingEndpoint] = useState("");
 
   // Search parameters
   const [topK, setTopK] = useState(10);
@@ -109,8 +109,10 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
     try {
       const response = await llmGenerateEmbedding({
         text,
+        model: embeddingModel || undefined,
         provider: embeddingProvider,
         api_key: embeddingApiKey || undefined,
+        api_endpoint: embeddingEndpoint || undefined,
       });
       return response.embedding;
     } catch (e) {
@@ -121,11 +123,7 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
   const handleSearch = async () => {
     if (!activeConnection || !selectedIndex) return;
 
-    if (searchMode === "vector" && !queryVector.trim()) {
-      setError("Please enter a query vector");
-      return;
-    }
-    if (searchMode === "text" && !queryText.trim()) {
+    if (!queryText.trim()) {
       setError("Please enter query text");
       return;
     }
@@ -137,17 +135,7 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
     const startTime = performance.now();
 
     try {
-      let vector: number[] | null;
-
-      if (searchMode === "text") {
-        vector = await generateEmbedding(queryText);
-      } else {
-        vector = parseVector(queryVector);
-        if (!vector) {
-          setError("Invalid vector format. Use comma-separated numbers.");
-          return;
-        }
-      }
+      const vector = await generateEmbedding(queryText);
 
       if (indexInfo?.vectorDimensions && vector.length !== indexInfo.vectorDimensions) {
         setError(`Vector dimension mismatch. Expected ${indexInfo.vectorDimensions}, got ${vector.length}`);
@@ -218,16 +206,6 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
     }
   };
 
-  const parseVector = (input: string): number[] | null => {
-    try {
-      const parts = input.split(",").map((s) => parseFloat(s.trim()));
-      if (parts.some(isNaN)) return null;
-      return parts;
-    } catch {
-      return null;
-    }
-  };
-
   const exportResults = () => {
     const data = results.map((r, i) => ({
       rank: i + 1,
@@ -246,15 +224,15 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 0.8) return "text-green-400";
-    if (score >= 0.6) return "text-yellow-400";
-    return "text-red-400";
+    if (score >= 0.8) return "text-green-600 dark:text-green-400";
+    if (score >= 0.6) return "text-yellow-600 dark:text-yellow-400";
+    return "text-red-600 dark:text-red-400";
   };
 
   const getScoreBackground = (score: number) => {
-    if (score >= 0.8) return "bg-green-900/30";
-    if (score >= 0.6) return "bg-yellow-900/30";
-    return "bg-red-900/30";
+    if (score >= 0.8) return "bg-green-50 dark:bg-green-900/30";
+    if (score >= 0.6) return "bg-yellow-50 dark:bg-yellow-900/30";
+    return "bg-red-50 dark:bg-red-900/30";
   };
 
   const content = (
@@ -277,7 +255,7 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
               <div className="space-y-2">
                 <Label>Select Index</Label>
                 <select
-                  className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+                  className="flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 dark:border-zinc-700 dark:bg-zinc-900"
                   value={selectedIndex}
                   onChange={(e) => setSelectedIndex(e.target.value)}
                   disabled={loading}
@@ -292,23 +270,23 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
               </div>
 
               {indexInfo && (
-                <div className="rounded-md border border-zinc-800 bg-zinc-900 p-4">
+                <div className="rounded-md border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900">
                   <div className="grid grid-cols-4 gap-4 text-sm">
                     <div>
-                      <div className="text-zinc-400 mb-1">Dimensions</div>
-                      <div className="text-green-400 font-mono text-lg">{indexInfo.vectorDimensions || "?"}</div>
+                      <div className="text-zinc-500 mb-1 dark:text-zinc-400">Dimensions</div>
+                      <div className="text-green-600 font-mono text-lg dark:text-green-400">{indexInfo.vectorDimensions || "?"}</div>
                     </div>
                     <div>
-                      <div className="text-zinc-400 mb-1">Documents</div>
-                      <div className="text-blue-400 font-mono text-lg">{indexInfo.numDocs.toLocaleString()}</div>
+                      <div className="text-zinc-500 mb-1 dark:text-zinc-400">Documents</div>
+                      <div className="text-blue-600 font-mono text-lg dark:text-blue-400">{indexInfo.numDocs.toLocaleString()}</div>
                     </div>
                     <div>
-                      <div className="text-zinc-400 mb-1">Vector Field</div>
-                      <div className="text-purple-400 font-mono text-lg">{indexInfo.vectorField || "?"}</div>
+                      <div className="text-zinc-500 mb-1 dark:text-zinc-400">Vector Field</div>
+                      <div className="text-purple-600 font-mono text-lg dark:text-purple-400">{indexInfo.vectorField || "?"}</div>
                     </div>
                     <div>
-                      <div className="text-zinc-400 mb-1">Status</div>
-                      <div className="text-green-400 font-mono text-lg">{indexInfo.indexStatus}</div>
+                      <div className="text-zinc-500 mb-1 dark:text-zinc-400">Status</div>
+                      <div className="text-green-600 font-mono text-lg dark:text-green-400">{indexInfo.indexStatus}</div>
                     </div>
                   </div>
                 </div>
@@ -321,80 +299,66 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
               <CardTitle>Query Input</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-4">
-                <Button
-                  variant={searchMode === "vector" ? "default" : "outline"}
-                  onClick={() => setSearchMode("vector")}
-                  className="flex-1"
-                >
-                  Vector Input
-                </Button>
-                <Button
-                  variant={searchMode === "text" ? "default" : "outline"}
-                  onClick={() => setSearchMode("text")}
-                  className="flex-1"
-                >
-                  Text to Vector
-                </Button>
+              <div className="space-y-2">
+                <Label htmlFor="queryText">Query Text</Label>
+                <textarea
+                  id="queryText"
+                  className="flex min-h-[80px] w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 dark:border-zinc-700 dark:bg-zinc-900"
+                  placeholder="Enter your query text here..."
+                  value={queryText}
+                  onChange={(e) => setQueryText(e.target.value)}
+                  disabled={loading}
+                />
               </div>
 
-              {searchMode === "vector" ? (
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="queryVector">Query Vector (comma-separated)</Label>
-                  <textarea
-                    id="queryVector"
-                    className="flex min-h-[80px] w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
-                    placeholder="0.1, 0.2, 0.3, ..."
-                    value={queryVector}
-                    onChange={(e) => setQueryVector(e.target.value)}
+                  <Label>Provider</Label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+                    value={embeddingProvider}
+                    onChange={(e) => setEmbeddingProvider(e.target.value as LLMProvider)}
+                    disabled={loading}
+                  >
+                    <option value="OpenAI">OpenAI</option>
+                    <option value="Ollama">Ollama (Local)</option>
+                    <option value="Custom">Custom Endpoint</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Model</Label>
+                  <Input
+                    placeholder={embeddingProvider === "OpenAI" ? "text-embedding-3-small" : embeddingProvider === "Ollama" ? "nomic-embed-text" : "model-name"}
+                    value={embeddingModel}
+                    onChange={(e) => setEmbeddingModel(e.target.value)}
                     disabled={loading}
                   />
-                  <div className="text-xs text-zinc-400">
-                    Dimensions: {queryVector ? queryVector.split(",").length : 0}
-                    {indexInfo?.vectorDimensions && ` / ${indexInfo.vectorDimensions}`}
-                  </div>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="queryText">Query Text</Label>
-                    <textarea
-                      id="queryText"
-                      className="flex min-h-[80px] w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
-                      placeholder="Enter your query text here..."
-                      value={queryText}
-                      onChange={(e) => setQueryText(e.target.value)}
-                      disabled={loading}
-                    />
-                  </div>
+              </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Embedding Provider</Label>
-                      <select
-                        className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
-                        value={embeddingProvider}
-                        onChange={(e) => setEmbeddingProvider(e.target.value as LLMProvider)}
-                        disabled={loading}
-                      >
-                        <option value="OpenAI">OpenAI</option>
-                        <option value="Ollama">Ollama (Local)</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>API Key (optional)</Label>
-                      <Input
-                        type="password"
-                        placeholder="sk-..."
-                        value={embeddingApiKey}
-                        onChange={(e) => setEmbeddingApiKey(e.target.value)}
-                        disabled={loading}
-                      />
-                    </div>
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>API Key</Label>
+                  <Input
+                    type="password"
+                    placeholder={embeddingProvider === "Ollama" ? "Not needed" : "sk-..."}
+                    value={embeddingApiKey}
+                    onChange={(e) => setEmbeddingApiKey(e.target.value)}
+                    disabled={loading}
+                  />
                 </div>
-              )}
+
+                <div className="space-y-2">
+                  <Label>Endpoint</Label>
+                  <Input
+                    placeholder={embeddingProvider === "Ollama" ? "http://localhost:11434" : embeddingProvider === "OpenAI" ? "https://api.openai.com/v1" : "https://..."}
+                    value={embeddingEndpoint}
+                    onChange={(e) => setEmbeddingEndpoint(e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -426,7 +390,7 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
               </div>
 
               {error && (
-                <div className="rounded-md border border-red-800 bg-red-900/20 p-3 text-sm text-red-400">
+                <div className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
                   {error}
                 </div>
               )}
@@ -441,7 +405,7 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
               </Button>
 
               {searchTime && (
-                <div className="text-center text-sm text-zinc-400">
+                <div className="text-center text-sm text-zinc-500 dark:text-zinc-400">
                   Search completed in {searchTime.toFixed(2)}ms
                 </div>
               )}
@@ -452,7 +416,7 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
         <TabsContent value="results" className="space-y-4">
           {results.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center text-zinc-400">
+              <CardContent className="py-12 text-center text-zinc-500 dark:text-zinc-400">
                 <p>No results yet. Run a search to see results here.</p>
               </CardContent>
             </Card>
@@ -478,13 +442,13 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
                           </div>
 
                           {result.fields?.text && (
-                            <div className="text-sm text-zinc-300 mb-2 line-clamp-2">
+                            <div className="text-sm text-zinc-700 mb-2 line-clamp-2 dark:text-zinc-300">
                               {result.fields.text}
                             </div>
                           )}
 
                           {result.fields?.title && (
-                            <div className="text-sm font-medium text-zinc-400 mb-1">
+                            <div className="text-sm font-medium text-zinc-500 mb-1 dark:text-zinc-400">
                               {result.fields.title}
                             </div>
                           )}
@@ -500,7 +464,7 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
                           <div className={`text-2xl font-bold ${getScoreColor(result.score)}`}>
                             {(result.score * 100).toFixed(1)}%
                           </div>
-                          <div className="text-xs text-zinc-400">
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400">
                             similarity
                           </div>
                         </div>
@@ -519,7 +483,7 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
               <CardTitle>Hybrid Search Filters</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="text-sm text-zinc-400 mb-4">
+              <div className="text-sm text-zinc-500 mb-4 dark:text-zinc-400">
                 Add filters to combine vector similarity with field-based filtering
               </div>
 
@@ -534,7 +498,7 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
                   <select
                     value={filter.operator}
                     onChange={(e) => updateFilter(index, { operator: e.target.value as FilterCondition["operator"] })}
-                    className="h-10 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
+                    className="h-10 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
                   >
                     <option value="eq">=</option>
                     <option value="ne">≠</option>
@@ -565,7 +529,7 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
             <CardHeader>
               <CardTitle>Performance Tips</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm text-zinc-400">
+            <CardContent className="space-y-2 text-sm text-zinc-500 dark:text-zinc-400">
               <p>• Use <strong>Top K</strong> to limit result size and improve performance</p>
               <p>• Set <strong>Min Score</strong> to filter out low-quality matches</p>
               <p>• <strong>Hybrid filters</strong> help narrow results before vector comparison</p>
@@ -578,18 +542,152 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
     </div>
   );
 
+  // Compact panel layout for bottom panel (320px)
   if (variant === "panel") {
     return (
-      <div className="h-full">
-        <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
-          <h3 className="text-sm font-semibold">Vector Search</h3>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={exportResults} disabled={results.length === 0} size="sm">
-              Export
-            </Button>
+      <div className="flex h-full flex-col overflow-auto p-2 text-sm">
+        <div className="flex items-center gap-2 pb-2">
+          <select
+            className="h-7 flex-1 rounded border border-zinc-300 bg-white px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-600 dark:border-zinc-700 dark:bg-zinc-900"
+            value={selectedIndex}
+            onChange={(e) => setSelectedIndex(e.target.value)}
+            disabled={loading}
+          >
+            <option value="">Select index...</option>
+            {indexes.map((idx) => (
+              <option key={idx} value={idx}>{idx}</option>
+            ))}
+          </select>
+          {indexInfo && (
+            <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
+              {indexInfo.vectorDimensions || "?"}d · {indexInfo.numDocs} docs
+            </span>
+          )}
+        </div>
+
+        <div className="mb-2 space-y-1">
+            <textarea
+              className="w-full rounded border border-zinc-300 bg-white p-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-600 dark:border-zinc-700 dark:bg-zinc-900"
+              placeholder="Search by semantic similarity..."
+              value={queryText}
+              onChange={(e) => setQueryText(e.target.value)}
+              disabled={loading}
+              rows={2}
+            />
+            <div className="flex gap-1">
+              <select
+                className="h-7 shrink-0 rounded border border-zinc-300 bg-white px-2 text-xs dark:border-zinc-700 dark:bg-zinc-900"
+                value={embeddingProvider}
+                onChange={(e) => setEmbeddingProvider(e.target.value as LLMProvider)}
+                disabled={loading}
+              >
+                <option value="OpenAI">OpenAI</option>
+                <option value="Ollama">Ollama</option>
+                <option value="Custom">Custom</option>
+              </select>
+              <Input
+                placeholder={embeddingProvider === "OpenAI" ? "text-embedding-3-small" : embeddingProvider === "Ollama" ? "nomic-embed-text" : "Model..."}
+                value={embeddingModel}
+                onChange={(e) => setEmbeddingModel(e.target.value)}
+                disabled={loading}
+                className="h-7 flex-1 text-xs"
+              />
+            </div>
+            {embeddingProvider !== "Ollama" && (
+              <div className="flex gap-1">
+                <Input
+                  type="password"
+                  placeholder="API key..."
+                  value={embeddingApiKey}
+                  onChange={(e) => setEmbeddingApiKey(e.target.value)}
+                  disabled={loading}
+                  className="h-7 flex-1 text-xs"
+                />
+              </div>
+            )}
+            <Input
+              placeholder={embeddingProvider === "Ollama" ? "http://localhost:11434" : embeddingProvider === "OpenAI" ? "https://api.openai.com/v1" : "Endpoint URL..."}
+              value={embeddingEndpoint}
+              onChange={(e) => setEmbeddingEndpoint(e.target.value)}
+              disabled={loading}
+              className="h-7 w-full text-xs"
+            />
+          </div>
+
+        <div className="flex gap-2 pb-2">
+          <div className="flex flex-1 items-center gap-1">
+            <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">Top</span>
+            <Input
+              type="number"
+              min={1}
+              max={100}
+              value={topK}
+              onChange={(e) => setTopK(parseInt(e.target.value) || 10)}
+              disabled={loading}
+              className="h-7 text-xs"
+            />
+          </div>
+          <div className="flex flex-1 items-center gap-1">
+            <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">Score ≥</span>
+            <Input
+              type="number"
+              min={0}
+              max={1}
+              step={0.1}
+              value={scoreThreshold}
+              onChange={(e) => setScoreThreshold(parseFloat(e.target.value) || 0)}
+              disabled={loading}
+              className="h-7 text-xs"
+            />
           </div>
         </div>
-        {content}
+
+        {error && (
+          <div className="mb-2 rounded border border-red-300 bg-red-50 p-2 text-xs text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+            {error}
+          </div>
+        )}
+
+        <Button
+          onClick={handleSearch}
+          disabled={loading || !selectedIndex}
+          className="w-full"
+          size="sm"
+        >
+          {loading ? "Searching..." : "Search"}
+        </Button>
+
+        {searchTime && (
+          <div className="py-1 text-center text-xs text-zinc-500 dark:text-zinc-400">
+            {searchTime.toFixed(1)}ms
+          </div>
+        )}
+
+        {results.length > 0 && (
+          <div className="mt-2 flex-1 space-y-1 overflow-auto">
+            <div className="flex items-center justify-between pb-1">
+              <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Results ({results.length})</span>
+              <Button variant="ghost" size="sm" onClick={exportResults} className="h-5 px-1 text-xs">
+                Export
+              </Button>
+            </div>
+            {results.map((result) => (
+              <div key={result.key} className={`rounded border p-2 ${getScoreBackground(result.score)} border-zinc-200 dark:border-zinc-800`}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate font-mono text-xs text-zinc-700 dark:text-zinc-200">{result.key}</span>
+                  <span className={`shrink-0 text-xs font-bold ${getScoreColor(result.score)}`}>
+                    {(result.score * 100).toFixed(1)}%
+                  </span>
+                </div>
+                {result.fields?.text && (
+                  <div className="mt-0.5 line-clamp-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    {result.fields.text}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -598,7 +696,7 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative z-50 w-full max-w-6xl h-[90vh] rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl overflow-auto">
+      <div className="relative z-50 w-full max-w-6xl h-[90vh] rounded-lg border border-zinc-200 bg-white p-6 shadow-xl overflow-auto dark:border-zinc-800 dark:bg-zinc-950">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">Vector Search</h2>
           <div className="flex gap-2">
