@@ -119,7 +119,7 @@ export function PubSubMonitor({ variant = "modal", isOpen = true, onClose }: Pub
                     className={`w-full rounded border p-2 text-left text-sm ${
                       selectedChannel === channel
                         ? "border-blue-600 bg-blue-950 text-blue-300"
-                        : "border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:bg-zinc-900"
+                        : "border-zinc-300 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:border-zinc-400 dark:hover:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-900"
                     }`}
                   >
                     {channel}
@@ -148,7 +148,7 @@ export function PubSubMonitor({ variant = "modal", isOpen = true, onClose }: Pub
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   placeholder="Enter message..."
-                  className="h-24 w-full rounded border border-zinc-800 bg-zinc-950 p-2 text-sm text-zinc-300 focus:border-zinc-700 focus:outline-none"
+                  className="h-24 w-full rounded border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2 text-sm text-zinc-700 dark:text-zinc-300 focus:border-zinc-300 dark:focus:border-zinc-700 focus:outline-none"
                 />
               </div>
               <Button onClick={handlePublish} className="w-full">
@@ -173,7 +173,7 @@ export function PubSubMonitor({ variant = "modal", isOpen = true, onClose }: Pub
               )}
             </div>
 
-            <div className="h-[calc(100%-4rem)] overflow-auto rounded border border-zinc-800 bg-zinc-950 p-4">
+            <div className="h-[calc(100%-4rem)] overflow-auto rounded border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-4">
               {selectedChannel ? (
                 <div className="space-y-3">
                   {publishedMessages.length === 0 ? (
@@ -184,7 +184,7 @@ export function PubSubMonitor({ variant = "modal", isOpen = true, onClose }: Pub
                     publishedMessages.map((msg) => (
                       <div
                         key={msg.id}
-                        className="rounded border border-zinc-800 bg-zinc-900 p-3"
+                        className="rounded border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3"
                       >
                         <div className="mb-2 flex items-center justify-between">
                           <span className="text-xs text-zinc-500">{msg.channel}</span>
@@ -192,7 +192,7 @@ export function PubSubMonitor({ variant = "modal", isOpen = true, onClose }: Pub
                             {msg.timestamp.toLocaleTimeString()}
                           </span>
                         </div>
-                        <div className="mb-2 text-sm text-zinc-300">{msg.message}</div>
+                        <div className="mb-2 text-sm text-zinc-700 dark:text-zinc-300">{msg.message}</div>
                         <div className="text-xs text-zinc-500">
                           Delivered to {msg.subscribers} subscriber
                           {msg.subscribers !== 1 ? "s" : ""}
@@ -222,7 +222,7 @@ export function PubSubMonitor({ variant = "modal", isOpen = true, onClose }: Pub
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative z-50 h-[700px] w-full max-w-6xl rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl">
+      <div className="relative z-50 h-[700px] w-full max-w-6xl rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6 shadow-xl">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold">Pub/Sub Monitor</h2>
           <div className="flex gap-2">

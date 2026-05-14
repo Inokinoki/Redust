@@ -142,7 +142,7 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
         <div className="space-y-2">
           <Label>Select Index</Label>
           <select
-            className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+            className="flex h-10 w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
             value={selectedIndex}
             onChange={(e) => setSelectedIndex(e.target.value)}
             disabled={uploading}
@@ -157,15 +157,15 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
         </div>
 
         {indexInfo && (
-          <div className="rounded-md border border-zinc-800 bg-zinc-900 p-3 text-sm">
+          <div className="rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3 text-sm">
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <span className="text-zinc-400">Dimensions:</span>{" "}
-                <span className="text-green-400">{indexInfo.vectorDimensions || "?"}</span>
+                <span className="text-zinc-500 dark:text-zinc-400">Dimensions:</span>{" "}
+                <span className="text-green-600 dark:text-green-400">{indexInfo.vectorDimensions || "?"}</span>
               </div>
               <div>
-                <span className="text-zinc-400">Documents:</span>{" "}
-                <span className="text-blue-400">{indexInfo.numDocs}</span>
+                <span className="text-zinc-500 dark:text-zinc-400">Documents:</span>{" "}
+                <span className="text-blue-600 dark:text-blue-400">{indexInfo.numDocs}</span>
               </div>
             </div>
           </div>
@@ -174,7 +174,7 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
         <div className="space-y-2">
           <Label>Embeddings JSON</Label>
           <textarea
-            className="flex min-h-[150px] w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+            className="flex min-h-[150px] w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 font-mono text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
             placeholder={`[
   {
     "key": "doc:1",
@@ -189,7 +189,7 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
         </div>
 
         {error && (
-          <div className="rounded-md border border-red-800 bg-red-900/20 p-3 text-sm text-red-400">
+          <div className="rounded-md border border-red-800 bg-red-900/20 p-3 text-sm text-red-600 dark:text-red-400">
             {error}
           </div>
         )}
@@ -222,14 +222,14 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
         />
       </div>
 
-      <div className="max-h-72 flex-1 overflow-auto rounded-lg border border-zinc-800">
+      <div className="max-h-72 flex-1 overflow-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
         <table className="w-full">
-          <thead className="sticky top-0 bg-zinc-950">
-            <tr className="border-b border-zinc-800">
-              <th className="px-4 py-2 text-left text-sm font-medium text-zinc-400">Key</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-zinc-400">Text</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-zinc-400">Dims</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-zinc-400">
+          <thead className="sticky top-0 bg-white dark:bg-zinc-950">
+            <tr className="border-b border-zinc-200 dark:border-zinc-800">
+              <th className="px-4 py-2 text-left text-sm font-medium text-zinc-500 dark:text-zinc-400">Key</th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-zinc-500 dark:text-zinc-400">Text</th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-zinc-500 dark:text-zinc-400">Dims</th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-zinc-500 dark:text-zinc-400">
                 Actions
               </th>
             </tr>
@@ -237,19 +237,19 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
           <tbody>
             {filteredEmbeddings.length === 0 ? (
               <tr>
-                <td colSpan={4} className="py-8 text-center text-zinc-400">
+                <td colSpan={4} className="py-8 text-center text-zinc-500 dark:text-zinc-400">
                   No embeddings found
                 </td>
               </tr>
             ) : (
               filteredEmbeddings.map((emb) => (
-                <tr key={emb.key} className="border-b border-zinc-800 hover:bg-zinc-900">
+                <tr key={emb.key} className="border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900">
                   <td className="max-w-[120px] truncate px-4 py-2 font-mono text-sm">
                     {emb.key}
                   </td>
                   <td className="max-w-[200px] truncate px-4 py-2 text-sm">{emb.text}</td>
                   <td className="px-4 py-2 text-sm">
-                    <span className="text-green-400">{emb.embedding.length}d</span>
+                    <span className="text-green-600 dark:text-green-400">{emb.embedding.length}d</span>
                   </td>
                   <td className="px-4 py-2">
                     <Button
@@ -269,7 +269,7 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
       </div>
 
       {viewedEmbedding && (
-        <div className="mt-4 rounded-md border border-zinc-800 bg-zinc-900 p-4">
+        <div className="mt-4 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-4">
           <div className="mb-2 flex items-center justify-between">
             <h4 className="font-medium">{viewingKey}</h4>
             <Button size="sm" variant="ghost" onClick={() => setViewedEmbedding(null)}>
@@ -278,11 +278,11 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
           </div>
           <div className="space-y-2 text-sm">
             <div>
-              <span className="text-zinc-400">Text:</span> <span>{viewedEmbedding.text}</span>
+              <span className="text-zinc-500 dark:text-zinc-400">Text:</span> <span>{viewedEmbedding.text}</span>
             </div>
             <div>
-              <span className="text-zinc-400">Embedding preview:</span>
-              <div className="mt-1 max-h-20 overflow-auto rounded bg-zinc-800 p-2 font-mono text-xs">
+              <span className="text-zinc-500 dark:text-zinc-400">Embedding preview:</span>
+              <div className="mt-1 max-h-20 overflow-auto rounded bg-zinc-100 dark:bg-zinc-800 p-2 font-mono text-xs">
                 [
                 {viewedEmbedding.embedding
                   .slice(0, 10)
@@ -300,7 +300,7 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
   if (variant === "panel") {
     return (
       <div className="flex h-full flex-col overflow-auto">
-        <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4 py-2">
           <h3 className="text-sm font-semibold">Embedding Cache</h3>
         </div>
         <div className="flex-1 overflow-auto p-4">
@@ -317,7 +317,7 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative z-50 w-full max-w-5xl rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl">
+      <div className="relative z-50 w-full max-w-5xl rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6 shadow-xl">
         <h2 className="mb-4 text-xl font-semibold">Embedding Cache</h2>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

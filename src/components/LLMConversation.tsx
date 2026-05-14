@@ -121,10 +121,10 @@ export function LLMConversation({ variant = "modal", isOpen = true, onClose }: L
   };
 
   const chatContent = (
-    <div className="flex h-full flex-col overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4">
+    <div className="flex h-full flex-col overflow-auto rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-4">
       <div className="flex-1 space-y-4 overflow-auto">
         {messages.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-zinc-400">
+          <div className="flex h-full items-center justify-center text-zinc-500 dark:text-zinc-400">
             <p>Start a conversation with Redis RAG</p>
           </div>
         ) : (
@@ -139,7 +139,7 @@ export function LLMConversation({ variant = "modal", isOpen = true, onClose }: L
                 className={`max-w-[80%] rounded-lg px-4 py-3 ${
                   message.role === "user"
                     ? "bg-red-600 text-white"
-                    : "bg-zinc-800 text-zinc-50"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
                 }`}
               >
                 <div className="mb-1 text-xs font-medium opacity-70">
@@ -149,17 +149,17 @@ export function LLMConversation({ variant = "modal", isOpen = true, onClose }: L
                   {message.content}
                 </p>
                 {message.sources && message.sources.length > 0 && (
-                  <div className="mt-3 border-t border-zinc-700 pt-2">
-                    <div className="mb-1 text-xs font-medium text-zinc-400">
+                  <div className="mt-3 border-t border-zinc-300 dark:border-zinc-700 pt-2">
+                    <div className="mb-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
                       Sources:
                     </div>
                     {message.sources.slice(0, 3).map((source, i) => (
                       <div
                         key={i}
-                        className="mb-1 rounded bg-zinc-900/50 p-2 text-xs"
+                        className="mb-1 rounded bg-zinc-50 dark:bg-zinc-900/50 p-2 text-xs"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="font-mono text-zinc-400">
+                          <span className="font-mono text-zinc-500 dark:text-zinc-400">
                             {source.key.slice(0, 30)}
                             {source.key.length > 30 ? "..." : ""}
                           </span>
@@ -168,7 +168,7 @@ export function LLMConversation({ variant = "modal", isOpen = true, onClose }: L
                           </span>
                         </div>
                         {source.snippet && (
-                          <div className="mt-1 text-zinc-400">
+                          <div className="mt-1 text-zinc-500 dark:text-zinc-400">
                             {source.snippet}
                           </div>
                         )}
@@ -176,7 +176,7 @@ export function LLMConversation({ variant = "modal", isOpen = true, onClose }: L
                     ))}
                   </div>
                 )}
-                <div className="mt-1 text-xs text-zinc-400">
+                <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                   {message.timestamp.toLocaleTimeString()}
                 </div>
               </div>
@@ -186,7 +186,7 @@ export function LLMConversation({ variant = "modal", isOpen = true, onClose }: L
         <div ref={endRef} />
       </div>
 
-      <div className="mt-4 border-t border-zinc-800 pt-4">
+      <div className="mt-4 border-t border-zinc-200 dark:border-zinc-800 pt-4">
         <div className="flex gap-2">
           <Input
             value={input}
@@ -200,7 +200,7 @@ export function LLMConversation({ variant = "modal", isOpen = true, onClose }: L
             {loading ? "..." : "Send"}
           </Button>
         </div>
-        <div className="mt-2 text-xs text-zinc-400">
+        <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
           {messages.length > 0 && "RAG enabled with " + ragConfig.topK + " context chunks"}
         </div>
       </div>
@@ -233,14 +233,14 @@ export function LLMConversation({ variant = "modal", isOpen = true, onClose }: L
             value={ragConfig.topK}
             onChange={(e) => setRagConfig({ ...ragConfig, topK: parseInt(e.target.value) })}
           />
-          <p className="mt-1 text-xs text-zinc-400">Number of context chunks to retrieve</p>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Number of context chunks to retrieve</p>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="llmProvider">LLM Provider</Label>
           <select
             id="llmProvider"
-            className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
+            className="flex h-10 w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm"
             value={ragConfig.provider}
             onChange={(e) =>
               setRagConfig({
@@ -265,7 +265,7 @@ export function LLMConversation({ variant = "modal", isOpen = true, onClose }: L
           <Label htmlFor="model">Model</Label>
           <select
             id="model"
-            className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
+            className="flex h-10 w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm"
             value={ragConfig.model}
             onChange={(e) => setRagConfig({ ...ragConfig, model: e.target.value as LLMModel })}
           >
@@ -301,7 +301,7 @@ export function LLMConversation({ variant = "modal", isOpen = true, onClose }: L
             value={ragConfig.apiKey}
             onChange={(e) => setRagConfig({ ...ragConfig, apiKey: e.target.value })}
           />
-          <p className="mt-1 text-xs text-zinc-400">
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             Leave empty to use environment variables or local models
           </p>
         </div>
@@ -322,11 +322,11 @@ export function LLMConversation({ variant = "modal", isOpen = true, onClose }: L
   if (variant === "panel") {
     return (
       <div className="flex h-full flex-col">
-        <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4 py-2">
           <h3 className="text-sm font-semibold">AI Chat (RAG)</h3>
         </div>
         <div className="flex flex-1 overflow-hidden">
-          <div className="w-72 border-r border-zinc-800 p-4 overflow-auto">
+          <div className="w-72 border-r border-zinc-200 dark:border-zinc-800 p-4 overflow-auto">
             {configContent}
           </div>
           <div className="flex-1 p-4">{chatContent}</div>
@@ -339,7 +339,7 @@ export function LLMConversation({ variant = "modal", isOpen = true, onClose }: L
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative z-50 flex h-[700px] w-full max-w-5xl rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl">
+      <div className="relative z-50 flex h-[700px] w-full max-w-5xl rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6 shadow-xl">
         <div className="flex w-full gap-4">
           <div className="flex w-1/3 flex-col">
             <h2 className="mb-2 text-xl font-semibold">RAG Configuration</h2>

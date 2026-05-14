@@ -207,7 +207,7 @@ export function ClusterVisualization({ variant = "modal", isOpen = true, onClose
         <div className="space-y-2">
           <Label>Select Index</Label>
           <select
-            className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
+            className="flex h-10 w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm"
             value={selectedIndex}
             onChange={(e) => setSelectedIndex(e.target.value)}
             disabled={loading}
@@ -222,14 +222,14 @@ export function ClusterVisualization({ variant = "modal", isOpen = true, onClose
         </div>
 
         {indexInfo && (
-          <div className="rounded-md border border-zinc-800 bg-zinc-900 p-3 text-sm">
+          <div className="rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-3 text-sm">
             <div className="space-y-1">
               <div>
-                <span className="text-zinc-400">Documents:</span>{" "}
+                <span className="text-zinc-500 dark:text-zinc-400">Documents:</span>{" "}
                 <span className="text-blue-400">{indexInfo.numDocs}</span>
               </div>
               <div>
-                <span className="text-zinc-400">Vector Field:</span>{" "}
+                <span className="text-zinc-500 dark:text-zinc-400">Vector Field:</span>{" "}
                 <span className="text-purple-400">{indexInfo.vectorField || "?"}</span>
               </div>
             </div>
@@ -263,7 +263,7 @@ export function ClusterVisualization({ variant = "modal", isOpen = true, onClose
         </div>
 
         {error && (
-          <div className="rounded-md border border-red-800 bg-red-900/20 p-3 text-sm text-red-400">
+          <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 dark:text-red-400">
             {error}
           </div>
         )}
@@ -292,16 +292,16 @@ export function ClusterVisualization({ variant = "modal", isOpen = true, onClose
           ref={canvasRef}
           width={600}
           height={400}
-          className="w-full rounded-md border border-zinc-800"
+          className="w-full rounded-md border border-zinc-200 dark:border-zinc-800"
           onMouseMove={handleCanvasMouseMove}
           onClick={handleCanvasClick}
         />
 
         {hoveredPoint && (
-          <div className="absolute right-2 top-2 rounded-md border border-zinc-700 bg-zinc-900 p-2 text-sm">
+          <div className="absolute right-2 top-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-2 text-sm">
             <div className="font-mono">{hoveredPoint.key}</div>
             {hoveredPoint.label && (
-              <div className="max-w-[200px] truncate text-zinc-400">{hoveredPoint.label}</div>
+              <div className="max-w-[200px] truncate text-zinc-500 dark:text-zinc-400">{hoveredPoint.label}</div>
             )}
             <div className="text-xs text-zinc-500">Cluster: {hoveredPoint.clusterId + 1}</div>
           </div>
@@ -309,12 +309,12 @@ export function ClusterVisualization({ variant = "modal", isOpen = true, onClose
       </div>
 
       {selectedPoint && (
-        <div className="mt-4 rounded-md border border-zinc-800 bg-zinc-900 p-4">
+        <div className="mt-4 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-4">
           <div className="flex items-start justify-between">
             <div>
               <h4 className="font-mono font-medium">{selectedPoint.key}</h4>
               {selectedPoint.label && (
-                <p className="mt-1 text-sm text-zinc-400">{selectedPoint.label}</p>
+                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{selectedPoint.label}</p>
               )}
               <div className="mt-2 text-xs text-zinc-500">
                 Cluster: {selectedPoint.clusterId + 1} | Coordinates: (
@@ -333,7 +333,7 @@ export function ClusterVisualization({ variant = "modal", isOpen = true, onClose
           {Array.from({ length: clusterData.numClusters }).map((_, i) => (
             <div
               key={i}
-              className="flex items-center gap-2 rounded-md bg-zinc-800 px-2 py-1 text-xs"
+              className="flex items-center gap-2 rounded-md bg-zinc-100 dark:bg-zinc-800 px-2 py-1 text-xs"
             >
               <div
                 className="h-3 w-3 rounded-full"
@@ -350,7 +350,7 @@ export function ClusterVisualization({ variant = "modal", isOpen = true, onClose
   if (variant === "panel") {
     return (
       <div className="flex h-full flex-col overflow-auto">
-        <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4 py-2">
           <h3 className="text-sm font-semibold">Cluster Visualization</h3>
         </div>
         <div className="flex-1 overflow-auto p-4">
@@ -367,7 +367,7 @@ export function ClusterVisualization({ variant = "modal", isOpen = true, onClose
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative z-50 w-full max-w-5xl rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl">
+      <div className="relative z-50 w-full max-w-5xl rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">Cluster Visualization</h2>
           <Button variant="outline" onClick={onClose} size="sm">Close</Button>

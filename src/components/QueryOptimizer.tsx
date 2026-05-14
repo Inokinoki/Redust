@@ -256,7 +256,7 @@ EXPLANATION: [detailed explanation]`;
                   <Label htmlFor="query">Query</Label>
                   <textarea
                     id="query"
-                    className="flex min-h-[200px] w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+                    className="flex min-h-[200px] w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
                     placeholder="Enter your Redis query here..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -275,7 +275,7 @@ EXPLANATION: [detailed explanation]`;
                     <div className="text-sm font-medium text-blue-400 mb-2">Quick Optimizations Detected:</div>
                     <ul className="space-y-1">
                       {quickOptimizations.map((opt, i) => (
-                        <li key={i} className="text-sm text-zinc-300 flex gap-2">
+                        <li key={i} className="text-sm text-zinc-700 dark:text-zinc-300 flex gap-2">
                           <span>•</span>
                           <span>{opt}</span>
                         </li>
@@ -298,7 +298,7 @@ EXPLANATION: [detailed explanation]`;
                     <div className="space-y-4">
                       <div>
                         <h4 className="font-semibold mb-2">Original Query</h4>
-                        <pre className="bg-zinc-900 p-3 rounded-lg text-sm overflow-x-auto">
+                        <pre className="bg-zinc-50 dark:bg-zinc-900 p-3 rounded-lg text-sm overflow-x-auto">
                           <code>{result.originalQuery}</code>
                         </pre>
                       </div>
@@ -311,7 +311,7 @@ EXPLANATION: [detailed explanation]`;
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-zinc-400">Estimated Improvement:</span>
+                        <span className="text-sm text-zinc-500 dark:text-zinc-400">Estimated Improvement:</span>
                         <span className="px-2 py-1 bg-green-900/50 text-green-400 rounded text-sm font-medium">
                           {result.estimatedImprovement}
                         </span>
@@ -329,7 +329,7 @@ EXPLANATION: [detailed explanation]`;
                       {result.improvements.map((improvement, index) => (
                         <li key={index} className="flex gap-3">
                           <span className="flex-shrink-0 text-green-400">✓</span>
-                          <span className="text-sm text-zinc-300">{improvement}</span>
+                          <span className="text-sm text-zinc-700 dark:text-zinc-300">{improvement}</span>
                         </li>
                       ))}
                     </ul>
@@ -341,7 +341,7 @@ EXPLANATION: [detailed explanation]`;
                     <CardTitle>Explanation</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-zinc-300 leading-relaxed">{result.explanation}</p>
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{result.explanation}</p>
                   </CardContent>
                 </Card>
 
@@ -355,7 +355,7 @@ EXPLANATION: [detailed explanation]`;
                         {result.indexingSuggestions.map((suggestion, index) => (
                           <li key={index} className="flex gap-3">
                             <span className="flex-shrink-0 text-blue-400">📊</span>
-                            <span className="text-sm text-zinc-300">{suggestion}</span>
+                            <span className="text-sm text-zinc-700 dark:text-zinc-300">{suggestion}</span>
                           </li>
                         ))}
                       </ul>
@@ -371,7 +371,7 @@ EXPLANATION: [detailed explanation]`;
                       {result.performanceTips.map((tip, index) => (
                         <li key={index} className="flex gap-3">
                           <span className="flex-shrink-0 text-yellow-400">⚡</span>
-                          <span className="text-sm text-zinc-300">{tip}</span>
+                          <span className="text-sm text-zinc-700 dark:text-zinc-300">{tip}</span>
                         </li>
                       ))}
                     </ul>
@@ -390,7 +390,7 @@ EXPLANATION: [detailed explanation]`;
               <CardContent className="space-y-4">
                 <div>
                   <h4 className="font-semibold mb-2">Command Optimization</h4>
-                  <ul className="space-y-2 text-sm text-zinc-300">
+                  <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
                     <li>• Use SCAN instead of KEYS in production</li>
                     <li>• Use MGET/MSET for bulk operations</li>
                     <li>• Use pipelining for multiple commands</li>
@@ -400,7 +400,7 @@ EXPLANATION: [detailed explanation]`;
 
                 <div>
                   <h4 className="font-semibold mb-2">Data Structure Selection</h4>
-                  <ul className="space-y-2 text-sm text-zinc-300">
+                  <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
                     <li>• Use Hashes for objects with multiple fields</li>
                     <li>• Use Lists for ordered collections</li>
                     <li>• Use Sets for unique collections</li>
@@ -410,7 +410,7 @@ EXPLANATION: [detailed explanation]`;
 
                 <div>
                   <h4 className="font-semibold mb-2">Memory Optimization</h4>
-                  <ul className="space-y-2 text-sm text-zinc-300">
+                  <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
                     <li>• Use Redis data structures efficiently</li>
                     <li>• Set appropriate TTL values</li>
                     <li>• Use Redis compression for large values</li>
@@ -420,7 +420,7 @@ EXPLANATION: [detailed explanation]`;
 
                 <div>
                   <h4 className="font-semibold mb-2">Indexing & Search</h4>
-                  <ul className="space-y-2 text-sm text-zinc-300">
+                  <ul className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
                     <li>• Use RediSearch for complex queries</li>
                     <li>• Create indexes on frequently queried fields</li>
                     <li>• Use RedisJSON for structured data</li>
@@ -440,7 +440,7 @@ EXPLANATION: [detailed explanation]`;
                 <div className="space-y-2">
                   <Label>LLM Provider</Label>
                   <select
-                    className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
+                    className="flex h-10 w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm"
                     value={llmProvider}
                     onChange={(e) => setLlmProvider(e.target.value as LLMProvider)}
                     disabled={analyzing}
@@ -454,7 +454,7 @@ EXPLANATION: [detailed explanation]`;
                 <div className="space-y-2">
                   <Label>Model</Label>
                   <select
-                    className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
+                    className="flex h-10 w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm"
                     value={llmModel}
                     onChange={(e) => setLlmModel(e.target.value as LLMModel)}
                     disabled={analyzing}
@@ -479,7 +479,7 @@ EXPLANATION: [detailed explanation]`;
                   />
                 </div>
 
-                <div className="text-sm text-zinc-400">
+                <div className="text-sm text-zinc-500 dark:text-zinc-400">
                   <p>• GPT-4 provides the best optimization suggestions</p>
                   <p>• Claude 3 offers detailed explanations</p>
                   <p>• Local models work offline with limited capabilities</p>
@@ -493,7 +493,7 @@ EXPLANATION: [detailed explanation]`;
   if (variant === "panel") {
     return (
       <div className="h-full overflow-auto">
-        <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4 py-2">
           <h3 className="text-sm font-semibold">Query Optimizer</h3>
         </div>
         {content}
@@ -504,7 +504,7 @@ EXPLANATION: [detailed explanation]`;
   // Modal variant (fallback)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative z-50 w-full max-w-5xl h-[85vh] rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl overflow-auto">
+      <div className="relative z-50 w-full max-w-5xl h-[85vh] rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6 shadow-xl overflow-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">AI Query Optimizer</h2>
           <div className="flex gap-2">
