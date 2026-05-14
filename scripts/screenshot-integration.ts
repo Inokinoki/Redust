@@ -265,25 +265,33 @@ async function main() {
   console.log("1. Dashboard + sidebar expanded");
   await page.close();
 
-  // 2. Vector Search panel — select index, switch to text mode, type query
+  // 2. Vector Search panel — select index, type query, run search
   page = await freshPage("vectorSearch");
-  // Select an index
+  // Increase bottom panel height for search results
+  await page.evaluate(() => {
+    const layout = JSON.parse(localStorage.getItem("redust-dashboard-layout") || "{}");
+    layout.state.bottomPanelHeight = 500;
+    localStorage.setItem("redust-dashboard-layout", JSON.stringify(layout));
+  });
+  await page.reload({ waitUntil: "networkidle" });
+  await page.waitForTimeout(2000);
+  // Select the seeded vector index
   const indexSelect = page.locator('select').first();
   if (await indexSelect.count() > 0) {
-    await indexSelect.selectOption({ label: "documents_idx" });
+    await indexSelect.selectOption({ label: "redust-docs-idx" }).catch(() => {});
     await page.waitForTimeout(500);
   }
-  // Switch to "Text to Vector" mode
-  const textModeBtn = page.getByRole("button", { name: /Text to Vector/i });
-  if (await textModeBtn.count() > 0) {
-    await textModeBtn.click();
+  // Type a query
+  const queryInput = page.locator('textarea, input[type="text"]').first();
+  if (await queryInput.count() > 0) {
+    await queryInput.fill("Redis vector search");
     await page.waitForTimeout(300);
   }
-  // Type a query
-  const queryInput = page.locator('textarea').first();
-  if (await queryInput.count() > 0) {
-    await queryInput.fill("Redis vector search best practices");
-    await page.waitForTimeout(300);
+  // Click Search button
+  const searchBtn = page.getByRole("button", { name: "Search", exact: true });
+  if (await searchBtn.count() > 0) {
+    await searchBtn.click();
+    await page.waitForTimeout(3000); // wait for search + embedding generation
   }
   await screenshotPanel(page, "vectorSearch", path.join(SCREENSHOTS_DIR, "02-vector-search.png"));
   console.log("2. Vector Search with query");

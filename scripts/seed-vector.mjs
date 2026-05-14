@@ -46,6 +46,7 @@ async function main() {
       "SCHEMA",
       "title", "TEXT",
       "content", "TEXT",
+      "text", "TEXT",
       "embedding", "VECTOR", "FLAT", "6",
       "TYPE", "FLOAT64",
       "DIM", String(EMBEDDING_DIM),
@@ -58,6 +59,7 @@ async function main() {
       await redis.hSet(`${PREFIX}${i + 1}`, {
         title: docs[i].title,
         content: docs[i].content,
+        text: docs[i].content,
         embedding: Buffer.from(new Float64Array(embeddings[i]).buffer),
       });
     }
