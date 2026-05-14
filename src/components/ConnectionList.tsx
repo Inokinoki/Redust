@@ -52,38 +52,43 @@ export function ConnectionList() {
                   : "hover:bg-zinc-100 dark:hover:bg-zinc-900"
               }`}
             >
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <h3 className="font-medium">{conn.name}</h3>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate font-medium">{conn.name}</h3>
+                  <p className="truncate text-sm text-zinc-600 dark:text-zinc-400">
                     {conn.host}:{conn.port}
                     {conn.database !== undefined && ` [db${conn.database}]`}
                     {conn.tls && " 🔒"}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex shrink-0 items-center gap-1">
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => handleTestConnection(conn)}
                     disabled={testing === conn.id}
+                    className="h-7 px-2 text-xs"
                   >
-                    {testing === conn.id ? "Testing..." : "Test"}
+                    {testing === conn.id ? "..." : "Test"}
                   </Button>
                   <Button
                     size="sm"
                     variant={activeConnectionId === conn.id ? "default" : "outline"}
                     onClick={() => setActiveConnection(conn.id)}
+                    className="h-7 px-2 text-xs"
                   >
                     {activeConnectionId === conn.id ? "Active" : "Connect"}
                   </Button>
                   <Button
                     size="sm"
-                    variant="destructive"
+                    variant="ghost"
                     onClick={() => handleDeleteConnection(conn.id)}
+                    className="h-7 w-7 p-0 text-zinc-400 hover:text-red-500"
                   >
-                    Delete
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                   </Button>
                 </div>
               </div>
