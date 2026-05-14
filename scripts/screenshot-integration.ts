@@ -4,7 +4,7 @@
  * Prerequisites: docker run -d --name redust-redis -p 6379:6379 redis/redis-stack-server:latest
  * Usage: npx tsx scripts/screenshot-integration.ts
  */
-import { chromium } from "playwright";
+import { chromium, type Page } from "playwright";
 import { createServer } from "vite";
 import { spawn } from "child_process";
 import path from "path";
@@ -162,7 +162,7 @@ async function main() {
       localStorage.setItem("redust-dashboard-layout", JSON.stringify(s));
     }, layout);
     // Set wider right panel for right-side panel screenshots
-    if (RIGHT_PANELS.includes(panelId as any)) {
+    if (panelId && (RIGHT_PANELS as readonly string[]).includes(panelId)) {
       await page.evaluate(() => {
         localStorage.setItem("redust-panel-layout", JSON.stringify({
           "left-sidebar": 0,
@@ -171,11 +171,11 @@ async function main() {
         }));
       });
       // Collapse left sidebar and MetricsBar for right panel screenshots
-      await page.evaluate((s) => {
+      await page.evaluate(() => {
         const current = JSON.parse(localStorage.getItem("redust-dashboard-layout") || "{}");
         current.state = { ...current.state, leftSidebarCollapsed: true, rightSidebarCollapsed: true };
         localStorage.setItem("redust-dashboard-layout", JSON.stringify(current));
-      }, layout);
+      });
     }
     await page.reload({ waitUntil: "networkidle" });
     await page.waitForTimeout(2500);
@@ -183,7 +183,7 @@ async function main() {
   }
 
   /** Screenshot only the panel content area — no tabs, no headers, no other panels */
-  async function screenshotPanel(page: any, panelId: string, filePath: string) {
+  async function screenshotPanel(page: Page, panelId: string, filePath: string) {
     const isBottom = BOTTOM_PANELS.includes(panelId);
     await page.evaluate((isBottom) => {
       if (isBottom) {
