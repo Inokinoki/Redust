@@ -10,6 +10,7 @@ import { spawn } from "child_process";
 import path from "path";
 import { mkdir, rm } from "fs/promises";
 import { fileURLToPath } from "url";
+import { createClient } from "redis";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SCREENSHOTS_DIR = path.join(__dirname, "..", "screenshots-integration");
@@ -64,7 +65,7 @@ window.__TAURI_INTERNALS__ = {
     const proxyCommands = [
       "getMonitoringData", "get_keys", "listVectorIndexes",
       "getVectorIndexInfo", "getPublicChannels", "getClusterInfo",
-      "publishMessage", "searchIndex"
+      "publishMessage", "searchIndex", "vectorSearch", "llm_generate_embedding"
     ];
     if (proxyCommands.includes(cmd)) {
       try {
@@ -100,12 +101,13 @@ window.__TAURI_INTERNALS__ = {
       case "llm_rag":
         return { response: "Based on the documents, here is the answer..." };
       case "llm_generate_embedding":
-        return { embedding: new Array(1536).fill(0).map(() => Math.random()) };
+        return { embedding: new Array(VECTOR_DIM).fill(0).map(() => Math.random()), model: "mock" };
       case "vector_search":
+        // Handled by proxy — kept as fallback only
         return {
           results: [
-            { id: "doc:1", score: 0.95, fields: { text: "Redis vector search documentation", title: "Getting Started" } },
-            { id: "doc:2", score: 0.87, fields: { text: "How to create vector indexes", title: "Indexing Guide" } },
+            { key: "redust:doc:1", score: 0.95, fields: { title: "Getting Started with Redis", content: "Redis is an in-memory data structure store." } },
+            { key: "redust:doc:2", score: 0.87, fields: { title: "Vector Search in Redis", content: "Redis Stack includes vector similarity search." } },
           ],
         };
       default:
@@ -119,6 +121,63 @@ if (!window.__TAURI__) {
 }
 `;
 
+const VECTOR_DIM = 128;
+
+/** Generate a simple random unit vector */
+function randomVector(dim: number): number[] {
+  const v = Array.from({ length: dim }, () => Math.random());
+  const norm = Math.sqrt(v.reduce((s, x) => s + x * x, 0));
+  return v.map((x) => x / norm);
+}
+
+/** Create a vector index and seed sample documents */
+async function seedVectorData() {
+  const redis = createClient({ url: "redis://localhost:6379" });
+  redis.on("error", (err: Error) => console.error("Redis seed error:", err.message));
+  await redis.connect();
+  console.log("Seeding vector data...");
+
+  try {
+    // Drop existing index if any
+    try { await redis.sendCommand(["FT.DROPINDEX", "redust-docs-idx"]); } catch { /* ok */ }
+
+    // Create index with vector field
+    await redis.sendCommand([
+      "FT.CREATE", "redust-docs-idx",
+      "ON", "HASH",
+      "PREFIX", "1", "redust:doc:",
+      "SCHEMA",
+      "title", "TEXT",
+      "content", "TEXT",
+      "embedding", "VECTOR", "FLAT", "6",
+      "TYPE", "FLOAT64",
+      "DIM", String(VECTOR_DIM),
+      "DISTANCE_METRIC", "COSINE",
+    ]);
+    console.log("Created index redust-docs-idx");
+
+    // Seed sample documents
+    const docs = [
+      { title: "Getting Started with Redis", content: "Redis is an in-memory data structure store used as a database, cache, and message broker." },
+      { title: "Vector Search in Redis", content: "Redis Stack includes vector similarity search capabilities for building AI-powered applications." },
+      { title: "Indexing Strategies", content: "Choose the right indexing strategy based on your data patterns and query requirements." },
+      { title: "Caching Best Practices", content: "Implement effective caching strategies to improve application performance and reduce latency." },
+      { title: "Redis Pub/Sub Guide", content: "Use Redis pub/sub for real-time messaging between application components." },
+    ];
+
+    for (let i = 0; i < docs.length; i++) {
+      await redis.hSet(`redust:doc:${i + 1}`, {
+        title: docs[i].title,
+        content: docs[i].content,
+        embedding: Buffer.from(new Float64Array(randomVector(VECTOR_DIM)).buffer),
+      });
+    }
+    console.log(`Seeded ${docs.length} documents`);
+  } finally {
+    await redis.disconnect();
+  }
+}
+
 async function main() {
   await rm(SCREENSHOTS_DIR, { recursive: true, force: true });
   await mkdir(SCREENSHOTS_DIR, { recursive: true });
@@ -130,6 +189,9 @@ async function main() {
   proxyProc.stdout.on("data", (d: Buffer) => process.stdout.write(d));
   proxyProc.stderr.on("data", (d: Buffer) => process.stderr.write(d));
   await new Promise((r) => setTimeout(r, 2000)); // wait for proxy to connect
+
+  // Seed vector index for realistic Vector Search screenshots
+  await seedVectorData();
 
   const server = await createServer({
     root: path.join(__dirname, ".."),

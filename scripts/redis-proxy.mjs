@@ -167,7 +167,57 @@ const COMMAND_MAP = {
   getClusterInfo: handleGetClusterInfo,
   publishMessage: handlePublishMessage,
   searchIndex: handleSearchIndex,
+  vectorSearch: handleVectorSearch,
+  llm_generate_embedding: handleGenerateEmbedding,
 };
+
+async function handleVectorSearch(config, { indexName, queryVector, vectorField, topK, returnFields } = {}) {
+  if (!indexName || !queryVector) return [];
+  try {
+    const k = topK || 5;
+    const vectorBlob = Buffer.from(new Float64Array(queryVector).buffer).toString("base64");
+    const args = [
+      "FT.SEARCH", indexName,
+      `(*)=>[KNN ${k} @${vectorField || "embedding"} $query_vec]`,
+      "PARAMS", "2", "query_vec", vectorBlob,
+      "DIALECT", "2",
+      "RETURN", String((returnFields || []).length + 1), "__key", ...(returnFields || []),
+      "SORTBY", "__score",
+    ];
+    const result = await redis.sendCommand(args);
+    // result: [total, key1, [field1, val1, ...], key2, ...]
+    if (!result || result.length < 2) return [];
+    const results = [];
+    for (let i = 1; i < result.length; i += 2) {
+      const key = result[i];
+      const fieldsArr = result[i + 1];
+      const fields = {};
+      if (Array.isArray(fieldsArr)) {
+        for (let j = 0; j < fieldsArr.length; j += 2) {
+          if (fieldsArr[j] !== "__key") fields[fieldsArr[j]] = fieldsArr[j + 1];
+        }
+      }
+      const scoreField = fieldsArr;
+      let score = 0;
+      if (Array.isArray(scoreField)) {
+        const idx = scoreField.indexOf("__score");
+        if (idx >= 0 && scoreField[idx + 1] != null) score = parseFloat(scoreField[idx + 1]);
+      }
+      results.push({ key, score, fields });
+    }
+    return results;
+  } catch (e) {
+    console.warn("vectorSearch error:", e.message);
+    return [];
+  }
+}
+
+async function handleGenerateEmbedding(/* request */) {
+  // Return a random 128-dim vector for screenshot purposes
+  const dim = 128;
+  const embedding = Array.from({ length: dim }, () => Math.random());
+  return { embedding, model: "screenshot-mock" };
+}
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
