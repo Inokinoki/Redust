@@ -136,7 +136,7 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
   );
 
   const uploadContent = (
-    <Card className="p-6">
+    <Card className={variant === "panel" ? "p-3" : "p-6"}>
       <h3 className="mb-4 text-lg font-medium">Upload Embeddings</h3>
       <div className="space-y-4">
         <div className="space-y-2">
@@ -210,7 +210,7 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
   );
 
   const tableContent = (
-    <Card className="p-6">
+    <Card className={variant === "panel" ? "p-3" : "p-6"}>
       <h3 className="mb-4 text-lg font-medium">Cached Embeddings ({embeddings.length})</h3>
 
       <div className="mb-4 space-y-2">
@@ -304,7 +304,7 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
           <h3 className="text-sm font-semibold">Embedding Cache</h3>
         </div>
         <div className="flex-1 overflow-auto p-4">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>{uploadContent}</div>
             <div>{tableContent}</div>
           </div>
