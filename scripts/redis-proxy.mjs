@@ -213,10 +213,16 @@ async function handleVectorSearch(config, { indexName, queryVector, vectorField,
 }
 
 async function handleGenerateEmbedding(/* request */) {
-  // Return a random 128-dim vector for screenshot purposes
-  const dim = 128;
-  const embedding = Array.from({ length: dim }, () => Math.random());
-  return { embedding, model: "screenshot-mock" };
+  try {
+    const { embed, EMBEDDING_DIM } = await import("./embed.mjs");
+    const text = arguments[1]?.text || "query";
+    const embedding = await embed(text);
+    return { embedding, model: "Xenova/all-MiniLM-L6-v2" };
+  } catch (e) {
+    // Fallback to random if model fails
+    console.warn("Embedding model failed, using random:", e.message);
+    return { embedding: Array.from({ length: 384 }, () => Math.random()), model: "random-fallback" };
+  }
 }
 
 const CORS_HEADERS = {

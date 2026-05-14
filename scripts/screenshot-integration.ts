@@ -6,11 +6,10 @@
  */
 import { chromium, type Page } from "playwright";
 import { createServer } from "vite";
-import { spawn } from "child_process";
+import { spawn, spawnSync } from "child_process";
 import path from "path";
 import { mkdir, rm } from "fs/promises";
 import { fileURLToPath } from "url";
-import { createClient } from "redis";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SCREENSHOTS_DIR = path.join(__dirname, "..", "screenshots-integration");
@@ -121,60 +120,17 @@ if (!window.__TAURI__) {
 }
 `;
 
-const VECTOR_DIM = 128;
+const VECTOR_DIM = 384; // all-MiniLM-L6-v2 output dimension
 
-/** Generate a simple random unit vector */
-function randomVector(dim: number): number[] {
-  const v = Array.from({ length: dim }, () => Math.random());
-  const norm = Math.sqrt(v.reduce((s, x) => s + x * x, 0));
-  return v.map((x) => x / norm);
-}
-
-/** Create a vector index and seed sample documents */
+/** Seed vector index with real semantic embeddings */
 async function seedVectorData() {
-  const redis = createClient({ url: "redis://localhost:6379" });
-  redis.on("error", (err: Error) => console.error("Redis seed error:", err.message));
-  await redis.connect();
-  console.log("Seeding vector data...");
-
-  try {
-    // Drop existing index if any
-    try { await redis.sendCommand(["FT.DROPINDEX", "redust-docs-idx"]); } catch { /* ok */ }
-
-    // Create index with vector field
-    await redis.sendCommand([
-      "FT.CREATE", "redust-docs-idx",
-      "ON", "HASH",
-      "PREFIX", "1", "redust:doc:",
-      "SCHEMA",
-      "title", "TEXT",
-      "content", "TEXT",
-      "embedding", "VECTOR", "FLAT", "6",
-      "TYPE", "FLOAT64",
-      "DIM", String(VECTOR_DIM),
-      "DISTANCE_METRIC", "COSINE",
-    ]);
-    console.log("Created index redust-docs-idx");
-
-    // Seed sample documents
-    const docs = [
-      { title: "Getting Started with Redis", content: "Redis is an in-memory data structure store used as a database, cache, and message broker." },
-      { title: "Vector Search in Redis", content: "Redis Stack includes vector similarity search capabilities for building AI-powered applications." },
-      { title: "Indexing Strategies", content: "Choose the right indexing strategy based on your data patterns and query requirements." },
-      { title: "Caching Best Practices", content: "Implement effective caching strategies to improve application performance and reduce latency." },
-      { title: "Redis Pub/Sub Guide", content: "Use Redis pub/sub for real-time messaging between application components." },
-    ];
-
-    for (let i = 0; i < docs.length; i++) {
-      await redis.hSet(`redust:doc:${i + 1}`, {
-        title: docs[i].title,
-        content: docs[i].content,
-        embedding: Buffer.from(new Float64Array(randomVector(VECTOR_DIM)).buffer),
-      });
-    }
-    console.log(`Seeded ${docs.length} documents`);
-  } finally {
-    await redis.disconnect();
+  console.log("Seeding vector data with real embeddings...");
+  const result = spawnSync("node", [path.join(__dirname, "seed-vector.mjs")], {
+    cwd: path.join(__dirname, ".."),
+    stdio: "inherit",
+  });
+  if (result.status !== 0) {
+    console.warn("Seed script failed, continuing without real embeddings");
   }
 }
 
