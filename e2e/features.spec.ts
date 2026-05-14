@@ -64,7 +64,27 @@ test.describe("Connection Management", () => {
 
 test.describe("Key Browser", () => {
   test.beforeEach(async ({ page }) => {
+    // Mock an active connection in localStorage so KeyBrowser renders
     await page.goto("/");
+    await page.evaluate(() => {
+      const state = {
+        state: {
+          connections: [
+            {
+              id: "test-conn-1",
+              name: "Test Redis",
+              host: "localhost",
+              port: 6379,
+              tls: false,
+            },
+          ],
+          activeConnectionId: "test-conn-1",
+        },
+        version: 0,
+      };
+      localStorage.setItem("redust-connections", JSON.stringify(state));
+    });
+    await page.reload();
     await page.waitForLoadState("networkidle");
   });
 

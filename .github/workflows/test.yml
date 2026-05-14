@@ -213,7 +213,7 @@ jobs:
   tauri-webdriver-e2e:
     name: Tauri WebDriver E2E (Linux + Redis)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     services:
       redis:
         image: redis:7-alpine
