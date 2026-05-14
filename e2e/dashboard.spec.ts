@@ -172,14 +172,14 @@ test.describe("Resizable Panels", () => {
 
   test("should have resizable separators", async ({ page }) => {
     // Check for resizable separators (they have the hover effect class)
-    const separators = page.locator('div[class*="bg-zinc-800 hover:bg-red-600"]');
+    const separators = page.locator('div[class*="hover:bg-red-600"]');
     const count = await separators.count();
     expect(count).toBeGreaterThanOrEqual(2);
   });
 
   test("should allow dragging separator to resize panels", async ({ page }) => {
     // Find first separator
-    const separator = page.locator('div[class*="bg-zinc-800 hover:bg-red-600"]').first();
+    const separator = page.locator('div[class*="hover:bg-red-600"]').first();
     await expect(separator).toBeVisible();
 
     // Get initial position
@@ -215,7 +215,7 @@ test.describe("Layout Persistence", () => {
     await page.waitForTimeout(500);
 
     // Drag a separator to trigger layout save
-    const separator = page.locator('div[class*="bg-zinc-800 hover:bg-red-600"]').first();
+    const separator = page.locator('div[class*="hover:bg-red-600"]').first();
     await separator.hover();
     await page.mouse.down();
     await page.mouse.move(200, 100);

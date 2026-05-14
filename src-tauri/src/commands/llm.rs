@@ -258,7 +258,7 @@ impl LLMClient {
 
     pub async fn chat_completion(&self, request: &LLMRequest) -> Result<LLMResponse, String> {
         match request.model.provider() {
-            LLMProvider::OpenAI => self.openai_chat(request).await,
+            LLMProvider::OpenAI | LLMProvider::Custom => self.openai_chat(request).await,
             LLMProvider::Anthropic => self.anthropic_chat(request).await,
             LLMProvider::Ollama => self.ollama_chat(request).await,
         }
