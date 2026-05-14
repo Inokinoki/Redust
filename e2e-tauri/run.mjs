@@ -163,6 +163,7 @@ async function main() {
     console.log("[e2e-tauri] OK — Tauri UI invoked Rust testConnection against live Redis.");
   } finally {
     await shutdown(driver);
+    process.exit(0);
   }
 }
 
