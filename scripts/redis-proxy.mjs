@@ -175,14 +175,14 @@ async function handleVectorSearch(config, { indexName, queryVector, vectorField,
   if (!indexName || !queryVector) return [];
   try {
     const k = topK || 5;
-    const vectorBlob = Buffer.from(new Float64Array(queryVector).buffer).toString("base64");
+    const vectorBlob = Buffer.from(new Float64Array(queryVector).buffer);
     const args = [
       "FT.SEARCH", indexName,
       `(*)=>[KNN ${k} @${vectorField || "embedding"} $query_vec]`,
       "PARAMS", "2", "query_vec", vectorBlob,
       "DIALECT", "2",
-      "RETURN", String((returnFields || []).length + 1), "__key", ...(returnFields || []),
-      "SORTBY", "__score",
+      "RETURN", String((returnFields || []).length + 2), "__key", "__embedding_score", ...(returnFields || []),
+      "SORTBY", "__embedding_score",
     ];
     const result = await redis.sendCommand(args);
     // result: [total, key1, [field1, val1, ...], key2, ...]
@@ -194,14 +194,15 @@ async function handleVectorSearch(config, { indexName, queryVector, vectorField,
       const fields = {};
       if (Array.isArray(fieldsArr)) {
         for (let j = 0; j < fieldsArr.length; j += 2) {
-          if (fieldsArr[j] !== "__key") fields[fieldsArr[j]] = fieldsArr[j + 1];
+          if (fieldsArr[j] !== "__key" && fieldsArr[j] !== "__embedding_score") {
+            fields[fieldsArr[j]] = fieldsArr[j + 1];
+          }
         }
       }
-      const scoreField = fieldsArr;
       let score = 0;
-      if (Array.isArray(scoreField)) {
-        const idx = scoreField.indexOf("__score");
-        if (idx >= 0 && scoreField[idx + 1] != null) score = parseFloat(scoreField[idx + 1]);
+      if (Array.isArray(fieldsArr)) {
+        const idx = fieldsArr.indexOf("__embedding_score");
+        if (idx >= 0 && fieldsArr[idx + 1] != null) score = parseFloat(fieldsArr[idx + 1]);
       }
       results.push({ key, score, fields });
     }
@@ -212,11 +213,10 @@ async function handleVectorSearch(config, { indexName, queryVector, vectorField,
   }
 }
 
-async function handleGenerateEmbedding(/* request */) {
+async function handleGenerateEmbedding(config, { text } = {}) {
   try {
-    const { embed, EMBEDDING_DIM } = await import("./embed.mjs");
-    const text = arguments[1]?.text || "query";
-    const embedding = await embed(text);
+    const { embed } = await import("./embed.mjs");
+    const embedding = await embed(text || "query");
     return { embedding, model: "Xenova/all-MiniLM-L6-v2" };
   } catch (e) {
     // Fallback to random if model fails
@@ -252,7 +252,7 @@ const server = createServer(async (req, res) => {
       const { cmd, args = {} } = JSON.parse(body);
       const handler = COMMAND_MAP[cmd];
       if (handler) {
-        const result = await handler(args.config, args);
+        const result = await handler(args.config, args.request || args);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify(result));
       } else {

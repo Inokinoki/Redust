@@ -267,32 +267,41 @@ async function main() {
 
   // 2. Vector Search panel — select index, type query, run search
   page = await freshPage("vectorSearch");
-  // Increase bottom panel height for search results
-  await page.evaluate(() => {
-    const layout = JSON.parse(localStorage.getItem("redust-dashboard-layout") || "{}");
-    layout.state.bottomPanelHeight = 500;
-    localStorage.setItem("redust-dashboard-layout", JSON.stringify(layout));
-  });
-  await page.reload({ waitUntil: "networkidle" });
-  await page.waitForTimeout(2000);
-  // Select the seeded vector index
+  // Wait for indexes to load asynchronously from proxy
+  await page.waitForTimeout(3000);
+  // Select the seeded vector index (force: true for bottom panel overlap)
   const indexSelect = page.locator('select').first();
   if (await indexSelect.count() > 0) {
-    await indexSelect.selectOption({ label: "redust-docs-idx" }).catch(() => {});
-    await page.waitForTimeout(500);
+    await indexSelect.selectOption({ value: "redust-docs-idx" }, { force: true }).catch(() => {});
+    await page.waitForTimeout(1000);
   }
-  // Type a query
-  const queryInput = page.locator('textarea, input[type="text"]').first();
+  // Type a query in the panel textarea (force: true for bottom panel overlap)
+  const queryInput = page.locator('textarea').first();
   if (await queryInput.count() > 0) {
-    await queryInput.fill("Redis vector search");
+    await queryInput.fill("Redis vector search", { force: true });
     await page.waitForTimeout(300);
   }
-  // Click Search button
-  const searchBtn = page.getByRole("button", { name: "Search", exact: true });
-  if (await searchBtn.count() > 0) {
-    await searchBtn.click();
-    await page.waitForTimeout(3000); // wait for search + embedding generation
-  }
+  // Click Search button via JS (Playwright click intercepted by overlay)
+  await page.evaluate(() => {
+    const panel = document.querySelector('.flex.h-full.flex-col.overflow-auto');
+    if (!panel) return;
+    const btn = [...panel.querySelectorAll('button')].find(b => b.textContent?.trim() === 'Search');
+    if (btn) btn.click();
+  });
+  await page.waitForTimeout(8000); // wait for embedding model load + search
+
+  // Hide form elements so results fill the panel visually
+  await page.evaluate(() => {
+    const panel = document.querySelector('.flex.h-full.flex-col.overflow-auto');
+    if (!panel) return;
+    const children = panel.children;
+    // Hide: textarea/provider/API key/endpoint block, top-k/score row
+    // Structure: [select-row, textarea-block, top-k-row, (error?), button, time, results]
+    for (const child of children) {
+      if (child.querySelector('textarea')) { (child as HTMLElement).style.display = 'none'; continue; }
+      if (child.querySelector('input[type="number"]')) { (child as HTMLElement).style.display = 'none'; continue; }
+    }
+  });
   await screenshotPanel(page, "vectorSearch", path.join(SCREENSHOTS_DIR, "02-vector-search.png"));
   console.log("2. Vector Search with query");
   await page.close();
