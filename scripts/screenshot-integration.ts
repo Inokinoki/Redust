@@ -290,16 +290,15 @@ async function main() {
   });
   await page.waitForTimeout(8000); // wait for embedding model load + search
 
-  // Hide form elements so results fill the panel visually
+  // Hide all form elements so only results remain — avoids overlapping in the 320px panel
   await page.evaluate(() => {
     const panel = document.querySelector('.flex.h-full.flex-col.overflow-auto');
     if (!panel) return;
-    const children = panel.children;
-    // Hide: textarea/provider/API key/endpoint block, top-k/score row
     // Structure: [select-row, textarea-block, top-k-row, (error?), button, time, results]
-    for (const child of children) {
-      if (child.querySelector('textarea')) { (child as HTMLElement).style.display = 'none'; continue; }
-      if (child.querySelector('input[type="number"]')) { (child as HTMLElement).style.display = 'none'; continue; }
+    // Keep only the results div (has class "mt-2" and "flex-1")
+    for (const child of panel.children) {
+      if (child.classList.contains('mt-2')) continue; // results div
+      (child as HTMLElement).style.display = 'none';
     }
   });
   await screenshotPanel(page, "vectorSearch", path.join(SCREENSHOTS_DIR, "02-vector-search.png"));
