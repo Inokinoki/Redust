@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "../ui/button";
-import { useDashboardStore } from "../../stores/dashboardStore";
+import { useDashboardStore, type PageId } from "../../stores/dashboardStore";
 
 interface NavItem {
   id: string;
@@ -8,19 +8,20 @@ interface NavItem {
   icon: string;
   shortcut: string;
   group: "ai" | "monitor" | "tools";
+  pageId?: PageId; // if present, navigates to page; otherwise opens modal
 }
 
 const NAV_ITEMS: NavItem[] = [
   // AI Features
-  { id: "vectorSearch", label: "Vector Search", icon: "🔍", shortcut: "Cmd+Shift+V", group: "ai" },
-  { id: "embeddingCache", label: "Embedding Cache", icon: "📦", shortcut: "Cmd+Shift+E", group: "ai" },
-  { id: "clusterVis", label: "Clusters", icon: "🎯", shortcut: "Cmd+Shift+D", group: "ai" },
-  { id: "llmChat", label: "AI Chat", icon: "🤖", shortcut: "Cmd+Shift+A", group: "ai" },
-  { id: "queryOptimizer", label: "Query Optimizer", icon: "⚡", shortcut: "Cmd+Shift+Q", group: "ai" },
+  { id: "vectorSearch", label: "Vector Search", icon: "🔍", shortcut: "Cmd+Shift+V", group: "ai", pageId: "vectorSearch" },
+  { id: "embeddingCache", label: "Embedding Cache", icon: "📦", shortcut: "Cmd+Shift+E", group: "ai", pageId: "embeddingCache" },
+  { id: "clusterVis", label: "Clusters", icon: "🎯", shortcut: "Cmd+Shift+D", group: "ai", pageId: "clusterVis" },
+  { id: "llmChat", label: "AI Chat", icon: "🤖", shortcut: "Cmd+Shift+A", group: "ai", pageId: "llmChat" },
+  { id: "queryOptimizer", label: "Query Optimizer", icon: "⚡", shortcut: "Cmd+Shift+Q", group: "ai", pageId: "queryOptimizer" },
   // Monitor
-  { id: "monitoring", label: "Monitoring", icon: "📊", shortcut: "Cmd+Shift+M", group: "monitor" },
-  { id: "cluster", label: "Cluster Topology", icon: "🔗", shortcut: "Cmd+Shift+C", group: "monitor" },
-  { id: "pubsub", label: "Pub/Sub", icon: "📡", shortcut: "Cmd+Shift+P", group: "monitor" },
+  { id: "monitoring", label: "Monitoring", icon: "📊", shortcut: "Cmd+Shift+M", group: "monitor", pageId: "monitoring" },
+  { id: "cluster", label: "Cluster Topology", icon: "🔗", shortcut: "Cmd+Shift+C", group: "monitor", pageId: "cluster" },
+  { id: "pubsub", label: "Pub/Sub", icon: "📡", shortcut: "Cmd+Shift+P", group: "monitor", pageId: "pubsub" },
   // Tools (these open modals, handled in App.tsx)
   { id: "importExport", label: "Import/Export", icon: "📥", shortcut: "Cmd+Shift+I", group: "tools" },
   { id: "luaEditor", label: "Lua Editor", icon: "📝", shortcut: "Cmd+Shift+L", group: "tools" },
@@ -33,14 +34,17 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const currentPage = useDashboardStore((s) => s.currentPage);
 
   const toggleGroup = (group: string) => {
     setOpenGroup(openGroup === group ? null : group);
   };
 
   const handleItemClick = (item: NavItem) => {
-    // Toggle panel visibility for panel items
-    useDashboardStore.getState().togglePanel(item.id);
+    if (item.pageId) {
+      useDashboardStore.getState().navigateTo(item.pageId);
+    }
+    // Tools items (importExport, luaEditor) are handled via onToolAction prop or command palette
   };
 
   const groups = [
@@ -126,7 +130,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     <button
                       key={item.id}
                       onClick={() => handleItemClick(item)}
-                      className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                      className={`flex w-full items-center gap-2 rounded px-3 py-2 text-sm ${
+                        item.pageId === currentPage
+                          ? "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400"
+                          : "text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                      }`}
                     >
                       <span>{item.icon}</span>
                       <span className="flex-1 text-left">{item.label}</span>

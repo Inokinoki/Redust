@@ -47,9 +47,9 @@ function App() {
     setRightKey({ key, type });
   };
 
-  // Helper to open panels
-  const openPanel = (panelId: string) => {
-    useDashboardStore.getState().setPanelVisible(panelId, true);
+  // Helper to navigate to pages
+  const navigateToPage = (pageId: string) => {
+    useDashboardStore.getState().navigateTo(pageId as any);
   };
 
   const commands: Command[] = [
@@ -69,7 +69,7 @@ function App() {
       icon: "🔍",
       shortcut: "Cmd+Shift+V",
       category: "AI Features",
-      action: () => openPanel("vectorSearch"),
+      action: () => navigateToPage("vectorSearch"),
     },
     {
       id: "embedding-cache",
@@ -78,7 +78,7 @@ function App() {
       icon: "📦",
       shortcut: "Cmd+Shift+E",
       category: "AI Features",
-      action: () => openPanel("embeddingCache"),
+      action: () => navigateToPage("embeddingCache"),
     },
     {
       id: "cluster-visualization",
@@ -87,7 +87,7 @@ function App() {
       icon: "🎯",
       shortcut: "Cmd+Shift+D",
       category: "AI Features",
-      action: () => openPanel("clusterVis"),
+      action: () => navigateToPage("clusterVis"),
     },
     {
       id: "llm-chat",
@@ -96,7 +96,7 @@ function App() {
       icon: "🤖",
       shortcut: "Cmd+Shift+A",
       category: "AI Features",
-      action: () => openPanel("llmChat"),
+      action: () => navigateToPage("llmChat"),
     },
     {
       id: "monitoring",
@@ -105,7 +105,7 @@ function App() {
       icon: "📊",
       shortcut: "Cmd+Shift+M",
       category: "Monitoring",
-      action: () => openPanel("monitoring"),
+      action: () => navigateToPage("monitoring"),
     },
     {
       id: "cluster",
@@ -114,7 +114,7 @@ function App() {
       icon: "🔗",
       shortcut: "Cmd+Shift+C",
       category: "Monitoring",
-      action: () => openPanel("cluster"),
+      action: () => navigateToPage("cluster"),
     },
     {
       id: "pubsub",
@@ -123,7 +123,7 @@ function App() {
       icon: "📡",
       shortcut: "Cmd+Shift+P",
       category: "Monitoring",
-      action: () => openPanel("pubsub"),
+      action: () => navigateToPage("pubsub"),
     },
     {
       id: "query-optimizer",
@@ -132,7 +132,7 @@ function App() {
       icon: "⚡",
       shortcut: "Cmd+Shift+Q",
       category: "AI Features",
-      action: () => openPanel("queryOptimizer"),
+      action: () => navigateToPage("queryOptimizer"),
     },
     {
       id: "import-export",
@@ -211,40 +211,40 @@ function App() {
         }
       }
 
-      // Panel shortcuts - use dashboard store
+      // Page shortcuts - use dashboard store
       if ((e.metaKey || e.ctrlKey) && e.shiftKey) {
         switch (e.key.toUpperCase()) {
           case "V":
             e.preventDefault();
-            openPanel("vectorSearch");
+            navigateToPage("vectorSearch");
             break;
           case "E":
             e.preventDefault();
-            openPanel("embeddingCache");
+            navigateToPage("embeddingCache");
             break;
           case "A":
             e.preventDefault();
-            openPanel("llmChat");
+            navigateToPage("llmChat");
             break;
           case "M":
             e.preventDefault();
-            openPanel("monitoring");
+            navigateToPage("monitoring");
             break;
           case "C":
             e.preventDefault();
-            openPanel("cluster");
+            navigateToPage("cluster");
             break;
           case "P":
             e.preventDefault();
-            openPanel("pubsub");
+            navigateToPage("pubsub");
             break;
           case "D":
             e.preventDefault();
-            openPanel("clusterVis");
+            navigateToPage("clusterVis");
             break;
           case "Q":
             e.preventDefault();
-            openPanel("queryOptimizer");
+            navigateToPage("queryOptimizer");
             break;
           case "I":
             e.preventDefault();

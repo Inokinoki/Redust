@@ -1,90 +1,61 @@
-import { ReactNode, useCallback } from "react";
-import { Panel, Group, Separator } from "react-resizable-panels";
+import { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
-import { MetricsBar } from "./MetricsBar";
-import { BottomPanelGroup, RightPanelGroup } from "./BottomPanelGroup";
-import { useDashboardStore } from "../../stores/dashboardStore";
+import { useDashboardStore, type PageId } from "../../stores/dashboardStore";
+import { MonitoringDashboard } from "../MonitoringDashboard";
+import { VectorSearch } from "../VectorSearch";
+import { EmbeddingCache } from "../EmbeddingCache";
+import { QueryOptimizer } from "../QueryOptimizer";
+import { PubSubMonitor } from "../PubSubMonitor";
+import { ClusterTopology } from "../ClusterTopology";
+import { ClusterVisualization } from "../ClusterVisualization";
+import { LLMConversation } from "../LLMConversation";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const PANEL_LAYOUT_STORAGE_KEY = "redust-panel-layout";
+function PageContent({ page }: { page: PageId }) {
+  switch (page) {
+    case "dashboard":
+      return null; // rendered as children
+    case "vectorSearch":
+      return <VectorSearch variant="page" />;
+    case "embeddingCache":
+      return <EmbeddingCache variant="page" />;
+    case "clusterVis":
+      return <ClusterVisualization variant="page" />;
+    case "llmChat":
+      return <LLMConversation variant="page" />;
+    case "queryOptimizer":
+      return <QueryOptimizer variant="page" />;
+    case "monitoring":
+      return <MonitoringDashboard variant="page" />;
+    case "cluster":
+      return <ClusterTopology variant="page" />;
+    case "pubsub":
+      return <PubSubMonitor variant="page" />;
+    default:
+      return null;
+  }
+}
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const {
-    leftSidebarCollapsed,
-    rightSidebarCollapsed,
-    toggleLeftSidebar,
-    toggleRightSidebar,
-  } = useDashboardStore();
-
-  // Load saved layout from localStorage
-  const loadLayout = useCallback(() => {
-    try {
-      const saved = localStorage.getItem(PANEL_LAYOUT_STORAGE_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error("Failed to load panel layout:", e);
-    }
-    return undefined;
-  }, []);
-
-  // Save layout to localStorage
-  const saveLayout = useCallback((layout: { [key: string]: number }) => {
-    try {
-      localStorage.setItem(PANEL_LAYOUT_STORAGE_KEY, JSON.stringify(layout));
-    } catch (e) {
-      console.error("Failed to save panel layout:", e);
-    }
-  }, []);
+  const { leftSidebarCollapsed, toggleLeftSidebar, currentPage } =
+    useDashboardStore();
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] w-full flex-col">
-      {/* Main horizontal layout: Left Sidebar | Main Content | Right Panels */}
-      <Group
-        orientation="horizontal"
-        className="flex-1 overflow-hidden"
-        id="dashboard-layout"
-        onLayoutChange={saveLayout}
-      >
-        {/* Left Sidebar */}
-        <Panel
-          id="left-sidebar"
-          defaultSize={loadLayout()?.["left-sidebar"] || 15}
-          minSize={10}
-          collapsible={true}
-          className={`${leftSidebarCollapsed ? "w-12" : ""}`}
-        >
-          <Sidebar collapsed={leftSidebarCollapsed} onToggle={toggleLeftSidebar} />
-        </Panel>
+    <div className="flex h-[calc(100vh-4rem)] w-full">
+      {/* Left Sidebar */}
+      <Sidebar collapsed={leftSidebarCollapsed} onToggle={toggleLeftSidebar} />
 
-        <Separator className="w-1 bg-zinc-200 transition-colors hover:bg-red-600 dark:bg-zinc-800" />
-
-        {/* Main Content Area (Key Browser) */}
-        <Panel id="main-content" defaultSize={loadLayout()?.["main-content"] || 65} minSize={40} className="flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-auto p-6">{children}</div>
-
-          {/* Bottom Panels with tabs */}
-          <BottomPanelGroup />
-        </Panel>
-
-        <Separator className="w-1 bg-zinc-200 transition-colors hover:bg-red-600 dark:bg-zinc-800" />
-
-        {/* Right Sidebar - Metrics + Panels */}
-        <Panel
-          id="right-sidebar"
-          defaultSize={loadLayout()?.["right-sidebar"] || 20}
-          minSize={15}
-          collapsible={true}
-          className="flex flex-col overflow-hidden"
-        >
-          <MetricsBar collapsed={rightSidebarCollapsed} onToggle={toggleRightSidebar} />
-          <RightPanelGroup />
-        </Panel>
-      </Group>
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-auto">
+        {currentPage === "dashboard" ? (
+          <div className="p-6">{children}</div>
+        ) : (
+          <PageContent page={currentPage} />
+        )}
+      </div>
     </div>
   );
 }
