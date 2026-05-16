@@ -25,6 +25,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css,md}\""
   },
   "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
     "@tanstack/react-virtual": "^3.13.19",
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/plugin-shell": "^2.0.0",
