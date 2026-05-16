@@ -30,14 +30,14 @@ export function DashboardPanel({
 
   return (
     <div
-      className={`flex flex-col border-l border-zinc-800 bg-zinc-950 ${className} ${
+      className={`flex flex-col border-l border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 ${className} ${
         isBottom ? "border-t border-l-0" : ""
       }`}
     >
       {/* Panel Header */}
-      <div className="flex h-12 min-h-[3rem] items-center justify-between border-b border-zinc-800 px-4">
+      <div className="flex h-12 min-h-[3rem] items-center justify-between border-b border-zinc-200 px-4 dark:border-zinc-800">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-zinc-200">{title}</h3>
+          <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">{title}</h3>
         </div>
         <div className="flex items-center gap-1">
           {headerActions}
@@ -46,7 +46,7 @@ export function DashboardPanel({
               variant="ghost"
               size="sm"
               onClick={onToggleCollapse}
-              className="h-7 px-2 text-zinc-400 hover:text-zinc-200"
+              className="h-7 px-2 text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
             >
               {collapsed ? (
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -64,7 +64,7 @@ export function DashboardPanel({
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="h-7 w-7 p-0 text-zinc-400 hover:text-zinc-200"
+              className="h-7 w-7 p-0 text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

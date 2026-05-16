@@ -13,7 +13,7 @@ export function Dialog({ open, children, className, ...props }: DialogProps) {
       className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 ${className ?? ""}`}
       {...props}
     >
-      <div className="relative z-50 w-full max-w-lg rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl">
+      <div className="relative z-50 w-full max-w-lg rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
         {children}
       </div>
     </div>

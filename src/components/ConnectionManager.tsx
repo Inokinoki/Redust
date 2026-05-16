@@ -125,7 +125,7 @@ export function ConnectionManager({ isOpen, onClose }: ConnectionManagerProps) {
               id="tls"
               checked={tls}
               onChange={(e) => setTls(e.target.checked)}
-              className="h-4 w-4 rounded border-zinc-700 bg-zinc-900"
+              className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700"
             />
             <Label htmlFor="tls" className="cursor-pointer">
               Use TLS/SSL

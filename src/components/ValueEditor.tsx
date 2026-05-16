@@ -140,7 +140,7 @@ export function ValueEditor({ isOpen, onClose, key, keyType }: ValueEditorProps)
           <div className="space-y-2">
             <Label>Value</Label>
             <textarea
-              className="flex h-64 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
+              className="flex h-64 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 font-mono text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-900"
               value={value}
               onChange={(e) => setValue(e.target.value)}
               disabled={loading}

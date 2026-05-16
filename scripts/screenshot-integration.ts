@@ -1,6 +1,6 @@
 /**
  * Integration screenshot script — connects to a real Redis Stack instance.
- * Mocks Tauri invoke calls so panels render with realistic data in the browser.
+ * Mocks Tauri invoke calls so pages render with realistic data in the browser.
  * Prerequisites: docker run -d --name redust-redis -p 6379:6379 redis/redis-stack-server:latest
  * Usage: npx tsx scripts/screenshot-integration.ts
  */
@@ -32,29 +32,14 @@ const CONNECTION_STATE = {
   version: 0,
 };
 
-const ALL_PANELS = [
-  "monitoring", "pubsub", "cluster", "vectorSearch",
-  "embeddingCache", "clusterVis", "llmChat", "queryOptimizer",
-] as const;
+type PageId = "dashboard" | "vectorSearch" | "embeddingCache" | "clusterVis" | "llmChat" | "queryOptimizer" | "monitoring" | "cluster" | "pubsub";
 
-const BOTTOM_PANELS = ["monitoring", "vectorSearch", "embeddingCache", "queryOptimizer"];
-const RIGHT_PANELS = ["pubsub", "cluster", "clusterVis", "llmChat"];
-
-function buildLayoutState(visiblePanel: string | null, opts?: { collapseLeft?: boolean }) {
-  const panels: Record<string, { visible: boolean; collapsed: boolean; position: string }> = {};
-  for (const p of ALL_PANELS) {
-    panels[p] = { visible: visiblePanel === p, collapsed: false, position: BOTTOM_PANELS.includes(p) ? "bottom" : "right" };
-  }
-  return { state: { panels, leftSidebarCollapsed: opts?.collapseLeft ?? false, rightSidebarCollapsed: false, bottomPanelHeight: 300 }, version: 0 };
+function buildPageState(pageId: PageId) {
+  return { state: { currentPage: pageId, leftSidebarCollapsed: false }, version: 0 };
 }
 
-function buildMultiPanelState(visiblePanels: string[]) {
-  const panels: Record<string, { visible: boolean; collapsed: boolean; position: string }> = {};
-  for (const p of ALL_PANELS) {
-    panels[p] = { visible: visiblePanels.includes(p), collapsed: false, position: BOTTOM_PANELS.includes(p) ? "bottom" : "right" };
-  }
-  return { state: { panels, leftSidebarCollapsed: false, rightSidebarCollapsed: false, bottomPanelHeight: 300 }, version: 0 };
-}
+/** Unique suffix for screenshot filenames to bust CDN caches */
+const RUN_ID = Date.now().toString(36);
 
 /** JS to mock Tauri invoke — proxies to real Redis via HTTP, falls back to defaults */
 const PROXY_TAURI_JS = `
@@ -100,9 +85,8 @@ window.__TAURI_INTERNALS__ = {
       case "llm_rag":
         return { response: "Based on the documents, here is the answer..." };
       case "llm_generate_embedding":
-        return { embedding: new Array(VECTOR_DIM).fill(0).map(() => Math.random()), model: "mock" };
+        return { embedding: new Array(384).fill(0).map(() => Math.random()), model: "mock" };
       case "vector_search":
-        // Handled by proxy — kept as fallback only
         return {
           results: [
             { key: "redust:doc:1", score: 0.95, fields: { title: "Getting Started with Redis", content: "Redis is an in-memory data structure store." } },
@@ -119,8 +103,6 @@ if (!window.__TAURI__) {
   window.__TAURI__ = {};
 }
 `;
-
-const VECTOR_DIM = 384; // all-MiniLM-L6-v2 output dimension
 
 /** Seed vector index with real semantic embeddings */
 async function seedVectorData() {
@@ -161,9 +143,10 @@ async function main() {
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
     deviceScaleFactor: 2,
+    colorScheme: "light",
   });
 
-  // Pre-seed connection config + mock Tauri on every new page
+  // Pre-seed connection config + force light theme on every new page
   await context.addInitScript((state) => {
     localStorage.setItem("redust-connections", JSON.stringify(state));
     localStorage.setItem("redust-theme", "light");
@@ -171,82 +154,10 @@ async function main() {
 
   await context.addInitScript(PROXY_TAURI_JS);
 
-  /** Create a fresh page with specific panel visible */
-  async function freshPage(panelId: string | null, opts?: { collapseLeft?: boolean }) {
+  /** Navigate to a specific page by setting localStorage and reloading */
+  async function openPage(pageId: PageId) {
     const page = await context.newPage();
-    const layout = buildLayoutState(panelId, opts);
-    await page.goto("http://localhost:4174", { waitUntil: "networkidle" });
-    await page.evaluate((s) => {
-      localStorage.setItem("redust-dashboard-layout", JSON.stringify(s));
-    }, layout);
-    // Set wider right panel for right-side panel screenshots
-    if (panelId && (RIGHT_PANELS as readonly string[]).includes(panelId)) {
-      await page.evaluate(() => {
-        localStorage.setItem("redust-panel-layout", JSON.stringify({
-          "left-sidebar": 0,
-          "main-content": 40,
-          "right-sidebar": 60,
-        }));
-      });
-      // Collapse left sidebar and MetricsBar for right panel screenshots
-      await page.evaluate(() => {
-        const current = JSON.parse(localStorage.getItem("redust-dashboard-layout") || "{}");
-        current.state = { ...current.state, leftSidebarCollapsed: true, rightSidebarCollapsed: true };
-        localStorage.setItem("redust-dashboard-layout", JSON.stringify(current));
-      });
-    }
-    await page.reload({ waitUntil: "networkidle" });
-    await page.waitForTimeout(2500);
-    return page;
-  }
-
-  /** Screenshot only the panel content area — no tabs, no headers, no other panels */
-  async function screenshotPanel(page: Page, panelId: string, filePath: string) {
-    const isBottom = BOTTOM_PANELS.includes(panelId);
-    await page.evaluate((isBottom) => {
-      if (isBottom) {
-        // Bottom panel: find 320px container, hide its tab bar (first child with border-b)
-        for (const el of document.querySelectorAll('[style]')) {
-          if ((el as HTMLElement).style.height === '320px') {
-            const tabBar = el.firstElementChild;
-            if (tabBar) (tabBar as HTMLElement).style.display = 'none';
-            (el as HTMLElement).id = 'screenshot-panel-target';
-            break;
-          }
-        }
-      } else {
-        // Right panel: find RightPanelGroup (border-t), hide its tab bar and header
-        const rs = document.getElementById('right-sidebar');
-        if (rs) {
-          const wrapper = rs.firstElementChild || rs;
-          for (const child of wrapper.children) {
-            if (child.classList.contains('border-t')) {
-              // Hide all children that have border-b (tab bar + header)
-              for (const gc of child.children) {
-                if (gc.classList.contains('border-b')) {
-                  (gc as HTMLElement).style.display = 'none';
-                }
-              }
-              (child as HTMLElement).id = 'screenshot-panel-target';
-              break;
-            }
-          }
-        }
-      }
-    }, isBottom);
-
-    const el = page.locator('#screenshot-panel-target');
-    if (await el.count() > 0) {
-      await el.screenshot({ path: filePath });
-    } else {
-      console.warn(`[SCREENSHOT] panel target not found, full page fallback`);
-      await page.screenshot({ path: filePath });
-    }
-  }
-
-  async function freshMultiPage(panelIds: string[]) {
-    const page = await context.newPage();
-    const layout = buildMultiPanelState(panelIds);
+    const layout = buildPageState(pageId);
     await page.goto("http://localhost:4174", { waitUntil: "networkidle" });
     await page.evaluate((s) => {
       localStorage.setItem("redust-dashboard-layout", JSON.stringify(s));
@@ -257,88 +168,77 @@ async function main() {
   }
 
   // 1. Main dashboard with sidebar expanded
-  let page = await freshPage(null);
+  let page = await openPage("dashboard");
   const aiGroup = page.locator('button').filter({ hasText: /🧠/ });
   await aiGroup.first().click();
   await page.waitForTimeout(500);
-  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, "01-dashboard-sidebar.png") });
+  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `01-dashboard-sidebar-${RUN_ID}.png`) });
   console.log("1. Dashboard + sidebar expanded");
   await page.close();
 
-  // 2. Vector Search panel — select index, type query, run search
-  page = await freshPage("vectorSearch");
-  // Wait for indexes to load asynchronously from proxy
+  // 2. Vector Search — select index, type query, run search
+  page = await openPage("vectorSearch");
   await page.waitForTimeout(3000);
-  // Select the seeded vector index (force: true for bottom panel overlap)
   const indexSelect = page.locator('select').first();
   if (await indexSelect.count() > 0) {
-    await indexSelect.selectOption({ value: "redust-docs-idx" }, { force: true }).catch(() => {});
+    await indexSelect.selectOption({ value: "redust-docs-idx" }).catch(() => {});
     await page.waitForTimeout(1000);
   }
-  // Type a query in the panel textarea (force: true for bottom panel overlap)
   const queryInput = page.locator('textarea').first();
   if (await queryInput.count() > 0) {
-    await queryInput.fill("Redis vector search", { force: true });
+    await queryInput.fill("Redis vector search");
     await page.waitForTimeout(300);
   }
-  // Click Search button via JS (Playwright click intercepted by overlay)
-  await page.evaluate(() => {
-    const panel = document.querySelector('.flex.h-full.flex-col.overflow-auto');
-    if (!panel) return;
-    const btn = [...panel.querySelectorAll('button')].find(b => b.textContent?.trim() === 'Search');
-    if (btn) btn.click();
-  });
+  const searchBtn = page.getByRole("button", { name: "Search", exact: true });
+  if (await searchBtn.count() > 0) {
+    await searchBtn.click().catch(() => {});
+  }
   await page.waitForTimeout(8000); // wait for embedding model load + search
-
-  // Hide all form elements so only results remain — avoids overlapping in the 320px panel
-  await page.evaluate(() => {
-    const panel = document.querySelector('.flex.h-full.flex-col.overflow-auto');
-    if (!panel) return;
-    // Structure: [select-row, textarea-block, top-k-row, (error?), button, time, results]
-    // Keep only the results div (has class "mt-2" and "flex-1")
-    for (const child of panel.children) {
-      if (child.classList.contains('mt-2')) continue; // results div
-      (child as HTMLElement).style.display = 'none';
-    }
-  });
-  await screenshotPanel(page, "vectorSearch", path.join(SCREENSHOTS_DIR, "02-vector-search.png"));
+  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `02-vector-search-${RUN_ID}.png`) });
   console.log("2. Vector Search with query");
+  // Switch to Results tab
+  const resultsTab = page.getByRole("tab", { name: /Results/ });
+  if (await resultsTab.count() > 0) {
+    await resultsTab.click();
+    await page.waitForTimeout(500);
+  }
+  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `02b-vector-results-${RUN_ID}.png`) });
+  console.log("2b. Vector Search Results tab");
   await page.close();
 
-  // 3. Monitoring panel — real metrics from Redis
-  page = await freshPage("monitoring");
-  await screenshotPanel(page, "monitoring", path.join(SCREENSHOTS_DIR, "03-monitoring.png"));
+  // 3. Monitoring — real metrics from Redis
+  page = await openPage("monitoring");
+  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `03-monitoring-${RUN_ID}.png`) });
   console.log("3. Monitoring metrics");
   await page.close();
 
-  // 4. Embedding Cache panel
-  page = await freshPage("embeddingCache");
-  await screenshotPanel(page, "embeddingCache", path.join(SCREENSHOTS_DIR, "04-embedding-cache.png"));
+  // 4. Embedding Cache
+  page = await openPage("embeddingCache");
+  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `04-embedding-cache-${RUN_ID}.png`) });
   console.log("4. Embedding Cache");
   await page.close();
 
-  // 5. Pub/Sub panel — channels loaded from Redis
-  page = await freshPage("pubsub");
+  // 5. Pub/Sub — channels loaded from Redis
+  page = await openPage("pubsub");
   await page.waitForTimeout(1000);
-  // Click a channel to select it
   const channelItem = page.getByText("notifications");
   if (await channelItem.count() > 0) {
     await channelItem.click();
     await page.waitForTimeout(300);
   }
-  await screenshotPanel(page, "pubsub", path.join(SCREENSHOTS_DIR, "05-pubsub.png"));
+  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `05-pubsub-${RUN_ID}.png`) });
   console.log("5. Pub/Sub with channels");
   await page.close();
 
-  // 6. Cluster Topology panel — node table from Redis
-  page = await freshPage("cluster");
+  // 6. Cluster Topology — node table from Redis
+  page = await openPage("cluster");
   await page.waitForTimeout(1000);
-  await screenshotPanel(page, "cluster", path.join(SCREENSHOTS_DIR, "06-cluster-topology.png"));
+  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `06-cluster-topology-${RUN_ID}.png`) });
   console.log("6. Cluster Topology");
   await page.close();
 
-  // 7. AI Chat panel — send a message to show chat bubbles
-  page = await freshPage("llmChat");
+  // 7. AI Chat — send a message to show chat bubbles
+  page = await openPage("llmChat");
   const chatInput = page.getByPlaceholder(/Ask about your Redis/i);
   if (await chatInput.count() > 0) {
     await chatInput.fill("How do I create a vector index in Redis?");
@@ -349,40 +249,47 @@ async function main() {
     await sendBtn.click();
     await page.waitForTimeout(1000);
   }
-  await screenshotPanel(page, "llmChat", path.join(SCREENSHOTS_DIR, "07-ai-chat.png"));
+  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `07-ai-chat-${RUN_ID}.png`) });
   console.log("7. AI Chat with message");
   await page.close();
 
   // 8. Command Palette
-  page = await freshPage(null);
+  page = await openPage("dashboard");
   await page.keyboard.press("Control+k");
   await page.waitForTimeout(500);
   await page.keyboard.type("vector");
   await page.waitForTimeout(300);
-  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, "08-command-palette.png") });
+  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `08-command-palette-${RUN_ID}.png`) });
   console.log("8. Command Palette");
   await page.close();
 
   // 9. Connection Manager modal
-  page = await freshPage(null);
+  page = await openPage("dashboard");
   const addBtn = page.getByRole("button", { name: /Add Connection/i });
   await addBtn.click();
   await page.waitForTimeout(800);
-  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, "09-connection-manager.png") });
+  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `09-connection-manager-${RUN_ID}.png`) });
   console.log("9. Connection Manager");
   await page.close();
 
-  // 10. All panels open (bottom: Monitoring + right: Cluster)
-  page = await freshMultiPage(["monitoring", "cluster"]);
+  // 10. Cluster Visualization
+  page = await openPage("clusterVis");
   await page.waitForTimeout(1000);
-  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, "10-all-panels.png") });
-  console.log("10. Dual panels");
+  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `10-cluster-visualization-${RUN_ID}.png`) });
+  console.log("10. Cluster Visualization");
+  await page.close();
+
+  // 11. Query Optimizer
+  page = await openPage("queryOptimizer");
+  await page.waitForTimeout(1000);
+  await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `11-query-optimizer-${RUN_ID}.png`) });
+  console.log("11. Query Optimizer");
   await page.close();
 
   await browser.close();
   await server.close();
   proxyProc.kill();
-  console.log(`\nDone! ${SCREENSHOTS_DIR}`);
+  console.log(`\nDone! ${SCREENSHOTS_DIR} (run: ${RUN_ID})`);
 }
 
 main().catch((err) => {
