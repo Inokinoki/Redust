@@ -22,7 +22,7 @@ interface FilterCondition {
 }
 
 interface VectorSearchProps {
-  variant?: "panel" | "modal";
+  variant?: "panel" | "modal" | "page";
   isOpen?: boolean;
   onClose?: () => void;
 }
@@ -691,6 +691,9 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
       </div>
     );
   }
+
+  // Page variant (inline, no overlay)
+  if (variant === "page") return <div className="h-full overflow-auto p-6">{content}</div>;
 
   // Modal variant (fallback)
   if (!isOpen) return null;

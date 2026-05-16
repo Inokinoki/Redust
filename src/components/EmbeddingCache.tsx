@@ -15,7 +15,7 @@ import {
 import { useConnectionStore } from "../stores/connectionStore";
 
 interface EmbeddingCacheProps {
-  variant?: "panel" | "modal";
+  variant?: "panel" | "modal" | "page";
   isOpen?: boolean;
   onClose?: () => void;
 }
@@ -308,6 +308,19 @@ export function EmbeddingCache({ variant = "modal", isOpen = true, onClose }: Em
             <div>{uploadContent}</div>
             <div>{tableContent}</div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Page variant (inline, no overlay)
+  if (variant === "page") {
+    return (
+      <div className="h-full overflow-auto p-6">
+        <h2 className="mb-4 text-xl font-semibold">Embedding Cache</h2>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div>{uploadContent}</div>
+          <div>{tableContent}</div>
         </div>
       </div>
     );

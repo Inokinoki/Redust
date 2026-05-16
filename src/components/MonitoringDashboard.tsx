@@ -41,7 +41,7 @@ function formatUptime(seconds: number): string {
 }
 
 interface MonitoringDashboardProps {
-  variant?: "panel" | "modal";
+  variant?: "panel" | "modal" | "page";
   isOpen?: boolean;
   onClose?: () => void;
 }
@@ -244,6 +244,9 @@ export function MonitoringDashboard({ variant = "modal", isOpen = true, onClose 
       </div>
     );
   }
+
+  // Page variant (inline, no overlay)
+  if (variant === "page") return <div className="h-full overflow-auto p-6">{content}</div>;
 
   // Modal variant (fallback)
   if (!isOpen) return null;

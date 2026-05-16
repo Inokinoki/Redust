@@ -22,7 +22,7 @@ interface ClusterInfo {
 }
 
 interface ClusterTopologyProps {
-  variant?: "panel" | "modal";
+  variant?: "panel" | "modal" | "page";
   isOpen?: boolean;
   onClose?: () => void;
 }
@@ -192,6 +192,9 @@ export function ClusterTopology({ variant = "modal", isOpen = true, onClose }: C
       </div>
     );
   }
+
+  // Page variant (inline, no overlay)
+  if (variant === "page") return <div className="h-full overflow-auto p-6">{content}</div>;
 
   // Modal variant (fallback)
   if (!isOpen) return null;

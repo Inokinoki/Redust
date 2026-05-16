@@ -14,7 +14,7 @@ import {
 import { useConnectionStore } from "../stores/connectionStore";
 
 interface ClusterVisualizationProps {
-  variant?: "panel" | "modal";
+  variant?: "panel" | "modal" | "page";
   isOpen?: boolean;
   onClose?: () => void;
 }
@@ -358,6 +358,19 @@ export function ClusterVisualization({ variant = "modal", isOpen = true, onClose
             <div className="lg:col-span-1">{settingsContent}</div>
             <div className="lg:col-span-2">{visualizationContent}</div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Page variant (inline, no overlay)
+  if (variant === "page") {
+    return (
+      <div className="h-full overflow-auto p-6">
+        <h2 className="mb-4 text-xl font-semibold">Cluster Visualization</h2>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-1">{settingsContent}</div>
+          <div className="lg:col-span-2">{visualizationContent}</div>
         </div>
       </div>
     );

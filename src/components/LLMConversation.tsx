@@ -25,7 +25,7 @@ interface RAGConfig {
 }
 
 interface LLMConversationProps {
-  variant?: "panel" | "modal";
+  variant?: "panel" | "modal" | "page";
   isOpen?: boolean;
   onClose?: () => void;
 }
@@ -330,6 +330,22 @@ export function LLMConversation({ variant = "modal", isOpen = true, onClose }: L
             {configContent}
           </div>
           <div className="flex-1 p-4">{chatContent}</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Page variant (inline, no overlay)
+  if (variant === "page") {
+    return (
+      <div className="flex h-full">
+        <div className="flex w-1/3 flex-col border-r border-zinc-200 p-6 dark:border-zinc-800">
+          <h2 className="mb-2 text-xl font-semibold">RAG Configuration</h2>
+          {configContent}
+        </div>
+        <div className="flex w-2/3 flex-col p-6">
+          <h2 className="mb-2 text-xl font-semibold">AI Chat</h2>
+          {chatContent}
         </div>
       </div>
     );
