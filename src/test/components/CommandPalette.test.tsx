@@ -173,7 +173,7 @@ describe("CommandPalette Component", () => {
     render(<CommandPalette isOpen={true} onClose={mockOnClose} commands={mockCommands} />);
 
     const command1Button = screen.getByText("Test Command 1").closest("button");
-    expect(command1Button).toHaveClass("bg-zinc-800", "text-zinc-100");
+    expect(command1Button).toHaveClass("bg-zinc-100", "text-zinc-900");
   });
 
   it("should close on Escape key", () => {
@@ -189,12 +189,12 @@ describe("CommandPalette Component", () => {
     const command1Button = screen.getByText("Test Command 1").closest("button");
     const command2Button = screen.getByText("Test Command 2").closest("button");
 
-    expect(command1Button).toHaveClass("bg-zinc-800", "text-zinc-100");
+    expect(command1Button).toHaveClass("bg-zinc-100", "text-zinc-900");
 
     fireEvent.keyDown(window, { key: "ArrowDown" });
 
-    expect(command2Button).toHaveClass("bg-zinc-800", "text-zinc-100");
-    expect(command1Button).not.toHaveClass("bg-zinc-800", "text-zinc-100");
+    expect(command2Button).toHaveClass("bg-zinc-100", "text-zinc-900");
+    expect(command1Button).not.toHaveClass("bg-zinc-100", "text-zinc-900");
   });
 
   it("should navigate up with ArrowUp key", () => {
@@ -204,12 +204,12 @@ describe("CommandPalette Component", () => {
     const command2Button = screen.getByText("Test Command 2").closest("button");
 
     fireEvent.keyDown(window, { key: "ArrowDown" });
-    expect(command2Button).toHaveClass("bg-zinc-800", "text-zinc-100");
+    expect(command2Button).toHaveClass("bg-zinc-100", "text-zinc-900");
 
     fireEvent.keyDown(window, { key: "ArrowUp" });
 
-    expect(command1Button).toHaveClass("bg-zinc-800", "text-zinc-100");
-    expect(command2Button).not.toHaveClass("bg-zinc-800", "text-zinc-100");
+    expect(command1Button).toHaveClass("bg-zinc-100", "text-zinc-900");
+    expect(command2Button).not.toHaveClass("bg-zinc-100", "text-zinc-900");
   });
 
   it("should execute selected command on Enter key", () => {
@@ -239,13 +239,13 @@ describe("CommandPalette Component", () => {
     fireEvent.keyDown(window, { key: "ArrowDown" });
 
     const command2Button = screen.getByText("Test Command 2").closest("button");
-    expect(command2Button).toHaveClass("bg-zinc-800", "text-zinc-100");
+    expect(command2Button).toHaveClass("bg-zinc-100", "text-zinc-900");
 
     fireEvent.change(input, { target: { value: "Other" } });
 
     await waitFor(() => {
       const otherButton = screen.getByText("Other Command").closest("button");
-      expect(otherButton).toHaveClass("bg-zinc-800", "text-zinc-100");
+      expect(otherButton).toHaveClass("bg-zinc-100", "text-zinc-900");
     });
   });
 
@@ -272,7 +272,7 @@ describe("CommandPalette Component", () => {
     fireEvent.keyDown(window, { key: "ArrowDown" });
     fireEvent.keyDown(window, { key: "ArrowDown" });
 
-    expect(lastButton).toHaveClass("bg-zinc-800", "text-zinc-100");
+    expect(lastButton).toHaveClass("bg-zinc-100", "text-zinc-900");
   });
 
   it("should not navigate ArrowUp beyond first command", () => {
@@ -282,7 +282,7 @@ describe("CommandPalette Component", () => {
 
     fireEvent.keyDown(window, { key: "ArrowUp" });
 
-    expect(firstButton).toHaveClass("bg-zinc-800", "text-zinc-100");
+    expect(firstButton).toHaveClass("bg-zinc-100", "text-zinc-900");
   });
 
   it("should not respond to keyboard events when closed", () => {

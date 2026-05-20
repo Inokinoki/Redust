@@ -261,6 +261,8 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        env:
+          NODE_OPTIONS: "--dns-result-order=ipv4first"
 
       - name: Build frontend
         run: npm run build

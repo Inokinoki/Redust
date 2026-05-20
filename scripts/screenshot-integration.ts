@@ -4,7 +4,7 @@
  * Prerequisites: docker run -d --name redust-redis -p 6379:6379 redis/redis-stack-server:latest
  * Usage: npx tsx scripts/screenshot-integration.ts
  */
-import { chromium, type Page } from "playwright";
+import { chromium } from "playwright";
 import { createServer } from "vite";
 import { spawn, spawnSync } from "child_process";
 import path from "path";

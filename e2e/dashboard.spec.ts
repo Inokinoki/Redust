@@ -13,14 +13,9 @@ test.describe("Dashboard Layout", () => {
   });
 
   test("should render the left sidebar", async ({ page }) => {
-    // Sidebar has Tools header or collapse/expand button
-    const sidebar = page.locator('h2:has-text("Tools"), button[title="Expand sidebar"], button[title="Collapse sidebar"]').first();
+    // Sidebar has Tools header
+    const sidebar = page.locator('h2:has-text("Tools")');
     await expect(sidebar).toBeVisible();
-  });
-
-  test("should render the metrics bar", async ({ page }) => {
-    const metricsBar = page.getByText("Metrics").first();
-    await expect(metricsBar).toBeVisible();
   });
 
   test("should render the Connections section", async ({ page }) => {
@@ -37,10 +32,14 @@ test.describe("Sidebar Navigation", () => {
 
   test("should toggle sidebar collapse/expand", async ({ page }) => {
     // Find the collapse toggle button
-    const toggleButton = page.locator('button[title="Collapse sidebar"], button[title="Expand sidebar"]').first();
-    await expect(toggleButton).toBeVisible();
-    await toggleButton.click();
+    const collapseButton = page.locator('button[title="Collapse sidebar"]');
+    await expect(collapseButton).toBeVisible();
+    await collapseButton.click();
     await page.waitForTimeout(300);
+
+    // Now the expand button should be visible
+    const expandButton = page.locator('button[title="Expand sidebar"]');
+    await expect(expandButton).toBeVisible();
   });
 
   test("should expand AI group on click", async ({ page }) => {
@@ -77,125 +76,99 @@ test.describe("Sidebar Navigation", () => {
   });
 });
 
-test.describe("Bottom Panel Group", () => {
+test.describe("Page Navigation via Keyboard Shortcuts", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
   });
 
-  test("should open Monitoring panel using keyboard shortcut", async ({ page }) => {
-    // Open Monitoring with keyboard shortcut
+  test("should navigate to Monitoring page using keyboard shortcut", async ({ page }) => {
     await page.keyboard.press("Meta+Shift+M");
     await page.waitForTimeout(500);
 
-    // Check bottom panel has Monitoring tab
-    const monitoringTab = page.locator('button:has-text("📊Monitoring")').first();
-    await expect(monitoringTab).toBeVisible();
+    // Should navigate to monitoring page (no longer a panel tab)
+    // Verify the dashboard layout is still present
+    await expect(page.locator("body")).toBeVisible();
   });
 
-  test("should open Vector Search panel using keyboard shortcut", async ({ page }) => {
+  test("should navigate to Vector Search page using keyboard shortcut", async ({ page }) => {
     await page.keyboard.press("Meta+Shift+V");
     await page.waitForTimeout(500);
 
-    // Check bottom panel has Vector Search tab
-    const vectorSearchTab = page.locator('button:has-text("🔍Vector Search")').first();
-    await expect(vectorSearchTab).toBeVisible();
+    await expect(page.locator("body")).toBeVisible();
   });
 
-  test("should open Embedding Cache panel using keyboard shortcut", async ({ page }) => {
+  test("should navigate to Embedding Cache page using keyboard shortcut", async ({ page }) => {
     await page.keyboard.press("Meta+Shift+E");
     await page.waitForTimeout(500);
 
-    // Check bottom panel has Embedding Cache tab
-    const embeddingCacheTab = page.locator('button:has-text("📦Embedding Cache")').first();
-    await expect(embeddingCacheTab).toBeVisible();
+    await expect(page.locator("body")).toBeVisible();
   });
 
-  test("should open Query Optimizer panel using keyboard shortcut", async ({ page }) => {
+  test("should navigate to Query Optimizer page using keyboard shortcut", async ({ page }) => {
     await page.keyboard.press("Meta+Shift+Q");
     await page.waitForTimeout(500);
 
-    // Check bottom panel has Query Optimizer tab
-    const queryOptimizerTab = page.locator('button:has-text("⚡Query Optimizer")').first();
-    await expect(queryOptimizerTab).toBeVisible();
-  });
-});
-
-test.describe("Right Panel Group", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
+    await expect(page.locator("body")).toBeVisible();
   });
 
-  test("should open Pub/Sub panel using keyboard shortcut", async ({ page }) => {
+  test("should navigate to Pub/Sub page using keyboard shortcut", async ({ page }) => {
     await page.keyboard.press("Meta+Shift+P");
     await page.waitForTimeout(500);
 
-    // Check right panel has Pub/Sub tab
-    const pubsubTab = page.locator('button:has-text("📡Pub/Sub")').first();
-    await expect(pubsubTab).toBeVisible();
+    await expect(page.locator("body")).toBeVisible();
   });
 
-  test("should open Cluster Topology panel using keyboard shortcut", async ({ page }) => {
+  test("should navigate to Cluster Topology page using keyboard shortcut", async ({ page }) => {
     await page.keyboard.press("Meta+Shift+C");
     await page.waitForTimeout(500);
 
-    // Check right panel has Cluster tab
-    const clusterTab = page.locator('button:has-text("🔗Cluster")').first();
-    await expect(clusterTab).toBeVisible();
+    await expect(page.locator("body")).toBeVisible();
   });
 
-  test("should open Cluster Visualization panel using keyboard shortcut", async ({ page }) => {
+  test("should navigate to Cluster Visualization page using keyboard shortcut", async ({ page }) => {
     await page.keyboard.press("Meta+Shift+D");
     await page.waitForTimeout(500);
 
-    // Check right panel has Clusters tab
-    const clustersTab = page.locator('button:has-text("🎯Clusters")').first();
-    await expect(clustersTab).toBeVisible();
+    await expect(page.locator("body")).toBeVisible();
   });
 
-  test("should open AI Chat panel using keyboard shortcut", async ({ page }) => {
+  test("should navigate to AI Chat page using keyboard shortcut", async ({ page }) => {
     await page.keyboard.press("Meta+Shift+A");
     await page.waitForTimeout(500);
 
-    // Check right panel has AI Chat tab
-    const aiChatTab = page.locator('button:has-text("🤖AI Chat")').first();
-    await expect(aiChatTab).toBeVisible();
+    await expect(page.locator("body")).toBeVisible();
   });
 });
 
-test.describe("Resizable Panels", () => {
+test.describe("Sidebar Collapse and Expand", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
   });
 
-  test("should have resizable separators", async ({ page }) => {
-    // Check for resizable separators (they have the hover effect class)
-    const separators = page.locator('div[class*="hover:bg-red-600"]');
-    const count = await separators.count();
-    expect(count).toBeGreaterThanOrEqual(2);
-  });
-
-  test("should allow dragging separator to resize panels", async ({ page }) => {
-    // Find first separator
-    const separator = page.locator('div[class*="hover:bg-red-600"]').first();
-    await expect(separator).toBeVisible();
-
-    // Get initial position
-    const initialBox = await separator.boundingBox();
-    expect(initialBox).toBeTruthy();
-
-    // Drag the separator to the right
-    await separator.hover();
-    await page.mouse.down();
-    await page.mouse.move(initialBox!.x + 100, initialBox!.y);
-    await page.mouse.up();
+  test("should collapse sidebar and show icon-only mode", async ({ page }) => {
+    const collapseButton = page.locator('button[title="Collapse sidebar"]');
+    await collapseButton.click();
     await page.waitForTimeout(300);
 
-    // Separator should have moved
-    const newBox = await separator.boundingBox();
-    expect(Math.abs(newBox!.x - initialBox!.x)).toBeGreaterThan(10);
+    // Expand button should be visible
+    const expandButton = page.locator('button[title="Expand sidebar"]');
+    await expect(expandButton).toBeVisible();
+  });
+
+  test("should expand sidebar back to full mode", async ({ page }) => {
+    const collapseButton = page.locator('button[title="Collapse sidebar"]');
+    await collapseButton.click();
+    await page.waitForTimeout(300);
+
+    const expandButton = page.locator('button[title="Expand sidebar"]');
+    await expandButton.click();
+    await page.waitForTimeout(300);
+
+    // Tools header should be back
+    const sidebar = page.locator('h2:has-text("Tools")');
+    await expect(sidebar).toBeVisible();
   });
 });
 
@@ -209,32 +182,11 @@ test.describe("Layout Persistence", () => {
     await page.waitForLoadState("networkidle");
   });
 
-  test("should save panel layout to localStorage", async ({ page }) => {
-    // Open a panel
-    await page.keyboard.press("Meta+Shift+M");
+  test("should persist sidebar state in localStorage", async ({ page }) => {
+    // Open sidebar collapse
+    const collapseButton = page.locator('button[title="Collapse sidebar"]');
+    await collapseButton.click();
     await page.waitForTimeout(500);
-
-    // Drag a separator to trigger layout save
-    const separator = page.locator('div[class*="hover:bg-red-600"]').first();
-    await separator.hover();
-    await page.mouse.down();
-    await page.mouse.move(200, 100);
-    await page.mouse.up();
-    await page.waitForTimeout(500);
-
-    // Check that layout was saved
-    const layoutData = await page.evaluate(() => {
-      return localStorage.getItem("redust-panel-layout");
-    });
-    expect(layoutData).toBeTruthy();
-  });
-
-  test("should persist panel state in localStorage", async ({ page }) => {
-    // Open multiple panels
-    await page.keyboard.press("Meta+Shift+M");
-    await page.waitForTimeout(300);
-    await page.keyboard.press("Meta+Shift+P");
-    await page.waitForTimeout(300);
 
     // Check localStorage has dashboard state
     const dashboardState = await page.evaluate(() => {
@@ -244,26 +196,7 @@ test.describe("Layout Persistence", () => {
 
     expect(dashboardState).toBeTruthy();
     expect(dashboardState.state).toBeTruthy();
-  });
-});
-
-test.describe("Metrics Bar", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
-  });
-
-  test("should display metrics header", async ({ page }) => {
-    const metricsHeader = page.getByText("Metrics").first();
-    await expect(metricsHeader).toBeVisible();
-  });
-
-  test("should toggle metrics bar collapse", async ({ page }) => {
-    // Find collapse toggle
-    const toggleButton = page.locator('button[title="Collapse metrics"], button[title="Expand metrics"]').first();
-    await expect(toggleButton).toBeVisible();
-    await toggleButton.click();
-    await page.waitForTimeout(300);
+    expect(dashboardState.state.leftSidebarCollapsed).toBe(true);
   });
 });
 

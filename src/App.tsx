@@ -11,7 +11,7 @@ import { ThemeToggle } from "./components/ThemeToggle";
 import { DashboardLayout } from "./components/Dashboard/DashboardLayout";
 import { useCommandPalette } from "./stores/commandPaletteStore";
 import { useSplitPaneStore } from "./stores/splitPaneStore";
-import { useDashboardStore } from "./stores/dashboardStore";
+import { useDashboardStore, type PageId } from "./stores/dashboardStore";
 import { Command } from "./stores/commandPaletteStore";
 import { Button } from "./components/ui/button";
 import "./index.css";
@@ -49,7 +49,7 @@ function App() {
 
   // Helper to navigate to pages
   const navigateToPage = (pageId: string) => {
-    useDashboardStore.getState().navigateTo(pageId as any);
+    useDashboardStore.getState().navigateTo(pageId as PageId);
   };
 
   const commands: Command[] = [
