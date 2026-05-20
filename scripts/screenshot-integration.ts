@@ -169,9 +169,6 @@ async function main() {
 
   // 1. Main dashboard with sidebar expanded
   let page = await openPage("dashboard");
-  const aiGroup = page.locator('button').filter({ hasText: /🧠/ });
-  await aiGroup.first().click();
-  await page.waitForTimeout(500);
   await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `01-dashboard-sidebar-${RUN_ID}.png`) });
   console.log("1. Dashboard + sidebar expanded");
   await page.close();
