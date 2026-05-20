@@ -44,7 +44,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     useDashboardStore();
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] w-full">
+    <div className="flex h-[calc(100vh-2.25rem)] w-full">
       {/* Left Sidebar */}
       <Sidebar collapsed={leftSidebarCollapsed} onToggle={toggleLeftSidebar} />
 

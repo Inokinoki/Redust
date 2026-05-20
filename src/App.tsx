@@ -6,14 +6,13 @@ import { ValueEditor } from "./components/ValueEditor";
 import { ImportExport } from "./components/ImportExport";
 import { LuaScriptEditor } from "./components/LuaScriptEditor";
 import { CommandPalette } from "./components/CommandPalette";
-import { SplitPane, SplitButton } from "./components/SplitPane";
+import { SplitPane } from "./components/SplitPane";
 import { TitleBar } from "./components/TitleBar";
 import { DashboardLayout } from "./components/Dashboard/DashboardLayout";
 import { useCommandPalette } from "./stores/commandPaletteStore";
 import { useSplitPaneStore } from "./stores/splitPaneStore";
 import { useDashboardStore, type PageId } from "./stores/dashboardStore";
 import { Command } from "./stores/commandPaletteStore";
-import { Button } from "./components/ui/button";
 import "./index.css";
 
 function App() {
@@ -269,23 +268,11 @@ function App() {
 
   return (
     <div className="flex h-screen flex-col bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      {/* Native-style Title Bar */}
-      <TitleBar />
-
-      {/* Toolbar - Below title bar */}
-      <header className="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 px-4 py-2">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowConnectionManager(true)}>
-            + Add Connection
-          </Button>
-          <SplitButton />
-        </div>
-        <Button variant="ghost" size="sm" onClick={open}>
-          <kbd className="rounded border border-zinc-300 bg-zinc-200 px-2 py-1 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-            ⌘K
-          </kbd>
-        </Button>
-      </header>
+      {/* Native-style Title Bar — all-in-one: breadcrumb, actions, window controls */}
+      <TitleBar
+        onOpenCommandPalette={open}
+        onAddConnection={() => setShowConnectionManager(true)}
+      />
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
@@ -306,7 +293,6 @@ function App() {
       <LuaScriptEditor isOpen={showLuaEditor} onClose={() => setShowLuaEditor(false)} />
 
       <CommandPalette isOpen={isOpen} onClose={close} commands={commands} />
-
       <ConnectionManager
         isOpen={showConnectionManager}
         onClose={() => setShowConnectionManager(false)}
