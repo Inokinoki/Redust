@@ -1,6 +1,23 @@
 import { useState, useEffect } from "react";
-import { appWindow } from "@tauri-apps/api/window";
 import { useDashboardStore, type PageId } from "../stores/dashboardStore";
+
+// Lazy-load Tauri API with fallback for browser/dev environments
+let appWindow: {
+  isMaximized: () => Promise<boolean>;
+  minimize: () => Promise<void>;
+  maximize: () => Promise<void>;
+  unmaximize: () => Promise<void>;
+  close: () => Promise<void>;
+  onFocusChanged: (cb: (e: { payload: boolean }) => void) => Promise<() => void>;
+} | null = null;
+
+try {
+  // Dynamic import will fail gracefully in browser without Tauri
+  const tauriWindow = await import("@tauri-apps/api/window");
+  appWindow = tauriWindow.appWindow;
+} catch {
+  // Not running in Tauri — window controls will be hidden
+}
 
 const PAGE_LABELS: Record<PageId, string> = {
   dashboard: "Keys",
@@ -24,7 +41,10 @@ export function TitleBar({ onOpenCommandPalette, onAddConnection }: TitleBarProp
   const [isFocused, setIsFocused] = useState(true);
   const currentPage = useDashboardStore((s) => s.currentPage);
 
+  const isTauri = !!appWindow;
+
   useEffect(() => {
+    if (!appWindow) return;
     appWindow.isMaximized().then(setMaximized);
 
     const unlistenFocus = appWindow.onFocusChanged(({ payload: focused }) => {
@@ -36,13 +56,14 @@ export function TitleBar({ onOpenCommandPalette, onAddConnection }: TitleBarProp
     };
   }, []);
 
-  const handleMinimize = () => appWindow.minimize();
+  const handleMinimize = () => appWindow?.minimize();
   const handleMaximize = () => {
+    if (!appWindow) return;
     if (maximized) appWindow.unmaximize();
     else appWindow.maximize();
     setMaximized(!maximized);
   };
-  const handleClose = () => appWindow.close();
+  const handleClose = () => appWindow?.close();
 
   const isMac = navigator.userAgent.includes("Mac");
 
@@ -112,10 +133,10 @@ export function TitleBar({ onOpenCommandPalette, onAddConnection }: TitleBarProp
         )}
 
         {/* Separator before window controls */}
-        {!isMac && <div className="mx-1 h-4 w-px bg-zinc-300 dark:bg-zinc-700" />}
+        {isTauri && !isMac && <div className="mx-1 h-4 w-px bg-zinc-300 dark:bg-zinc-700" />}
 
-        {/* Window controls: Windows/Linux only */}
-        {!isMac && (
+        {/* Window controls: Windows/Linux only, Tauri environment */}
+        {isTauri && !isMac && (
           <>
             <button
               onClick={handleMinimize}
