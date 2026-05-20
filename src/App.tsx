@@ -7,7 +7,7 @@ import { ImportExport } from "./components/ImportExport";
 import { LuaScriptEditor } from "./components/LuaScriptEditor";
 import { CommandPalette } from "./components/CommandPalette";
 import { SplitPane, SplitButton } from "./components/SplitPane";
-import { ThemeToggle } from "./components/ThemeToggle";
+import { TitleBar } from "./components/TitleBar";
 import { DashboardLayout } from "./components/Dashboard/DashboardLayout";
 import { useCommandPalette } from "./stores/commandPaletteStore";
 import { useSplitPaneStore } from "./stores/splitPaneStore";
@@ -268,39 +268,38 @@ function App() {
   }, [open, close]);
 
   return (
-    <div className="min-h-screen bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      <header className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center space-x-2">
-            <h1 className="text-2xl font-bold text-red-500">Redust</h1>
-            <span className="text-sm text-zinc-600 dark:text-zinc-400">v0.1.0</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Button variant="outline" onClick={() => setShowConnectionManager(true)}>
-              + Add Connection
-            </Button>
-            <SplitButton />
-            <Button variant="ghost" onClick={open}>
-              <kbd className="rounded border border-zinc-300 bg-zinc-200 px-2 py-1 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-                ⌘K
-              </kbd>
-            </Button>
-          </div>
+    <div className="flex h-screen flex-col bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
+      {/* Native-style Title Bar */}
+      <TitleBar />
+
+      {/* Toolbar - Below title bar */}
+      <header className="flex items-center justify-between border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 px-4 py-2">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowConnectionManager(true)}>
+            + Add Connection
+          </Button>
+          <SplitButton />
         </div>
+        <Button variant="ghost" size="sm" onClick={open}>
+          <kbd className="rounded border border-zinc-300 bg-zinc-200 px-2 py-1 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+            ⌘K
+          </kbd>
+        </Button>
       </header>
 
-      <DashboardLayout>
-        {/* Main content: Connection List + Key Browser */}
-        <div className="grid h-full grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-1">
-            <ConnectionList />
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden">
+        <DashboardLayout>
+          <div className="grid h-full grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-1">
+              <ConnectionList />
+            </div>
+            <div className="lg:col-span-2">
+              <KeyBrowser onKeyClick={handleKeyClick} onRightClick={handleRightClick} />
+            </div>
           </div>
-          <div className="lg:col-span-2">
-            <KeyBrowser onKeyClick={handleKeyClick} onRightClick={handleRightClick} />
-          </div>
-        </div>
-      </DashboardLayout>
+        </DashboardLayout>
+      </div>
 
       {/* Modal Components (remain as modals for focused tasks) */}
       <ImportExport isOpen={showImportExport} onClose={() => setShowImportExport(false)} />
