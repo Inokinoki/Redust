@@ -5,6 +5,9 @@ import type { KeyInfo } from "../types";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { VirtualList } from "./VirtualList";
+import { KeyTree } from "./KeyTree";
+
+type ViewMode = "table" | "tree";
 
 export function KeyBrowser({
   onKeyClick,
@@ -16,6 +19,7 @@ export function KeyBrowser({
   const activeConnection = useConnectionStore((state) => state.getActiveConnection());
   const { keys, searchPattern, isLoading, setKeys, setSearchPattern, setIsLoading } = useKeyStore();
   const [debouncedPattern, setDebouncedPattern] = useState(searchPattern);
+  const [viewMode, setViewMode] = useState<ViewMode>("tree");
 
   // Debounce search pattern
   useEffect(() => {
@@ -80,7 +84,40 @@ export function KeyBrowser({
   return (
     <div className="flex h-full flex-col">
       <div className="mb-4 space-y-4">
-        <h2 className="text-xl font-semibold">Keys</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Keys</h2>
+          {/* View mode toggle */}
+          <div className="flex rounded-md border border-zinc-200 dark:border-zinc-700">
+            <button
+              onClick={() => setViewMode("tree")}
+              className={`flex items-center gap-1 rounded-l-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                viewMode === "tree"
+                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              }`}
+              title="Tree view"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+              </svg>
+              Tree
+            </button>
+            <button
+              onClick={() => setViewMode("table")}
+              className={`flex items-center gap-1 rounded-r-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                viewMode === "table"
+                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              }`}
+              title="Table view"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18M3 6h18M3 18h18" />
+              </svg>
+              Table
+            </button>
+          </div>
+        </div>
         <div className="flex space-x-2">
           <Input
             placeholder="Search keys (e.g., user:*, cache:*)"
@@ -99,6 +136,16 @@ export function KeyBrowser({
       ) : keys.length === 0 ? (
         <div className="flex items-center justify-center py-8">
           <p className="text-zinc-600 dark:text-zinc-400">No keys found</p>
+        </div>
+      ) : viewMode === "tree" ? (
+        <div className="flex-1 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+          <KeyTree
+            keys={keys}
+            onKeyClick={(key, type) => onKeyClick?.(key, type)}
+            onKeyContextMenu={(key, type) => {
+              onRightClick?.(key, type);
+            }}
+          />
         </div>
       ) : (
         <div className="flex-1 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">

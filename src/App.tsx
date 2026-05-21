@@ -266,6 +266,42 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, close]);
 
+  // Listen for native menu events from Tauri
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+
+    (async () => {
+      try {
+        const { listen } = await import("@tauri-apps/api/event");
+        unlisten = await listen<string>("menu-event", (event) => {
+          switch (event.payload) {
+            case "new_conn":
+              setShowConnectionManager(true);
+              break;
+            case "import_export":
+              setShowImportExport(true);
+              break;
+            case "cmd_palette":
+              open();
+              break;
+            case "toggle_sidebar":
+              useDashboardStore.getState().toggleLeftSidebar();
+              break;
+            case "about":
+              alert("Redust — Next-Gen Redis GUI\nVersion 0.1.0");
+              break;
+          }
+        });
+      } catch {
+        // Not running in Tauri
+      }
+    })();
+
+    return () => {
+      unlisten?.();
+    };
+  }, [open]);
+
   return (
     <div className="flex h-screen flex-col bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
       {/* Native-style Title Bar — all-in-one: breadcrumb, actions, window controls */}
