@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { ConnectionManager } from "./components/ConnectionManager";
-import { ConnectionList } from "./components/ConnectionList";
 import { KeyBrowser } from "./components/KeyBrowser";
 import { ValueEditor } from "./components/ValueEditor";
 import { ImportExport } from "./components/ImportExport";
@@ -283,14 +282,7 @@ function App() {
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
         <DashboardLayout onAddConnection={() => setShowConnectionManager(true)}>
-          <div className="grid h-full grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-1">
-              <ConnectionList />
-            </div>
-            <div className="lg:col-span-2">
-              <KeyBrowser onKeyClick={handleKeyClick} />
-            </div>
-          </div>
+          <KeyBrowser onKeyClick={handleKeyClick} />
         </DashboardLayout>
       </div>
 
