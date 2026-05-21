@@ -3,22 +3,24 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card } from "./ui/card";
+import { useToastStore } from "../stores/toastStore";
 
 export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [keyPattern, setKeyPattern] = useState("*");
+  const addToast = useToastStore((s) => s.addToast);
 
   const handleExport = () => {
-    alert("Import/Export functionality requires Tauri plugins to be installed.");
+    addToast("info", "Import/Export functionality requires Tauri plugins to be installed.");
     // TODO: Implement with @tauri-apps/plugin-dialog when available
   };
 
   const handleImport = () => {
-    alert("Import/Export functionality requires Tauri plugins to be installed.");
+    addToast("info", "Import/Export functionality requires Tauri plugins to be installed.");
     // TODO: Implement with @tauri-apps/plugin-dialog and @tauri-apps/plugin-fs when available
   };
 
   const handleDelete = () => {
-    alert("Import/Export functionality requires Tauri plugins to be installed.");
+    addToast("info", "Import/Export functionality requires Tauri plugins to be installed.");
     // TODO: Implement with @tauri-apps/plugin-dialog when available
   };
 

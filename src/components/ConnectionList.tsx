@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { useConnectionStore } from "../stores";
+import { useToastStore } from "../stores/toastStore";
 import { testConnection } from "../lib/api";
 import type { ConnectionConfig } from "../types";
 
@@ -9,14 +10,15 @@ export function ConnectionList() {
   const { connections, activeConnectionId, setActiveConnection, deleteConnection } =
     useConnectionStore();
   const [testing, setTesting] = useState<string | null>(null);
+  const addToast = useToastStore((s) => s.addToast);
 
   const handleTestConnection = async (config: ConnectionConfig) => {
     setTesting(config.id);
     try {
       const result = await testConnection(config);
-      alert(`Connection successful: ${result}`);
+      addToast("success", `Connection successful: ${result}`);
     } catch (error) {
-      alert(`Connection failed: ${error}`);
+      addToast("error", `Connection failed: ${error}`);
     }
     setTesting(null);
   };

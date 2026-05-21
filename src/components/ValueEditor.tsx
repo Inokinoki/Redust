@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from "./ui/dialog";
+import { useToastStore } from "../stores/toastStore";
 import { useConnectionStore } from "../stores";
 import {
   getString,
@@ -94,7 +95,7 @@ export function ValueEditor({ isOpen, onClose, key, keyType }: ValueEditorProps)
       }, 500);
     } catch (error) {
       console.error("Failed to save value:", error);
-      alert("Failed to save value. Please check the format.");
+      useToastStore.getState().addToast("error", "Failed to save value. Please check the format.");
     } finally {
       setLoading(false);
     }

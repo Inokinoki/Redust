@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Button } from "./ui/button";
+import { useToastStore } from "../stores/toastStore";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
 import { useConnectionStore } from "../stores/connectionStore";
@@ -68,16 +69,18 @@ return deleted`,
     setArgs(example.args);
   };
 
+  const addToast = useToastStore((s) => s.addToast);
+
   const handleSaveScript = () => {
     if (!script.trim()) {
-      alert("Please enter a script to save");
+      addToast("warning", "Please enter a script to save");
       return;
     }
 
     const name = prompt("Enter a name for this script:");
     if (name) {
       setSavedScripts((prev) => ({ ...prev, [name]: script }));
-      alert(`Script saved as "${name}"`);
+      addToast("success", `Script saved as "${name}"`);
     }
   };
 
@@ -91,12 +94,12 @@ return deleted`,
   const handleRunScript = async () => {
     const config = getActiveConnection();
     if (!config) {
-      alert("No active connection");
+      addToast("error", "No active connection");
       return;
     }
 
     if (!script.trim()) {
-      alert("Please enter a script");
+      addToast("warning", "Please enter a script");
       return;
     }
 

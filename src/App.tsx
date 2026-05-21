@@ -7,6 +7,7 @@ import { ImportExport } from "./components/ImportExport";
 import { LuaScriptEditor } from "./components/LuaScriptEditor";
 import { CommandPalette } from "./components/CommandPalette";
 import { SplitPane } from "./components/SplitPane";
+import { ToastContainer } from "./components/ToastContainer";
 import { TitleBar } from "./components/TitleBar";
 import { DashboardLayout } from "./components/Dashboard/DashboardLayout";
 import { useCommandPalette } from "./stores/commandPaletteStore";
@@ -288,7 +289,9 @@ function App() {
               useDashboardStore.getState().toggleLeftSidebar();
               break;
             case "about":
-              alert("Redust — Next-Gen Redis GUI\nVersion 0.1.0");
+              import("./stores/toastStore").then(({ useToastStore }) => {
+                useToastStore.getState().addToast("info", "Redust — Next-Gen Redis GUI v0.1.0", 5000);
+              });
               break;
           }
         });
@@ -335,6 +338,8 @@ function App() {
       />
 
       <SplitPane />
+
+      <ToastContainer />
 
       {selectedKey && (
         <ValueEditor

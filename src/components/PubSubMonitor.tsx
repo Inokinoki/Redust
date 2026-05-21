@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { useToastStore } from "../stores/toastStore";
 import { Card } from "./ui/card";
 import { useConnectionStore } from "../stores/connectionStore";
 
@@ -50,8 +51,9 @@ export function PubSubMonitor({ variant = "modal", isOpen = true, onClose }: Pub
     if (!inputChannel.trim() || !inputMessage.trim()) return;
 
     const config = getActiveConnection();
+    const addToast = useToastStore.getState().addToast;
     if (!config) {
-      alert("No active connection");
+      addToast("error", "No active connection");
       return;
     }
 
@@ -74,7 +76,7 @@ export function PubSubMonitor({ variant = "modal", isOpen = true, onClose }: Pub
       setInputMessage("");
     } catch (error) {
       console.error("Failed to publish message:", error);
-      alert("Failed to publish message. Check your connection.");
+      useToastStore.getState().addToast("error", "Failed to publish message. Check your connection.");
     }
   };
 
