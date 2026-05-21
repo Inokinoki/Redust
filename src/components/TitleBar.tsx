@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDashboardStore, type PageId } from "../stores/dashboardStore";
+import { useConnectionStore } from "../stores/connectionStore";
+import type { ConnectionConfig } from "../types";
 
 // Lazy-load Tauri API with fallback for browser/dev environments
 let appWindow: {
@@ -34,6 +36,52 @@ const PAGE_LABELS: Record<PageId, string> = {
 interface TitleBarProps {
   onOpenCommandPalette?: () => void;
   onAddConnection?: () => void;
+}
+
+function ConnectionTabsInTitleBar() {
+  const { connections, activeConnectionId, setActiveConnection } =
+    useConnectionStore();
+
+  // Single or no connection: show simple indicator
+  if (connections.length <= 1) {
+    const active = connections.find((c) => c.id === activeConnectionId);
+    return (
+      <div className="ml-3 flex items-center gap-1.5" data-tauri-drag-region>
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        <span className="text-[10px] text-zinc-500 dark:text-zinc-500">
+          {active ? `${active.host}:${active.port}` : "No connection"}
+        </span>
+      </div>
+    );
+  }
+
+  // Multiple connections: show tabs
+  return (
+    <div className="ml-2 flex items-center gap-0.5" data-tauri-drag-region>
+      {connections.map((conn: ConnectionConfig) => {
+        const isActive = activeConnectionId === conn.id;
+        return (
+          <button
+            key={conn.id}
+            onClick={() => setActiveConnection(conn.id)}
+            className={`flex shrink-0 items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium transition-colors ${
+              isActive
+                ? "bg-zinc-200 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-100"
+                : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+            }`}
+            title={`${conn.host}:${conn.port}${conn.tls ? " (TLS)" : ""}`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                isActive ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-600"
+              }`}
+            />
+            <span className="max-w-[64px] truncate">{conn.name}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 export function TitleBar({ onOpenCommandPalette, onAddConnection }: TitleBarProps) {
@@ -92,11 +140,8 @@ export function TitleBar({ onOpenCommandPalette, onAddConnection }: TitleBarProp
         </div>
       )}
 
-      {/* Connection indicator */}
-      <div className="ml-3 flex items-center gap-1.5" data-tauri-drag-region>
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-        <span className="text-[10px] text-zinc-500 dark:text-zinc-500">localhost:6379</span>
-      </div>
+      {/* Connection tabs (when multiple connections exist) */}
+      <ConnectionTabsInTitleBar />
 
       {/* Center spacer - draggable */}
       <div className="flex-1" data-tauri-drag-region />
