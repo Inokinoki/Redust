@@ -1,57 +1,66 @@
 import { useState } from "react";
 import { Button } from "../ui/button";
-import { useDashboardStore, type PageId } from "../../stores/dashboardStore";
-
-interface NavItem {
-  id: string;
-  label: string;
-  icon: string;
-  shortcut: string;
-  group: "ai" | "monitor" | "tools";
-  pageId?: PageId; // if present, navigates to page; otherwise opens modal
-}
-
-const NAV_ITEMS: NavItem[] = [
-  // AI Features
-  { id: "vectorSearch", label: "Vector Search", icon: "🔍", shortcut: "Cmd+Shift+V", group: "ai", pageId: "vectorSearch" },
-  { id: "embeddingCache", label: "Embedding Cache", icon: "📦", shortcut: "Cmd+Shift+E", group: "ai", pageId: "embeddingCache" },
-  { id: "clusterVis", label: "Clusters", icon: "🎯", shortcut: "Cmd+Shift+D", group: "ai", pageId: "clusterVis" },
-  { id: "llmChat", label: "AI Chat", icon: "🤖", shortcut: "Cmd+Shift+A", group: "ai", pageId: "llmChat" },
-  { id: "queryOptimizer", label: "Query Optimizer", icon: "⚡", shortcut: "Cmd+Shift+Q", group: "ai", pageId: "queryOptimizer" },
-  // Monitor
-  { id: "monitoring", label: "Monitoring", icon: "📊", shortcut: "Cmd+Shift+M", group: "monitor", pageId: "monitoring" },
-  { id: "cluster", label: "Cluster Topology", icon: "🔗", shortcut: "Cmd+Shift+C", group: "monitor", pageId: "cluster" },
-  { id: "pubsub", label: "Pub/Sub", icon: "📡", shortcut: "Cmd+Shift+P", group: "monitor", pageId: "pubsub" },
-  // Tools (these open modals, handled in App.tsx)
-  { id: "importExport", label: "Import/Export", icon: "📥", shortcut: "Cmd+Shift+I", group: "tools" },
-  { id: "luaEditor", label: "Lua Editor", icon: "📝", shortcut: "Cmd+Shift+L", group: "tools" },
-];
+import { useConnectionStore } from "../../stores/connectionStore";
+import { useTabStore, getPageLabel, type PageId } from "../../stores/tabStore";
+import type { ConnectionConfig } from "../../types";
 
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  onAddConnection?: () => void;
 }
 
-export function Sidebar({ collapsed, onToggle }: SidebarProps) {
-  const [openGroup, setOpenGroup] = useState<string | null>(null);
-  const currentPage = useDashboardStore((s) => s.currentPage);
+const PAGE_GROUPS = [
+  {
+    id: "main",
+    label: "Main",
+    pages: [
+      { pageId: "dashboard" as PageId, icon: "\u{1F511}" },
+    ],
+  },
+  {
+    id: "ai",
+    label: "AI",
+    pages: [
+      { pageId: "vectorSearch" as PageId, icon: "\u{1F50D}" },
+      { pageId: "embeddingCache" as PageId, icon: "\u{1F4E6}" },
+      { pageId: "clusterVis" as PageId, icon: "\u{1F3AF}" },
+      { pageId: "llmChat" as PageId, icon: "\u{1F916}" },
+      { pageId: "queryOptimizer" as PageId, icon: "\u26A1" },
+    ],
+  },
+  {
+    id: "monitor",
+    label: "Monitor",
+    pages: [
+      { pageId: "monitoring" as PageId, icon: "\u{1F4CA}" },
+      { pageId: "cluster" as PageId, icon: "\u{1F517}" },
+      { pageId: "pubsub" as PageId, icon: "\u{1F4E1}" },
+    ],
+  },
+];
+
+export function Sidebar({ collapsed, onToggle, onAddConnection }: SidebarProps) {
+  const [openGroup, setOpenGroup] = useState<string>("main");
+  const connections = useConnectionStore((s) => s.connections);
+  const activeTab = useTabStore((s) => s.getActiveTab());
+  const openTab = useTabStore((s) => s.openTab);
 
   const toggleGroup = (group: string) => {
-    setOpenGroup(openGroup === group ? null : group);
+    setOpenGroup(openGroup === group ? "" : group);
   };
 
-  const handleItemClick = (item: NavItem) => {
-    if (item.pageId) {
-      useDashboardStore.getState().navigateTo(item.pageId);
+  const currentConnectionId = activeTab?.connectionId;
+
+  const handleConnectionClick = (conn: ConnectionConfig) => {
+    openTab(conn.id, "dashboard");
+  };
+
+  const handlePageClick = (pageId: PageId) => {
+    if (currentConnectionId) {
+      openTab(currentConnectionId, pageId);
     }
-    // Tools items (importExport, luaEditor) are handled via onToolAction prop or command palette
   };
-
-  const groups = [
-    { id: "ai", label: "AI", icon: "🧠" },
-    { id: "monitor", label: "Monitor", icon: "📈" },
-    { id: "tools", label: "Tools", icon: "🔧" },
-  ];
 
   if (collapsed) {
     return (
@@ -67,15 +76,19 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
           </svg>
         </Button>
-        <div className="mt-4 flex flex-col gap-2">
-          {groups.map((group) => (
+        <div className="mt-4 flex flex-col gap-1">
+          {connections.map((conn) => (
             <button
-              key={group.id}
-              onClick={() => toggleGroup(group.id)}
-              className="flex h-10 w-10 items-center justify-center rounded text-lg hover:bg-zinc-200 dark:hover:bg-zinc-800"
-              title={group.label}
+              key={conn.id}
+              onClick={() => handleConnectionClick(conn)}
+              className={`flex h-10 w-10 items-center justify-center rounded text-sm font-bold ${
+                currentConnectionId === conn.id
+                  ? "bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400"
+                  : "text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+              }`}
+              title={conn.name}
             >
-              {group.icon}
+              {conn.name.charAt(0).toUpperCase()}
             </button>
           ))}
         </div>
@@ -85,69 +98,112 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
   return (
     <div className="flex w-64 flex-col border-r border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950">
-      {/* Header */}
-      <div className="flex h-14 items-center justify-between border-b border-zinc-200 px-4 dark:border-zinc-800">
-        <h2 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Tools</h2>
+      {/* Connection list */}
+      <div className="border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex h-10 items-center justify-between px-3">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Connections</h2>
+          {onAddConnection && (
+            <button
+              onClick={onAddConnection}
+              className="flex h-5 w-5 items-center justify-center rounded text-zinc-400 hover:bg-zinc-200 hover:text-zinc-600 dark:hover:bg-zinc-800"
+              title="Add Connection"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+          )}
+        </div>
+        <div className="max-h-40 overflow-y-auto px-1 pb-2">
+          {connections.length === 0 ? (
+            <p className="px-3 py-2 text-[11px] text-zinc-400">No connections</p>
+          ) : (
+            connections.map((conn) => (
+              <button
+                key={conn.id}
+                onClick={() => handleConnectionClick(conn)}
+                className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-[12px] transition-colors ${
+                  currentConnectionId === conn.id
+                    ? "bg-zinc-200 font-medium text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                    : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                }`}
+                title={`${conn.host}:${conn.port}`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                    currentConnectionId === conn.id ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-600"
+                  }`}
+                />
+                <span className="truncate">{conn.name}</span>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Page index for current connection */}
+      {currentConnectionId && (
+        <div className="flex-1 overflow-auto">
+          <div className="flex h-8 items-center px-3">
+            <h2 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Pages</h2>
+          </div>
+          <div className="px-1 pb-2">
+            {PAGE_GROUPS.map((group) => {
+              const isOpen = openGroup === group.id;
+              return (
+                <div key={group.id} className="mb-1">
+                  {group.id !== "main" && (
+                    <button
+                      onClick={() => toggleGroup(group.id)}
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-[11px] font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
+                    >
+                      <svg
+                        className={`h-3 w-3 transition-transform ${isOpen ? "rotate-90" : ""}`}
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      <span>{group.label}</span>
+                    </button>
+                  )}
+                  {(isOpen || group.id === "main") && (
+                    <div className={group.id === "main" ? "" : "ml-3"}>
+                      {group.pages.map((page) => (
+                        <button
+                          key={page.pageId}
+                          onClick={() => handlePageClick(page.pageId)}
+                          className={`flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-[12px] transition-colors ${
+                            activeTab?.pageId === page.pageId
+                              ? "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400"
+                              : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                          }`}
+                        >
+                          <span className="text-sm">{page.icon}</span>
+                          <span className="flex-1 text-left">{getPageLabel(page.pageId)}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Collapse button */}
+      <div className="border-t border-zinc-200 p-2 dark:border-zinc-800">
         <Button
           variant="ghost"
           size="sm"
           onClick={onToggle}
-          className="h-7 w-7 p-0 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
-          title="Collapse sidebar"
+          className="w-full justify-start text-zinc-500 hover:text-zinc-700 dark:text-zinc-400"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
+          <span className="text-xs">Collapse</span>
         </Button>
-      </div>
-
-      {/* Navigation Groups */}
-      <div className="flex-1 overflow-auto py-2">
-        {groups.map((group) => {
-          const groupItems = NAV_ITEMS.filter((item) => item.group === group.id);
-          const isOpen = openGroup === group.id;
-
-          return (
-            <div key={group.id} className="mb-2">
-              <button
-                onClick={() => toggleGroup(group.id)}
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-200 dark:text-zinc-300 dark:hover:bg-zinc-800"
-              >
-                <span className="text-lg">{group.icon}</span>
-                <span>{group.label}</span>
-                <svg
-                  className={`ml-auto h-4 w-4 text-zinc-500 transition-transform dark:text-zinc-500 ${isOpen ? "rotate-90" : ""}`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-              {isOpen && (
-                <div className="ml-4 mt-1 space-y-1">
-                  {groupItems.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => handleItemClick(item)}
-                      className={`flex w-full items-center gap-2 rounded px-3 py-2 text-sm ${
-                        item.pageId === currentPage
-                          ? "bg-red-50 text-red-600 dark:bg-red-950 dark:text-red-400"
-                          : "text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                      }`}
-                    >
-                      <span>{item.icon}</span>
-                      <span className="flex-1 text-left">{item.label}</span>
-                      <kbd className="hidden rounded border border-zinc-300 bg-zinc-200 px-1.5 py-0.5 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500 lg:block">
-                        {item.shortcut.replace("Cmd+", "⌘").replace("Shift+", "⇧")}
-                      </kbd>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
       </div>
     </div>
   );

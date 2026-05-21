@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
-import { useDashboardStore, type PageId } from "../../stores/dashboardStore";
+import { useDashboardStore } from "../../stores/dashboardStore";
+import { useTabStore, type PageId } from "../../stores/tabStore";
 import { MonitoringDashboard } from "../MonitoringDashboard";
 import { VectorSearch } from "../VectorSearch";
 import { EmbeddingCache } from "../EmbeddingCache";
@@ -12,6 +13,7 @@ import { LLMConversation } from "../LLMConversation";
 
 interface DashboardLayoutProps {
   children: ReactNode;
+  onAddConnection?: () => void;
 }
 
 function PageContent({ page }: { page: PageId }) {
@@ -39,14 +41,20 @@ function PageContent({ page }: { page: PageId }) {
   }
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { leftSidebarCollapsed, toggleLeftSidebar, currentPage } =
-    useDashboardStore();
+export function DashboardLayout({ children, onAddConnection }: DashboardLayoutProps) {
+  const { leftSidebarCollapsed, toggleLeftSidebar } = useDashboardStore();
+  const activeTab = useTabStore((s) => s.getActiveTab());
+
+  const currentPage = activeTab?.pageId || "dashboard";
 
   return (
     <div className="flex h-[calc(100vh-2.25rem)] w-full">
-      {/* Left Sidebar */}
-      <Sidebar collapsed={leftSidebarCollapsed} onToggle={toggleLeftSidebar} />
+      {/* Left Sidebar: connection list + page index */}
+      <Sidebar
+        collapsed={leftSidebarCollapsed}
+        onToggle={toggleLeftSidebar}
+        onAddConnection={onAddConnection}
+      />
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-auto">

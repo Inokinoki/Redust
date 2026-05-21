@@ -6,12 +6,11 @@ import { ValueEditor } from "./components/ValueEditor";
 import { ImportExport } from "./components/ImportExport";
 import { LuaScriptEditor } from "./components/LuaScriptEditor";
 import { CommandPalette } from "./components/CommandPalette";
-import { SplitPane } from "./components/SplitPane";
 import { ToastContainer } from "./components/ToastContainer";
+import { TabBar } from "./components/TabBar";
 import { TitleBar } from "./components/TitleBar";
 import { DashboardLayout } from "./components/Dashboard/DashboardLayout";
 import { useCommandPalette } from "./stores/commandPaletteStore";
-import { useSplitPaneStore } from "./stores/splitPaneStore";
 import { useDashboardStore, type PageId } from "./stores/dashboardStore";
 import { Command } from "./stores/commandPaletteStore";
 import "./index.css";
@@ -27,24 +26,9 @@ function App() {
   } | null>(null);
 
   const { isOpen, open, close } = useCommandPalette();
-  const { splitMode, setLeftKey, setRightKey } = useSplitPaneStore();
 
   const handleKeyClick = (key: string, type: string) => {
-    if (splitMode === "none") {
-      setSelectedKey({ key, type });
-    } else {
-      if (!useSplitPaneStore.getState().leftKey) {
-        setLeftKey({ key, type });
-      } else if (!useSplitPaneStore.getState().rightKey) {
-        setRightKey({ key, type });
-      } else {
-        setSelectedKey({ key, type });
-      }
-    }
-  };
-
-  const handleRightClick = (key: string, type: string) => {
-    setRightKey({ key, type });
+    setSelectedKey({ key, type });
   };
 
   // Helper to navigate to pages
@@ -153,15 +137,6 @@ function App() {
       action: () => setShowLuaEditor(true),
     },
     {
-      id: "split-view",
-      label: "Split View",
-      description: "Open split pane for key comparison",
-      icon: "⚡",
-      shortcut: "Cmd+Shift+S",
-      category: "Navigation",
-      action: () => useSplitPaneStore.getState().setSplitMode("horizontal"),
-    },
-    {
       id: "focus-search",
       label: "Focus Key Search",
       description: "Jump to key search bar",
@@ -200,18 +175,7 @@ function App() {
         open();
       }
 
-      // Split View: Cmd/Ctrl + Shift + S
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "S") {
-        e.preventDefault();
-        const currentMode = useSplitPaneStore.getState().splitMode;
-        if (currentMode === "none") {
-          useSplitPaneStore.getState().setSplitMode("horizontal");
-        } else {
-          useSplitPaneStore.getState().resetSplit();
-        }
-      }
-
-      // Page shortcuts - use dashboard store
+      // Page shortcuts - use tab store
       if ((e.metaKey || e.ctrlKey) && e.shiftKey) {
         switch (e.key.toUpperCase()) {
           case "V":
@@ -313,15 +277,18 @@ function App() {
         onAddConnection={() => setShowConnectionManager(true)}
       />
 
+      {/* Tab bar */}
+      <TabBar />
+
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
-        <DashboardLayout>
+        <DashboardLayout onAddConnection={() => setShowConnectionManager(true)}>
           <div className="grid h-full grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="lg:col-span-1">
               <ConnectionList />
             </div>
             <div className="lg:col-span-2">
-              <KeyBrowser onKeyClick={handleKeyClick} onRightClick={handleRightClick} />
+              <KeyBrowser onKeyClick={handleKeyClick} />
             </div>
           </div>
         </DashboardLayout>
@@ -336,8 +303,6 @@ function App() {
         isOpen={showConnectionManager}
         onClose={() => setShowConnectionManager(false)}
       />
-
-      <SplitPane />
 
       <ToastContainer />
 
