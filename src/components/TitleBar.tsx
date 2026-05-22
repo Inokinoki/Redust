@@ -15,8 +15,8 @@ let appWindow: {
 
 try {
   // Dynamic import will fail gracefully in browser without Tauri
-  const tauriWindow = await import("@tauri-apps/api/window");
-  appWindow = tauriWindow.appWindow;
+  const { getCurrentWindow } = await import("@tauri-apps/api/window");
+  appWindow = getCurrentWindow();
 } catch {
   // Not running in Tauri — window controls will be hidden
 }
