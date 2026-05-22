@@ -110,7 +110,7 @@ export function Console() {
   return (
     <div className="flex h-full flex-col">
       <h2 className="mb-4 text-xl font-semibold">CLI Console</h2>
-      <div className="flex flex-1 overflow-auto rounded-lg border border-zinc-800 bg-zinc-950 p-4 font-mono text-sm">
+      <div className="flex flex-1 overflow-auto rounded-lg border border-zinc-200 bg-zinc-50 p-4 font-mono text-sm dark:border-zinc-800 dark:bg-zinc-950">
         {output.length === 0 ? (
           <p className="text-zinc-500">Type HELP for available commands</p>
         ) : (

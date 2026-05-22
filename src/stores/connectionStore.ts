@@ -46,6 +46,11 @@ export const useConnectionStore = create<ConnectionStore>()(
     }),
     {
       name: "redust-connections",
+      partialize: (state) => ({
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        connections: state.connections.map(({ password: _, ...rest }) => rest),
+        activeConnectionId: state.activeConnectionId,
+      }),
     }
   )
 );

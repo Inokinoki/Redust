@@ -1,34 +1,21 @@
 import { useState, useEffect } from "react";
 import { ConnectionManager } from "./components/ConnectionManager";
-import { ConnectionList } from "./components/ConnectionList";
 import { KeyBrowser } from "./components/KeyBrowser";
 import { ValueEditor } from "./components/ValueEditor";
-import { VectorSearch } from "./components/VectorSearch";
-import { EmbeddingCache } from "./components/EmbeddingCache";
-import { ClusterVisualization } from "./components/ClusterVisualization";
-import { LLMConversation } from "./components/LLMConversation";
-import { MonitoringDashboard } from "./components/MonitoringDashboard";
-import { ClusterTopology } from "./components/ClusterTopology";
-import { PubSubMonitor } from "./components/PubSubMonitor";
 import { ImportExport } from "./components/ImportExport";
 import { LuaScriptEditor } from "./components/LuaScriptEditor";
 import { CommandPalette } from "./components/CommandPalette";
-import { SplitPane, SplitButton } from "./components/SplitPane";
-import { ThemeToggle } from "./components/ThemeToggle";
+import { ToastContainer } from "./components/ToastContainer";
+import { TabBar } from "./components/TabBar";
+import { TitleBar } from "./components/TitleBar";
+import { DashboardLayout } from "./components/Dashboard/DashboardLayout";
 import { useCommandPalette } from "./stores/commandPaletteStore";
-import { useSplitPaneStore } from "./stores/splitPaneStore";
+import { useDashboardStore, type PageId } from "./stores/dashboardStore";
 import { Command } from "./stores/commandPaletteStore";
-import { Button } from "./components/ui/button";
 import "./index.css";
 
 function App() {
-  const [showVectorSearch, setShowVectorSearch] = useState(false);
-  const [showEmbeddingCache, setShowEmbeddingCache] = useState(false);
-  const [showClusterVis, setShowClusterVis] = useState(false);
-  const [showLLMChat, setShowLLMChat] = useState(false);
-  const [showMonitoring, setShowMonitoring] = useState(false);
-  const [showCluster, setShowCluster] = useState(false);
-  const [showPubSub, setShowPubSub] = useState(false);
+  // Modal-only states (for components that remain as modals)
   const [showImportExport, setShowImportExport] = useState(false);
   const [showLuaEditor, setShowLuaEditor] = useState(false);
   const [showConnectionManager, setShowConnectionManager] = useState(false);
@@ -38,26 +25,14 @@ function App() {
   } | null>(null);
 
   const { isOpen, open, close } = useCommandPalette();
-  const { splitMode, setLeftKey, setRightKey } = useSplitPaneStore();
 
   const handleKeyClick = (key: string, type: string) => {
-    if (splitMode === "none") {
-      setSelectedKey({ key, type });
-    } else {
-      // In split mode, open in first available pane
-      if (!useSplitPaneStore.getState().leftKey) {
-        setLeftKey({ key, type });
-      } else if (!useSplitPaneStore.getState().rightKey) {
-        setRightKey({ key, type });
-      } else {
-        // Both panes full, open in normal editor
-        setSelectedKey({ key, type });
-      }
-    }
+    setSelectedKey({ key, type });
   };
 
-  const handleRightClick = (key: string, type: string) => {
-    setRightKey({ key, type });
+  // Helper to navigate to pages
+  const navigateToPage = (pageId: string) => {
+    useDashboardStore.getState().navigateTo(pageId as PageId);
   };
 
   const commands: Command[] = [
@@ -77,7 +52,7 @@ function App() {
       icon: "🔍",
       shortcut: "Cmd+Shift+V",
       category: "AI Features",
-      action: () => setShowVectorSearch(true),
+      action: () => navigateToPage("vectorSearch"),
     },
     {
       id: "embedding-cache",
@@ -86,7 +61,7 @@ function App() {
       icon: "📦",
       shortcut: "Cmd+Shift+E",
       category: "AI Features",
-      action: () => setShowEmbeddingCache(true),
+      action: () => navigateToPage("embeddingCache"),
     },
     {
       id: "cluster-visualization",
@@ -95,7 +70,7 @@ function App() {
       icon: "🎯",
       shortcut: "Cmd+Shift+D",
       category: "AI Features",
-      action: () => setShowClusterVis(true),
+      action: () => navigateToPage("clusterVis"),
     },
     {
       id: "llm-chat",
@@ -104,7 +79,7 @@ function App() {
       icon: "🤖",
       shortcut: "Cmd+Shift+A",
       category: "AI Features",
-      action: () => setShowLLMChat(true),
+      action: () => navigateToPage("llmChat"),
     },
     {
       id: "monitoring",
@@ -113,7 +88,7 @@ function App() {
       icon: "📊",
       shortcut: "Cmd+Shift+M",
       category: "Monitoring",
-      action: () => setShowMonitoring(true),
+      action: () => navigateToPage("monitoring"),
     },
     {
       id: "cluster",
@@ -122,7 +97,7 @@ function App() {
       icon: "🔗",
       shortcut: "Cmd+Shift+C",
       category: "Monitoring",
-      action: () => setShowCluster(true),
+      action: () => navigateToPage("cluster"),
     },
     {
       id: "pubsub",
@@ -131,7 +106,16 @@ function App() {
       icon: "📡",
       shortcut: "Cmd+Shift+P",
       category: "Monitoring",
-      action: () => setShowPubSub(true),
+      action: () => navigateToPage("pubsub"),
+    },
+    {
+      id: "query-optimizer",
+      label: "Query Optimizer",
+      description: "Optimize Redis queries with AI",
+      icon: "⚡",
+      shortcut: "Cmd+Shift+Q",
+      category: "AI Features",
+      action: () => navigateToPage("queryOptimizer"),
     },
     {
       id: "import-export",
@@ -150,15 +134,6 @@ function App() {
       shortcut: "Cmd+Shift+L",
       category: "Advanced",
       action: () => setShowLuaEditor(true),
-    },
-    {
-      id: "split-view",
-      label: "Split View",
-      description: "Open split pane for key comparison",
-      icon: "⚡",
-      shortcut: "Cmd+Shift+S",
-      category: "Navigation",
-      action: () => useSplitPaneStore.getState().setSplitMode("horizontal"),
     },
     {
       id: "focus-search",
@@ -199,69 +174,50 @@ function App() {
         open();
       }
 
-      // Split View: Cmd/Ctrl + Shift + S
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "S") {
-        e.preventDefault();
-        const currentMode = useSplitPaneStore.getState().splitMode;
-        if (currentMode === "none") {
-          useSplitPaneStore.getState().setSplitMode("horizontal");
-        } else {
-          useSplitPaneStore.getState().resetSplit();
+      // Page shortcuts - use tab store
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey) {
+        switch (e.key.toUpperCase()) {
+          case "V":
+            e.preventDefault();
+            navigateToPage("vectorSearch");
+            break;
+          case "E":
+            e.preventDefault();
+            navigateToPage("embeddingCache");
+            break;
+          case "A":
+            e.preventDefault();
+            navigateToPage("llmChat");
+            break;
+          case "M":
+            e.preventDefault();
+            navigateToPage("monitoring");
+            break;
+          case "C":
+            e.preventDefault();
+            navigateToPage("cluster");
+            break;
+          case "P":
+            e.preventDefault();
+            navigateToPage("pubsub");
+            break;
+          case "D":
+            e.preventDefault();
+            navigateToPage("clusterVis");
+            break;
+          case "Q":
+            e.preventDefault();
+            navigateToPage("queryOptimizer");
+            break;
+          case "I":
+            e.preventDefault();
+            setShowImportExport(true);
+            break;
+          case "L":
+            e.preventDefault();
+            setShowLuaEditor(true);
+            break;
         }
-      }
-
-      // Vector Search: Cmd/Ctrl + Shift + V
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "V") {
-        e.preventDefault();
-        setShowVectorSearch(true);
-      }
-
-      // Embedding Cache: Cmd/Ctrl + Shift + E
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "E") {
-        e.preventDefault();
-        setShowEmbeddingCache(true);
-      }
-
-      // LLM Chat: Cmd/Ctrl + Shift + A
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "A") {
-        e.preventDefault();
-        setShowLLMChat(true);
-      }
-
-      // Monitoring: Cmd/Ctrl + Shift + M
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "M") {
-        e.preventDefault();
-        setShowMonitoring(true);
-      }
-
-      // Cluster: Cmd/Ctrl + Shift + C
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "C") {
-        e.preventDefault();
-        setShowCluster(true);
-      }
-
-      // Pub/Sub: Cmd/Ctrl + Shift + P
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "P") {
-        e.preventDefault();
-        setShowPubSub(true);
-      }
-
-      // Import/Export: Cmd/Ctrl + Shift + I
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "I") {
-        e.preventDefault();
-        setShowImportExport(true);
-      }
-
-      // Lua Editor: Cmd/Ctrl + Shift + L
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "L") {
-        e.preventDefault();
-        setShowLuaEditor(true);
-      }
-
-      // Cluster Visualization: Cmd/Ctrl + Shift + D
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "D") {
-        e.preventDefault();
-        setShowClusterVis(true);
       }
 
       // Close dialogs: Escape
@@ -274,95 +230,73 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, close]);
 
+  // Listen for native menu events from Tauri
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+
+    (async () => {
+      try {
+        const { listen } = await import("@tauri-apps/api/event");
+        unlisten = await listen<string>("menu-event", (event) => {
+          switch (event.payload) {
+            case "new_conn":
+              setShowConnectionManager(true);
+              break;
+            case "import_export":
+              setShowImportExport(true);
+              break;
+            case "cmd_palette":
+              open();
+              break;
+            case "toggle_sidebar":
+              useDashboardStore.getState().toggleLeftSidebar();
+              break;
+            case "about":
+              import("./stores/toastStore").then(({ useToastStore }) => {
+                useToastStore.getState().addToast("info", "Redust — Next-Gen Redis GUI v0.1.0", 5000);
+              });
+              break;
+          }
+        });
+      } catch {
+        // Not running in Tauri
+      }
+    })();
+
+    return () => {
+      unlisten?.();
+    };
+  }, [open]);
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-50">
-      <header className="border-b border-zinc-800 bg-zinc-950">
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <div className="flex items-center space-x-2">
-            <h1 className="text-2xl font-bold text-red-500">Redust</h1>
-            <span className="text-sm text-zinc-400">v0.1.0</span>
-          </div>
-          <div className="flex gap-2">
-            <ThemeToggle />
-            <Button variant="outline" onClick={() => setShowConnectionManager(true)}>
-              + Add Connection
-            </Button>
-            <div className="ml-4 flex gap-2">
-              <Button variant="outline" onClick={() => setShowVectorSearch(true)}>
-                🔍 Vector Search
-              </Button>
-              <Button variant="outline" onClick={() => setShowEmbeddingCache(true)}>
-                📦 Embedding Cache
-              </Button>
-              <Button variant="outline" onClick={() => setShowClusterVis(true)}>
-                🎯 Clusters
-              </Button>
-              <Button variant="outline" onClick={() => setShowLLMChat(true)}>
-                🤖 AI Chat (RAG)
-              </Button>
-              <Button variant="outline" onClick={() => setShowMonitoring(true)}>
-                📊 Monitoring
-              </Button>
-              <Button variant="outline" onClick={() => setShowCluster(true)}>
-                🔗 Cluster
-              </Button>
-              <Button variant="outline" onClick={() => setShowPubSub(true)}>
-                📡 Pub/Sub
-              </Button>
-              <Button variant="outline" onClick={() => setShowImportExport(true)}>
-                📥 Import/Export
-              </Button>
-              <Button variant="outline" onClick={() => setShowLuaEditor(true)}>
-                📝 Lua Editor
-              </Button>
-              <SplitButton />
-              <Button variant="ghost" onClick={open}>
-                <kbd className="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-400">
-                  ⌘K
-                </kbd>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="flex h-screen flex-col bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
+      {/* Native-style Title Bar — all-in-one: breadcrumb, actions, window controls */}
+      <TitleBar
+        onOpenCommandPalette={open}
+        onAddConnection={() => setShowConnectionManager(true)}
+      />
 
-      <main className="container mx-auto flex h-[calc(100vh-4rem)] px-4 py-6">
-        <div className="grid w-full grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-1">
-            <ConnectionList />
-          </div>
-          <div className="lg:col-span-2">
-            <KeyBrowser onKeyClick={handleKeyClick} onRightClick={handleRightClick} />
-          </div>
-        </div>
-      </main>
+      {/* Tab bar */}
+      <TabBar />
 
-      <VectorSearch isOpen={showVectorSearch} onClose={() => setShowVectorSearch(false)} />
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden">
+        <DashboardLayout onAddConnection={() => setShowConnectionManager(true)}>
+          <KeyBrowser onKeyClick={handleKeyClick} />
+        </DashboardLayout>
+      </div>
 
-      <EmbeddingCache isOpen={showEmbeddingCache} onClose={() => setShowEmbeddingCache(false)} />
-
-      <LLMConversation isOpen={showLLMChat} onClose={() => setShowLLMChat(false)} />
-
-      <MonitoringDashboard isOpen={showMonitoring} onClose={() => setShowMonitoring(false)} />
-
-      <ClusterTopology isOpen={showCluster} onClose={() => setShowCluster(false)} />
-
-      <PubSubMonitor isOpen={showPubSub} onClose={() => setShowPubSub(false)} />
-
+      {/* Modal Components (remain as modals for focused tasks) */}
       <ImportExport isOpen={showImportExport} onClose={() => setShowImportExport(false)} />
-
       <LuaScriptEditor isOpen={showLuaEditor} onClose={() => setShowLuaEditor(false)} />
 
-      <ClusterVisualization isOpen={showClusterVis} onClose={() => setShowClusterVis(false)} />
-
       <CommandPalette isOpen={isOpen} onClose={close} commands={commands} />
-
       <ConnectionManager
         isOpen={showConnectionManager}
         onClose={() => setShowConnectionManager(false)}
       />
 
-      <SplitPane />
+      <ToastContainer />
 
       {selectedKey && (
         <ValueEditor

@@ -285,7 +285,7 @@ export function VectorVisualization({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative z-50 w-full max-w-6xl h-[90vh] rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl overflow-auto">
+      <div className="relative z-50 w-full max-w-6xl h-[90vh] rounded-lg border border-zinc-200 bg-white p-6 shadow-xl overflow-auto dark:border-zinc-800 dark:bg-zinc-950">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">Vector Similarity Visualization</h2>
           <div className="flex gap-2">
@@ -333,24 +333,24 @@ export function VectorVisualization({
                   ref={canvasRef}
                   width={400}
                   height={400}
-                  className="w-full border border-zinc-800 bg-zinc-900 rounded-lg cursor-crosshair"
+                  className="w-full border border-zinc-200 bg-zinc-50 rounded-lg cursor-crosshair dark:border-zinc-800 dark:bg-zinc-900"
                   onMouseMove={handleCanvasMouseMove}
                   onClick={handleCanvasClick}
                 />
 
                 {selectedPoint && (
-                  <div className="bg-zinc-900 p-3 rounded-lg">
+                  <div className="bg-zinc-50 p-3 rounded-lg dark:bg-zinc-900">
                     <div className="text-sm">
                       <div className="font-semibold">Selected Point: {selectedPoint.label}</div>
                       <div className="text-zinc-400">Index: {selectedPoint.originalIndex}</div>
-                      <div className="text-zinc-400">
+                      <div className="text-zinc-500 dark:text-zinc-400">
                         Position: ({selectedPoint.x.toFixed(3)}, {selectedPoint.y.toFixed(3)})
                       </div>
                     </div>
                   </div>
                 )}
 
-                <div className="text-xs text-zinc-400">
+                <div className="text-xs text-zinc-500 dark:text-zinc-400">
                   <p>• Hover over points to see labels</p>
                   <p>• Click points to select/deselect</p>
                   <p>• Lines connect similar vectors</p>
@@ -404,15 +404,15 @@ export function VectorVisualization({
               <CardContent>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-zinc-400">Total Vectors:</span>
+                    <span className="text-zinc-500 dark:text-zinc-400">Total Vectors:</span>
                     <span className="font-medium">{vectors.length}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-zinc-400">Dimensions:</span>
+                    <span className="text-zinc-500 dark:text-zinc-400">Dimensions:</span>
                     <span className="font-medium">{vectors[0]?.length || 0}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-zinc-400">Avg Similarity:</span>
+                    <span className="text-zinc-500 dark:text-zinc-400">Avg Similarity:</span>
                     <span className="font-medium">
                       {(
                         similarityMatrix.flat().reduce((a, b) => a + b, 0) /

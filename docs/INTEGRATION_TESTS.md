@@ -1,6 +1,8 @@
 # Redis Integration Tests
 
-This directory contains integration tests that connect to a live Redis instance on port 6379.
+This directory contains **`redis-live.test.ts`**, which talks to a **real** Redis over TCP (no mocked Tauri `invoke`). Keys use the prefix `test:integration:` and are removed after the suite.
+
+**`npm test`** includes this file by default. You need Redis on **`REDIS_HOST` / `REDIS_PORT`** (defaults `localhost:6379`), e.g. `npm run docker:test:up`. To run Vitest **without** live Redis: `npm run test:no-redis` or `SKIP_REDIS_LIVE=1 npm test`.
 
 ## Quick Start
 
@@ -199,6 +201,19 @@ Test data is automatically cleaned up after each test run. All test keys use the
 # Manual cleanup if needed
 redis-cli KEYS "test:integration:*" | xargs redis-cli DEL
 ```
+
+## Tauri WebDriver E2E (real `invoke` + Redis)
+
+Linux only (GitHub Actions job `tauri-webdriver-e2e`, or WSL2). macOS is skipped locally — Apple does not ship a WKWebView WebDriver server; see [Tauri WebDriver](https://v2.tauri.app/develop/tests/webdriver/).
+
+```bash
+# Linux: install driver, Redis on 6379, then:
+cargo install tauri-driver --locked
+npm run build && npx tauri build --debug --no-bundle
+xvfb-run --auto-servernum npm run test:e2e-tauri
+```
+
+On macOS, `npm run test:e2e-tauri` exits 0 with a skip message. Use **Playwright** (`npm run test:e2e`) for browser-only checks against Vite.
 
 ## Contributing
 

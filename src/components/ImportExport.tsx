@@ -3,22 +3,24 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card } from "./ui/card";
+import { useToastStore } from "../stores/toastStore";
 
 export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [keyPattern, setKeyPattern] = useState("*");
+  const addToast = useToastStore((s) => s.addToast);
 
   const handleExport = () => {
-    alert("Import/Export functionality requires Tauri plugins to be installed.");
+    addToast("info", "Import/Export functionality requires Tauri plugins to be installed.");
     // TODO: Implement with @tauri-apps/plugin-dialog when available
   };
 
   const handleImport = () => {
-    alert("Import/Export functionality requires Tauri plugins to be installed.");
+    addToast("info", "Import/Export functionality requires Tauri plugins to be installed.");
     // TODO: Implement with @tauri-apps/plugin-dialog and @tauri-apps/plugin-fs when available
   };
 
   const handleDelete = () => {
-    alert("Import/Export functionality requires Tauri plugins to be installed.");
+    addToast("info", "Import/Export functionality requires Tauri plugins to be installed.");
     // TODO: Implement with @tauri-apps/plugin-dialog when available
   };
 
@@ -26,7 +28,7 @@ export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: ()
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative z-50 w-full max-w-4xl rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl">
+      <div className="relative z-50 w-full max-w-4xl rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
         <h2 className="mb-4 text-xl font-semibold">Import / Export</h2>
 
         <div className="mb-6 space-y-4">
@@ -48,7 +50,7 @@ export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: ()
           <Card className="p-4">
             <h3 className="mb-4 text-lg font-medium">Export</h3>
             <div className="space-y-4">
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 Export keys matching the pattern to a JSON file.
               </p>
               <Button onClick={handleExport} className="w-full">
@@ -60,7 +62,7 @@ export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: ()
           <Card className="p-4">
             <h3 className="mb-4 text-lg font-medium">Import</h3>
             <div className="space-y-4">
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 Import keys from a JSON file that was exported from Redis.
               </p>
               <Button onClick={handleImport} variant="outline" className="w-full">
@@ -72,7 +74,7 @@ export function ImportExport({ isOpen, onClose }: { isOpen: boolean; onClose: ()
           <Card className="p-4">
             <h3 className="mb-4 text-lg font-medium text-red-400">Danger Zone</h3>
             <div className="space-y-4">
-              <p className="text-sm text-zinc-400">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 Delete all keys matching pattern. This action cannot be undone!
               </p>
               <Button

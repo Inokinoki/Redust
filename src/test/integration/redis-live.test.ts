@@ -1,32 +1,34 @@
 /**
- * Real Redis Integration Tests
+ * Real Redis integration tests (live TCP, real commands — no mocked `invoke`).
  *
- * These tests connect to a live Redis instance on port 6379
- * Make sure Redis is running before running these tests:
- * - Using Docker: docker run -d -p 6379:6379 redis
- * - Using system: redis-server
+ * Env: `REDIS_HOST` (default `localhost`), `REDIS_PORT` (default `6379`).
+ * Keys use prefix `test:integration:` and are deleted in `afterAll`.
  *
- * Run with: npm test src/test/integration/redis-live.test.ts
+ * Docker: `npm run docker:test:up`
+ *
+ * Skip when Redis is unavailable: `SKIP_REDIS_LIVE=1 npm test`
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { createClient } from "redis";
 
-describe("Real Redis Integration Tests", () => {
+const redisHost = process.env.REDIS_HOST ?? "localhost";
+const redisPort = parseInt(process.env.REDIS_PORT ?? "6379", 10);
+
+describe.skipIf(process.env.SKIP_REDIS_LIVE === "1")("Real Redis Integration Tests", () => {
   let redisClient: ReturnType<typeof createClient>;
   const testPrefix = "test:integration:";
 
   beforeAll(async () => {
-    // Create Redis client
     redisClient = createClient({
       socket: {
-        host: "localhost",
-        port: 6379,
+        host: redisHost,
+        port: redisPort,
       },
     });
 
     await redisClient.connect();
-    console.log("✅ Connected to Redis on port 6379");
+    console.log(`✅ Connected to Redis at ${redisHost}:${redisPort}`);
   });
 
   afterAll(async () => {

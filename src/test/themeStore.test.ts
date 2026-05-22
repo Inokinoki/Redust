@@ -34,13 +34,18 @@ describe("ThemeStore", () => {
     const mockElement = {
       classList: {
         classes: [] as string[],
-        add: vi.fn(function (this: any, className: string) {
-          this.classes.push(className);
+        add: vi.fn(function (this: any, ...classNames: string[]) {
+          for (const className of classNames) {
+            if (!this.classes.includes(className)) {
+              this.classes.push(className);
+            }
+          }
         }),
-        remove: vi.fn(function (this: any, className: string) {
-          this.classes = this.classes.filter((c: string) => c !== className);
+        remove: vi.fn(function (this: any, ...classNames: string[]) {
+          this.classes = this.classes.filter((c: string) => !classNames.includes(c));
         }),
       },
+      style: { colorScheme: "" } as { colorScheme: string },
     };
 
     Object.defineProperty(document, "documentElement", {
@@ -218,28 +223,22 @@ describe("ThemeStore", () => {
   it("should add effective theme class to document", () => {
     useThemeStore.getState().setTheme("light");
 
-    const addCalls = (document.documentElement.classList.add as any).mock.calls;
-    const removeCalls = (document.documentElement.classList.remove as any).mock.calls;
+    const addCalls = (document.documentElement.classList.add as any).mock.calls.flat();
+    const removeMock = document.documentElement.classList.remove as any;
 
-    const hasAddedLight = addCalls.some((call: any[]) => call.includes("light"));
-    const hasRemovedDark = removeCalls.some((call: any[]) => call.includes("dark"));
-
-    expect(hasAddedLight).toBe(true);
-    expect(hasRemovedDark).toBe(true);
+    expect(addCalls).not.toContain("dark");
+    expect(removeMock).toHaveBeenCalledWith("dark", "light");
+    expect((document.documentElement as any).style.colorScheme).toBe("light");
   });
 
   it("should remove previous theme class when changing themes", () => {
     useThemeStore.getState().setTheme("dark");
 
-    const removeCalls = (document.documentElement.classList.remove as any).mock.calls;
-
-    const hasRemovedLight = removeCalls.some((call: any[]) => call.includes("light"));
-    expect(hasRemovedLight).toBe(true);
+    const removeMock = document.documentElement.classList.remove as any;
+    removeMock.mockClear();
 
     useThemeStore.getState().setTheme("system");
 
-    const removeCalls2 = (document.documentElement.classList.remove as any).mock.calls;
-    const hasRemovedDark2 = removeCalls2.some((call: any[]) => call.includes("dark"));
-    expect(hasRemovedDark2).toBe(true);
+    expect(removeMock).toHaveBeenCalledWith("dark", "light");
   });
 });

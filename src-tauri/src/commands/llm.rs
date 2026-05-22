@@ -9,6 +9,7 @@ pub enum LLMProvider {
     OpenAI,
     Anthropic,
     Ollama,
+    Custom,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -257,7 +258,7 @@ impl LLMClient {
 
     pub async fn chat_completion(&self, request: &LLMRequest) -> Result<LLMResponse, String> {
         match request.model.provider() {
-            LLMProvider::OpenAI => self.openai_chat(request).await,
+            LLMProvider::OpenAI | LLMProvider::Custom => self.openai_chat(request).await,
             LLMProvider::Anthropic => self.anthropic_chat(request).await,
             LLMProvider::Ollama => self.ollama_chat(request).await,
         }
@@ -456,22 +457,43 @@ impl LLMClient {
 
     pub async fn generate_embedding(&self, request: &EmbeddingRequest) -> Result<EmbeddingResponse, String> {
         match request.provider {
-            LLMProvider::OpenAI => self.openai_embedding(request).await,
+            LLMProvider::OpenAI | LLMProvider::Custom => self.openai_embedding(request).await,
             LLMProvider::Ollama => self.ollama_embedding(request).await,
             _ => Err("Embeddings not supported for this provider".to_string()),
         }
     }
 
     async fn openai_embedding(&self, request: &EmbeddingRequest) -> Result<EmbeddingResponse, String> {
-        let endpoint = "https://api.openai.com/v1/embeddings";
+        let endpoint = self
+            .endpoint
+            .as_deref()
+            .unwrap_or("https://api.openai.com/v1/embeddings");
         let model = request.model.as_deref().unwrap_or("text-embedding-ada-002");
-        let api_key = self.api_key.as_ref().ok_or("API key is required")?;
 
         #[derive(Debug, Serialize)]
         struct OpenAIEmbeddingRequest {
             model: String,
             input: String,
         }
+
+        let client = reqwest::Client::new();
+        let mut req = client
+            .post(endpoint)
+            .header("Content-Type", "application/json")
+            .json(&OpenAIEmbeddingRequest {
+                model: model.to_string(),
+                input: request.text.clone(),
+            })
+            .timeout(self.timeout);
+
+        if let Some(api_key) = self.api_key.as_ref() {
+            req = req.header("Authorization", format!("Bearer {}", api_key));
+        }
+
+        let response = req
+            .send()
+            .await
+            .map_err(|e| format!("Embedding API request failed: {}", e))?;
 
         #[derive(Debug, Deserialize)]
         struct OpenAIEmbeddingResponse {
@@ -483,19 +505,6 @@ impl LLMClient {
         struct OpenAIEmbeddingData {
             embedding: Vec<f64>,
         }
-
-        let client = reqwest::Client::new();
-        let response = client
-            .post(endpoint)
-            .header("Authorization", format!("Bearer {}", api_key))
-            .json(&OpenAIEmbeddingRequest {
-                model: model.to_string(),
-                input: request.text.clone(),
-            })
-            .timeout(self.timeout)
-            .send()
-            .await
-            .map_err(|e| format!("OpenAI Embedding API request failed: {}", e))?;
 
         if !response.status().is_success() {
             let error_text = response.text().await.unwrap_or_default();

@@ -17,6 +17,8 @@ coverage/
 .nyc_output/
 *.lcov
 *.lcov.info
+playwright-report/
+test-results/
 
 # Editor directories and files
 .vscode/*
@@ -42,3 +44,7 @@ src-tauri/Cargo.lock
 .env
 .env.local
 .env.*.local
+
+# Generated screenshots
+screenshots/
+screenshots-integration/

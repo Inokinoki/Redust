@@ -25,11 +25,12 @@ interface RAGConfig {
 }
 
 interface LLMConversationProps {
-  isOpen: boolean;
-  onClose: () => void;
+  variant?: "panel" | "modal" | "page";
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export function LLMConversation({ isOpen, onClose }: LLMConversationProps) {
+export function LLMConversation({ variant = "modal", isOpen = true, onClose }: LLMConversationProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [ragConfig, setRagConfig] = useState<RAGConfig>({
@@ -76,13 +77,11 @@ export function LLMConversation({ isOpen, onClose }: LLMConversationProps) {
         throw new Error("Please specify a vector index name");
       }
 
-      // Build conversation history
       const history = messages.map((msg) => ({
         role: msg.role,
         content: msg.content,
       }));
 
-      // Call RAG API
       const response = await api.llmRAG(connection, {
         query: currentInput,
         model: ragConfig.model,
@@ -121,215 +120,254 @@ export function LLMConversation({ isOpen, onClose }: LLMConversationProps) {
     }
   };
 
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative z-50 flex h-[700px] w-full max-w-5xl rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl">
-        <div className="flex w-full gap-4">
-          <div className="flex w-2/3 flex-col">
-            <h2 className="mb-4 text-xl font-semibold">RAG Configuration</h2>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Retrieval Settings</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="indexName">Vector Index</Label>
-                  <Input
-                    id="indexName"
-                    placeholder="e.g., documents_index"
-                    value={ragConfig.indexName}
-                    onChange={(e) => setRagConfig({ ...ragConfig, indexName: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="topK">Top-K Chunks</Label>
-                  <Input
-                    id="topK"
-                    type="number"
-                    min={1}
-                    max={20}
-                    value={ragConfig.topK}
-                    onChange={(e) => setRagConfig({ ...ragConfig, topK: parseInt(e.target.value) })}
-                  />
-                  <p className="mt-1 text-xs text-zinc-400">Number of context chunks to retrieve</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="llmProvider">LLM Provider</Label>
-                  <select
-                    id="llmProvider"
-                    className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
-                    value={ragConfig.provider}
-                    onChange={(e) =>
-                      setRagConfig({
-                        ...ragConfig,
-                        provider: e.target.value as LLMProvider,
-                        model:
-                          e.target.value === "OpenAI"
-                            ? "gpt-4-turbo"
-                            : e.target.value === "Anthropic"
-                            ? "claude-3-sonnet"
-                            : "llama2",
-                      })
-                    }
-                  >
-                    <option value="OpenAI">OpenAI</option>
-                    <option value="Anthropic">Anthropic</option>
-                    <option value="Ollama">Ollama (Local)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="model">Model</Label>
-                  <select
-                    id="model"
-                    className="flex h-10 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm"
-                    value={ragConfig.model}
-                    onChange={(e) => setRagConfig({ ...ragConfig, model: e.target.value as LLMModel })}
-                  >
-                    {ragConfig.provider === "OpenAI" && (
-                      <>
-                        <option value="gpt-4">GPT-4</option>
-                        <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                      </>
-                    )}
-                    {ragConfig.provider === "Anthropic" && (
-                      <>
-                        <option value="claude-3-opus">Claude 3 Opus</option>
-                        <option value="claude-3-sonnet">Claude 3 Sonnet</option>
-                        <option value="claude-3-haiku">Claude 3 Haiku</option>
-                      </>
-                    )}
-                    {ragConfig.provider === "Ollama" && (
-                      <>
-                        <option value="llama2">Llama 2</option>
-                        <option value="mistral">Mistral</option>
-                      </>
-                    )}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="apiKey">API Key (optional)</Label>
-                  <Input
-                    id="apiKey"
-                    type="password"
-                    placeholder="sk-..."
-                    value={ragConfig.apiKey}
-                    onChange={(e) => setRagConfig({ ...ragConfig, apiKey: e.target.value })}
-                  />
-                  <p className="mt-1 text-xs text-zinc-400">
-                    Leave empty to use environment variables or local models
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="vectorField">Vector Field Name</Label>
-                  <Input
-                    id="vectorField"
-                    placeholder="embedding"
-                    value={vectorField}
-                    onChange={(e) => setVectorField(e.target.value)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+  const chatContent = (
+    <div className="flex h-full flex-col overflow-auto rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-4">
+      <div className="flex-1 space-y-4 overflow-auto">
+        {messages.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-zinc-500 dark:text-zinc-400">
+            <p>Start a conversation with Redis RAG</p>
           </div>
-
-          <div className="flex w-1/3 flex-col">
-            <h2 className="mb-2 text-xl font-semibold">AI Chat</h2>
-            <div className="flex flex-1 flex-col overflow-auto rounded-lg border border-zinc-800 bg-zinc-900 p-4">
-              <div className="flex-1 space-y-4 overflow-auto">
-                {messages.length === 0 ? (
-                  <div className="flex h-full items-center justify-center text-zinc-400">
-                    <p>Start a conversation with Redis RAG</p>
-                  </div>
-                ) : (
-                  messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex gap-3 ${
-                        message.role === "user" ? "justify-end" : "justify-start"
-                      }`}
-                    >
+        ) : (
+          messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex gap-3 ${
+                message.role === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
+              <div
+                className={`max-w-[80%] rounded-lg px-4 py-3 ${
+                  message.role === "user"
+                    ? "bg-red-600 text-white"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50"
+                }`}
+              >
+                <div className="mb-1 text-xs font-medium opacity-70">
+                  {message.role === "user" ? "You" : "AI Assistant"}
+                </div>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                  {message.content}
+                </p>
+                {message.sources && message.sources.length > 0 && (
+                  <div className="mt-3 border-t border-zinc-300 dark:border-zinc-700 pt-2">
+                    <div className="mb-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                      Sources:
+                    </div>
+                    {message.sources.slice(0, 3).map((source, i) => (
                       <div
-                        className={`max-w-[80%] rounded-lg px-4 py-3 ${
-                          message.role === "user"
-                            ? "bg-red-600 text-white"
-                            : "bg-zinc-800 text-zinc-50"
-                        }`}
+                        key={i}
+                        className="mb-1 rounded bg-zinc-50 dark:bg-zinc-900/50 p-2 text-xs"
                       >
-                        <div className="mb-1 text-xs font-medium opacity-70">
-                          {message.role === "user" ? "You" : "AI Assistant"}
+                        <div className="flex items-center justify-between">
+                          <span className="font-mono text-zinc-500 dark:text-zinc-400">
+                            {source.key.slice(0, 30)}
+                            {source.key.length > 30 ? "..." : ""}
+                          </span>
+                          <span className="text-red-400">
+                            {(source.score * 100).toFixed(1)}%
+                          </span>
                         </div>
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                          {message.content}
-                        </p>
-                        {message.sources && message.sources.length > 0 && (
-                          <div className="mt-3 border-t border-zinc-700 pt-2">
-                            <div className="mb-1 text-xs font-medium text-zinc-400">
-                              Sources:
-                            </div>
-                            {message.sources.slice(0, 3).map((source, i) => (
-                              <div
-                                key={i}
-                                className="mb-1 rounded bg-zinc-900/50 p-2 text-xs"
-                              >
-                                <div className="flex items-center justify-between">
-                                  <span className="font-mono text-zinc-400">
-                                    {source.key.slice(0, 30)}
-                                    {source.key.length > 30 ? "..." : ""}
-                                  </span>
-                                  <span className="text-red-400">
-                                    {(source.score * 100).toFixed(1)}%
-                                  </span>
-                                </div>
-                                {source.snippet && (
-                                  <div className="mt-1 text-zinc-400">
-                                    {source.snippet}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
+                        {source.snippet && (
+                          <div className="mt-1 text-zinc-500 dark:text-zinc-400">
+                            {source.snippet}
                           </div>
                         )}
-                        <div className="mt-1 text-xs text-zinc-400">
-                          {message.timestamp.toLocaleTimeString()}
-                        </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
-                <div ref={endRef} />
-              </div>
-
-              <div className="mt-4 border-t border-zinc-800 pt-4">
-                <div className="flex gap-2">
-                  <Input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && !loading && handleSend()}
-                    placeholder="Ask about your Redis data..."
-                    disabled={loading}
-                    className="flex-1"
-                  />
-                  <Button onClick={handleSend} disabled={loading || !input.trim()}>
-                    {loading ? "..." : "Send"}
-                  </Button>
-                </div>
-                <div className="mt-2 text-xs text-zinc-400">
-                  {messages.length > 0 && "RAG enabled with " + ragConfig.topK + " context chunks"}
+                <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                  {message.timestamp.toLocaleTimeString()}
                 </div>
               </div>
             </div>
+          ))
+        )}
+        <div ref={endRef} />
+      </div>
+
+      <div className="mt-4 border-t border-zinc-200 dark:border-zinc-800 pt-4">
+        <div className="flex gap-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !loading && handleSend()}
+            placeholder="Ask about your Redis data..."
+            disabled={loading}
+            className="flex-1"
+          />
+          <Button onClick={handleSend} disabled={loading || !input.trim()}>
+            {loading ? "..." : "Send"}
+          </Button>
+        </div>
+        <div className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+          {messages.length > 0 && "RAG enabled with " + ragConfig.topK + " context chunks"}
+        </div>
+      </div>
+    </div>
+  );
+
+  const configContent = (
+    <Card>
+      <CardHeader>
+        <CardTitle>Retrieval Settings</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="indexName">Vector Index</Label>
+          <Input
+            id="indexName"
+            placeholder="e.g., documents_index"
+            value={ragConfig.indexName}
+            onChange={(e) => setRagConfig({ ...ragConfig, indexName: e.target.value })}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="topK">Top-K Chunks</Label>
+          <Input
+            id="topK"
+            type="number"
+            min={1}
+            max={20}
+            value={ragConfig.topK}
+            onChange={(e) => setRagConfig({ ...ragConfig, topK: parseInt(e.target.value) })}
+          />
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Number of context chunks to retrieve</p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="llmProvider">LLM Provider</Label>
+          <select
+            id="llmProvider"
+            className="flex h-10 w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm"
+            value={ragConfig.provider}
+            onChange={(e) =>
+              setRagConfig({
+                ...ragConfig,
+                provider: e.target.value as LLMProvider,
+                model:
+                  e.target.value === "OpenAI"
+                    ? "gpt-4-turbo"
+                    : e.target.value === "Anthropic"
+                    ? "claude-3-sonnet"
+                    : "llama2",
+              })
+            }
+          >
+            <option value="OpenAI">OpenAI</option>
+            <option value="Anthropic">Anthropic</option>
+            <option value="Ollama">Ollama (Local)</option>
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="model">Model</Label>
+          <select
+            id="model"
+            className="flex h-10 w-full rounded-md border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 px-3 py-2 text-sm"
+            value={ragConfig.model}
+            onChange={(e) => setRagConfig({ ...ragConfig, model: e.target.value as LLMModel })}
+          >
+            {ragConfig.provider === "OpenAI" && (
+              <>
+                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+              </>
+            )}
+            {ragConfig.provider === "Anthropic" && (
+              <>
+                <option value="claude-3-opus">Claude 3 Opus</option>
+                <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                <option value="claude-3-haiku">Claude 3 Haiku</option>
+              </>
+            )}
+            {ragConfig.provider === "Ollama" && (
+              <>
+                <option value="llama2">Llama 2</option>
+                <option value="mistral">Mistral</option>
+              </>
+            )}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="apiKey">API Key (optional)</Label>
+          <Input
+            id="apiKey"
+            type="password"
+            placeholder="sk-..."
+            value={ragConfig.apiKey}
+            onChange={(e) => setRagConfig({ ...ragConfig, apiKey: e.target.value })}
+          />
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            Leave empty to use environment variables or local models
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="vectorField">Vector Field Name</Label>
+          <Input
+            id="vectorField"
+            placeholder="embedding"
+            value={vectorField}
+            onChange={(e) => setVectorField(e.target.value)}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  if (variant === "panel") {
+    return (
+      <div className="flex h-full flex-col">
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 px-4 py-2">
+          <h3 className="text-sm font-semibold">AI Chat (RAG)</h3>
+        </div>
+        <div className="flex flex-1 overflow-hidden">
+          <div className="w-72 border-r border-zinc-200 dark:border-zinc-800 p-4 overflow-auto">
+            {configContent}
+          </div>
+          <div className="flex-1 p-4">{chatContent}</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Page variant (inline, no overlay)
+  if (variant === "page") {
+    return (
+      <div className="flex h-full">
+        <div className="flex w-1/3 flex-col border-r border-zinc-200 p-6 dark:border-zinc-800">
+          <h2 className="mb-2 text-xl font-semibold">RAG Configuration</h2>
+          {configContent}
+        </div>
+        <div className="flex w-2/3 flex-col p-6">
+          <h2 className="mb-2 text-xl font-semibold">AI Chat</h2>
+          {chatContent}
+        </div>
+      </div>
+    );
+  }
+
+  // Modal variant (fallback)
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="relative z-50 flex h-[700px] w-full max-w-5xl rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6 shadow-xl">
+        <div className="flex w-full gap-4">
+          <div className="flex w-1/3 flex-col">
+            <h2 className="mb-2 text-xl font-semibold">RAG Configuration</h2>
+            {configContent}
           </div>
 
-          <div className="mt-4 flex justify-end">
+          <div className="flex w-2/3 flex-col">
+            <h2 className="mb-2 text-xl font-semibold">AI Chat</h2>
+            {chatContent}
+          </div>
+
+          <div className="absolute bottom-4 right-4">
             <Button variant="outline" onClick={onClose}>
               Close
             </Button>

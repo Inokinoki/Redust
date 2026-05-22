@@ -79,7 +79,7 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 pt-24">
       <Card className="w-full max-w-2xl overflow-hidden shadow-2xl">
         <CardContent className="p-0">
-          <div className="flex items-center border-b border-zinc-800 p-4">
+          <div className="flex items-center border-b border-zinc-200 p-4 dark:border-zinc-800">
             <span className="mr-3 text-xl">🔍</span>
             <Input
               value={search}
@@ -89,11 +89,11 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
               autoFocus
             />
             <div className="ml-4 flex gap-2 text-xs text-zinc-500">
-              <kbd className="rounded border border-zinc-700 px-2 py-1">↑↓</kbd>
+              <kbd className="rounded border border-zinc-300 px-2 py-1 dark:border-zinc-700">↑↓</kbd>
               <span>to navigate</span>
-              <kbd className="ml-2 rounded border border-zinc-700 px-2 py-1">↵</kbd>
+              <kbd className="ml-2 rounded border border-zinc-300 px-2 py-1 dark:border-zinc-700">↵</kbd>
               <span>to select</span>
-              <kbd className="ml-2 rounded border border-zinc-700 px-2 py-1">esc</kbd>
+              <kbd className="ml-2 rounded border border-zinc-300 px-2 py-1 dark:border-zinc-700">esc</kbd>
               <span>to close</span>
             </div>
           </div>
@@ -104,14 +104,14 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
                 No commands found matching "{search}"
               </div>
             ) : (
-              <div className="divide-y divide-zinc-800">
+              <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
                 {categories.map((category) => {
                   const categoryCommands = filteredCommands.filter((c) => c.category === category);
                   if (categoryCommands.length === 0) return null;
 
                   return (
                     <div key={category}>
-                      <div className="bg-zinc-900/50 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                      <div className="bg-zinc-100 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:bg-zinc-900/50">
                         {category}
                       </div>
                       {categoryCommands.map((command) => (
@@ -124,21 +124,21 @@ export function CommandPalette({ isOpen, onClose, commands }: CommandPaletteProp
                           }}
                           className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors ${
                             selectedCommand?.id === command.id
-                              ? "bg-zinc-800 text-zinc-100"
-                              : "text-zinc-400 hover:bg-zinc-900/50 hover:text-zinc-300"
+                              ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                              : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900/50 dark:hover:text-zinc-300"
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             {command.icon && <span className="text-lg">{command.icon}</span>}
                             <div>
-                              <div className="font-medium text-zinc-200">{command.label}</div>
+                              <div className="font-medium text-zinc-900 dark:text-zinc-200">{command.label}</div>
                               {command.description && (
                                 <div className="text-xs text-zinc-500">{command.description}</div>
                               )}
                             </div>
                           </div>
                           {command.shortcut && (
-                            <kbd className="rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-xs text-zinc-500">
+                            <kbd className="rounded border border-zinc-300 bg-zinc-100 px-2 py-1 text-xs text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800">
                               {command.shortcut}
                             </kbd>
                           )}

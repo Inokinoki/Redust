@@ -390,7 +390,7 @@ export interface VectorSearchRequestApi {
 export interface VectorSearchResult {
   key: string;
   score: number;
-  fields?: Record<string, string>;
+  fields?: Record<string, string | number | null>;
 }
 
 export async function vectorSearchApi(
@@ -466,7 +466,7 @@ export async function batchVectorSearch(
 
 // LLM types and commands
 
-export type LLMProvider = "OpenAI" | "Anthropic" | "Ollama";
+export type LLMProvider = "OpenAI" | "Anthropic" | "Ollama" | "Custom";
 
 export type LLMModel =
   | "gpt-4"
@@ -537,6 +537,7 @@ export interface EmbeddingRequest {
   model?: string;
   provider: LLMProvider;
   api_key?: string;
+  api_endpoint?: string;
 }
 
 export interface EmbeddingResponse {

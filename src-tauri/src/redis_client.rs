@@ -28,8 +28,10 @@ impl RedisManager {
 
     pub async fn get_client(&mut self) -> Result<Client> {
         if self.client.is_none() {
+            let scheme = if self.config.tls { "rediss" } else { "redis" };
             let connection_string = format!(
-                "redis://{}:{}{}",
+                "{}://{}:{}{}",
+                scheme,
                 self.config.host,
                 self.config.port,
                 self.config
@@ -130,50 +132,53 @@ impl RedisManager {
             keys.truncate(count as usize);
         }
 
-        // Get type and TTL for each key
-        let mut key_infos = Vec::new();
-        for key in keys {
-            let key_type: String = redis::cmd("TYPE")
-                .arg(&key)
-                .query_async(&mut conn)
-                .await?;
-            let ttl: i64 = redis::cmd("TTL").arg(&key).query_async(&mut conn).await?;
+        // Get type and TTL for each key using pipeline to reduce round-trips
+        let mut pipe = redis::pipe();
+        for key in &keys {
+            pipe.cmd("TYPE").arg(key.as_str());
+            pipe.cmd("TTL").arg(key.as_str());
+        }
 
-            // Get size for certain types
+        let pipe_results: Vec<redis::Value> = pipe.query_async(&mut conn).await?;
+        let mut key_infos = Vec::with_capacity(keys.len());
+
+        for (i, key) in keys.into_iter().enumerate() {
+            let type_val = pipe_results.get(i * 2);
+            let ttl_val = pipe_results.get(i * 2 + 1);
+
+            let key_type: String = match type_val {
+                Some(redis::Value::Status(s)) => s.clone(),
+                Some(redis::Value::Data(b)) => String::from_utf8_lossy(b).to_string(),
+                _ => "unknown".to_string(),
+            };
+
+            let ttl: i64 = match ttl_val {
+                Some(redis::Value::Int(n)) => *n,
+                _ => -1,
+            };
+
+            // Get size for certain types (single command per key)
             let size = match key_type.as_str() {
-                "string" => {
-                    if let Ok(len) = redis::cmd("STRLEN")
-                        .arg(&key)
-                        .query_async::<_, usize>(&mut conn)
-                        .await
-                    {
-                        Some(len)
-                    } else {
-                        None
-                    }
-                }
-                "hash" => {
-                    if let Ok(len) = redis::cmd("HLEN")
-                        .arg(&key)
-                        .query_async::<_, usize>(&mut conn)
-                        .await
-                    {
-                        Some(len)
-                    } else {
-                        None
-                    }
-                }
-                "list" | "set" => {
-                    if let Ok(len) = redis::cmd("LLEN")
-                        .arg(&key)
-                        .query_async::<_, usize>(&mut conn)
-                        .await
-                    {
-                        Some(len)
-                    } else {
-                        None
-                    }
-                }
+                "string" => redis::cmd("STRLEN")
+                    .arg(&key)
+                    .query_async::<_, usize>(&mut conn)
+                    .await
+                    .ok(),
+                "hash" => redis::cmd("HLEN")
+                    .arg(&key)
+                    .query_async::<_, usize>(&mut conn)
+                    .await
+                    .ok(),
+                "list" => redis::cmd("LLEN")
+                    .arg(&key)
+                    .query_async::<_, usize>(&mut conn)
+                    .await
+                    .ok(),
+                "set" => redis::cmd("SCARD")
+                    .arg(&key)
+                    .query_async::<_, usize>(&mut conn)
+                    .await
+                    .ok(),
                 _ => None,
             };
 

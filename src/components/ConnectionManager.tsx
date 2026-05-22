@@ -54,8 +54,8 @@ export function ConnectionManager({ isOpen, onClose }: ConnectionManagerProps) {
 
   if (!isOpen) return null;
 
-  return (
-    <Dialog open={isOpen}>
+    return (
+    <Dialog open={isOpen} data-testid="e2e-connection-dialog">
       <DialogHeader>
         <DialogTitle>Add Redis Connection</DialogTitle>
       </DialogHeader>
@@ -90,7 +90,7 @@ export function ConnectionManager({ isOpen, onClose }: ConnectionManagerProps) {
                 min={1}
                 max={65535}
                 value={port}
-                onChange={(e) => setPort(parseInt(e.target.value))}
+                onChange={(e) => setPort(parseInt(e.target.value, 10) || 6379)}
                 required
               />
             </div>
@@ -115,7 +115,7 @@ export function ConnectionManager({ isOpen, onClose }: ConnectionManagerProps) {
               min={0}
               max={15}
               value={database}
-              onChange={(e) => setDatabase(parseInt(e.target.value))}
+              onChange={(e) => setDatabase(parseInt(e.target.value, 10) || 0)}
             />
           </div>
 
@@ -125,7 +125,7 @@ export function ConnectionManager({ isOpen, onClose }: ConnectionManagerProps) {
               id="tls"
               checked={tls}
               onChange={(e) => setTls(e.target.checked)}
-              className="h-4 w-4 rounded border-zinc-700 bg-zinc-900"
+              className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700"
             />
             <Label htmlFor="tls" className="cursor-pointer">
               Use TLS/SSL
@@ -136,7 +136,9 @@ export function ConnectionManager({ isOpen, onClose }: ConnectionManagerProps) {
             <Button type="button" variant="ghost" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">Add Connection</Button>
+            <Button type="submit" data-testid="e2e-save-connection">
+              Add Connection
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

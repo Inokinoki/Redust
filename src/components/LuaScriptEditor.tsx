@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Button } from "./ui/button";
+import { useToastStore } from "../stores/toastStore";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
 import { useConnectionStore } from "../stores/connectionStore";
@@ -68,16 +69,18 @@ return deleted`,
     setArgs(example.args);
   };
 
+  const addToast = useToastStore((s) => s.addToast);
+
   const handleSaveScript = () => {
     if (!script.trim()) {
-      alert("Please enter a script to save");
+      addToast("warning", "Please enter a script to save");
       return;
     }
 
     const name = prompt("Enter a name for this script:");
     if (name) {
       setSavedScripts((prev) => ({ ...prev, [name]: script }));
-      alert(`Script saved as "${name}"`);
+      addToast("success", `Script saved as "${name}"`);
     }
   };
 
@@ -91,12 +94,12 @@ return deleted`,
   const handleRunScript = async () => {
     const config = getActiveConnection();
     if (!config) {
-      alert("No active connection");
+      addToast("error", "No active connection");
       return;
     }
 
     if (!script.trim()) {
-      alert("Please enter a script");
+      addToast("warning", "Please enter a script");
       return;
     }
 
@@ -136,7 +139,7 @@ return deleted`,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative z-50 flex h-[600px] w-full max-w-7xl flex-col rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl">
+      <div className="relative z-50 flex h-[600px] w-full max-w-7xl flex-col rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">Lua Script Editor</h2>
           <div className="flex gap-2">
@@ -158,7 +161,7 @@ return deleted`,
                   <button
                     key={example.name}
                     onClick={() => handleLoadExample(example)}
-                    className="w-full rounded border border-zinc-800 p-2 text-left text-sm text-zinc-400 hover:border-zinc-700 hover:bg-zinc-900"
+                    className="w-full rounded border border-zinc-200 p-2 text-left text-sm text-zinc-600 hover:border-zinc-300 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
                   >
                     {example.name}
                   </button>
@@ -174,7 +177,7 @@ return deleted`,
                     <button
                       key={name}
                       onClick={() => handleLoadSaved(name)}
-                      className="w-full rounded border border-zinc-800 p-2 text-left text-sm text-zinc-400 hover:border-zinc-700 hover:bg-zinc-900"
+                      className="w-full rounded border border-zinc-200 p-2 text-left text-sm text-zinc-600 hover:border-zinc-300 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900"
                     >
                       {name}
                     </button>
@@ -196,7 +199,7 @@ return deleted`,
                 value={script}
                 onChange={(e) => setScript(e.target.value)}
                 placeholder="Enter your Lua script here..."
-                className="flex-1 rounded border border-zinc-800 bg-zinc-950 p-4 font-mono text-sm text-zinc-300 focus:border-zinc-700 focus:outline-none"
+                className="flex-1 rounded border border-zinc-200 bg-white p-4 font-mono text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:focus:border-zinc-700"
                 spellCheck={false}
               />
             </Card>
@@ -238,7 +241,7 @@ return deleted`,
                 className={`rounded border p-4 font-mono text-sm ${
                   output.startsWith("Error")
                     ? "border-red-800 bg-red-950 text-red-300"
-                    : "border-zinc-800 bg-zinc-950 text-zinc-300"
+                    : "border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
                 }`}
               >
                 {output || "Run the script to see output..."}

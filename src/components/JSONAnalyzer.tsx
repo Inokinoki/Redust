@@ -382,7 +382,7 @@ Provide analysis in a clear, structured format.`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative z-50 w-full max-w-6xl h-[90vh] rounded-lg border border-zinc-800 bg-zinc-950 p-6 shadow-xl overflow-auto">
+      <div className="relative z-50 w-full max-w-6xl h-[90vh] rounded-lg border border-zinc-200 bg-white p-6 shadow-xl overflow-auto dark:border-zinc-800 dark:bg-zinc-950">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold">JSON Document Analysis</h2>
           <div className="flex gap-2">
@@ -415,7 +415,7 @@ Provide analysis in a clear, structured format.`;
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="text-zinc-400">Key:</span>{" "}
-                        <span className="font-mono text-zinc-200">{keyName}</span>
+                        <span className="font-mono text-zinc-900 dark:text-zinc-200">{keyName}</span>
                       </div>
                       <div>
                         <span className="text-zinc-400">Root Type:</span>{" "}
@@ -439,7 +439,7 @@ Provide analysis in a clear, structured format.`;
                   {analysis && (
                     <div>
                       <h3 className="font-semibold mb-2">Summary</h3>
-                      <p className="text-sm text-zinc-300 leading-relaxed">{analysis.summary}</p>
+                      <p className="text-sm text-zinc-700 leading-relaxed dark:text-zinc-300">{analysis.summary}</p>
                     </div>
                   )}
 
@@ -463,19 +463,19 @@ Provide analysis in a clear, structured format.`;
                       <div className="text-2xl font-bold text-blue-400">
                         {analysis.statistics.complexity}
                       </div>
-                      <div className="text-xs text-zinc-400">Complexity Score</div>
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400">Complexity Score</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-green-400">
                         {analysis.statistics.nestingLevel}
                       </div>
-                      <div className="text-xs text-zinc-400">Nesting Levels</div>
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400">Nesting Levels</div>
                     </div>
                     <div className="text-center">
                       <div className="text-2xl font-bold text-purple-400">
                         {analysis.statistics.uniquePaths}
                       </div>
-                      <div className="text-xs text-zinc-400">Unique Paths</div>
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400">Unique Paths</div>
                     </div>
                   </div>
                 </CardContent>
@@ -493,21 +493,21 @@ Provide analysis in a clear, structured format.`;
                   <CardContent>
                     <div className="space-y-4">
                       <div className="grid grid-cols-3 gap-4">
-                        <div className="text-center p-4 bg-zinc-900 rounded-lg">
+                        <div className="text-center p-4 bg-zinc-50 rounded-lg dark:bg-zinc-900">
                           <div className="text-2xl font-bold text-blue-400">{analysis.structure.arrays}</div>
-                          <div className="text-sm text-zinc-400">Arrays</div>
+                          <div className="text-sm text-zinc-500 dark:text-zinc-400">Arrays</div>
                         </div>
-                        <div className="text-center p-4 bg-zinc-900 rounded-lg">
+                        <div className="text-center p-4 bg-zinc-50 rounded-lg dark:bg-zinc-900">
                           <div className="text-2xl font-bold text-green-400">
                             {analysis.structure.objects}
                           </div>
-                          <div className="text-sm text-zinc-400">Objects</div>
+                          <div className="text-sm text-zinc-500 dark:text-zinc-400">Objects</div>
                         </div>
-                        <div className="text-center p-4 bg-zinc-900 rounded-lg">
+                        <div className="text-center p-4 bg-zinc-50 rounded-lg dark:bg-zinc-900">
                           <div className="text-2xl font-bold text-purple-400">
                             {analysis.structure.primitives}
                           </div>
-                          <div className="text-sm text-zinc-400">Primitives</div>
+                          <div className="text-sm text-zinc-500 dark:text-zinc-400">Primitives</div>
                         </div>
                       </div>
 
@@ -518,7 +518,7 @@ Provide analysis in a clear, structured format.`;
                             <div key={type} className="flex items-center justify-between">
                               <span className="text-sm capitalize">{type}</span>
                               <div className="flex items-center gap-2">
-                                <div className="w-32 bg-zinc-800 rounded-full h-2">
+                                <div className="w-32 bg-zinc-200 rounded-full h-2 dark:bg-zinc-800">
                                   <div
                                     className="bg-red-600 h-2 rounded-full"
                                     style={{
@@ -526,7 +526,7 @@ Provide analysis in a clear, structured format.`;
                                     }}
                                   />
                                 </div>
-                                <span className="text-sm text-zinc-400">{count}</span>
+                                <span className="text-sm text-zinc-500 dark:text-zinc-400">{count}</span>
                               </div>
                             </div>
                           ))}
@@ -546,7 +546,7 @@ Provide analysis in a clear, structured format.`;
                   <CardTitle>Inferred Schema</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <pre className="bg-zinc-900 p-4 rounded-lg overflow-auto max-h-96 text-sm">
+                  <pre className="bg-zinc-50 p-4 rounded-lg overflow-auto max-h-96 text-sm dark:bg-zinc-900">
                     <code>{JSON.stringify(analysis.schema, null, 2)}</code>
                   </pre>
                 </CardContent>
@@ -568,7 +568,7 @@ Provide analysis in a clear, structured format.`;
                           <span className="flex-shrink-0 w-6 h-6 bg-blue-900/50 rounded-full flex items-center justify-center text-xs">
                             {index + 1}
                           </span>
-                          <span className="text-sm text-zinc-300">{insight}</span>
+                          <span className="text-sm text-zinc-700 dark:text-zinc-300">{insight}</span>
                         </li>
                       ))}
                     </ul>
@@ -584,7 +584,7 @@ Provide analysis in a clear, structured format.`;
                       {analysis.recommendations.map((rec, index) => (
                         <li key={index} className="flex gap-3">
                           <span className="flex-shrink-0 text-green-400">✓</span>
-                          <span className="text-sm text-zinc-300">{rec}</span>
+                          <span className="text-sm text-zinc-700 dark:text-zinc-300">{rec}</span>
                         </li>
                       ))}
                     </ul>
