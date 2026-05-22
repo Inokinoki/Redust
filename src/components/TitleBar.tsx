@@ -13,13 +13,14 @@ let appWindow: {
   onFocusChanged: (cb: (e: { payload: boolean }) => void) => Promise<() => void>;
 } | null = null;
 
-try {
-  // Dynamic import will fail gracefully in browser without Tauri
-  const { getCurrentWindow } = await import("@tauri-apps/api/window");
-  appWindow = getCurrentWindow();
-} catch {
-  // Not running in Tauri — window controls will be hidden
-}
+// Init asynchronously — avoids top-level await which breaks esbuild
+import("@tauri-apps/api/window")
+  .then(({ getCurrentWindow }) => {
+    appWindow = getCurrentWindow();
+  })
+  .catch(() => {
+    // Not running in Tauri — window controls will be hidden
+  });
 
 const PAGE_LABELS: Record<PageId, string> = {
   dashboard: "Keys",
