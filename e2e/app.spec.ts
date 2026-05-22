@@ -16,7 +16,7 @@ test.describe("Application", () => {
   });
 
   test("should display the Connection Manager button", async ({ page }) => {
-    const addConnectionButton = page.getByRole("button", { name: /Add Connection/i });
+    const addConnectionButton = page.getByRole("button", { name: /Add Connection/i }).first();
     await expect(addConnectionButton).toBeVisible();
   });
 
@@ -34,7 +34,7 @@ test.describe("Application", () => {
   });
 
   test("should open Connection Manager modal", async ({ page }) => {
-    const addConnectionButton = page.getByRole("button", { name: /Add Connection/i });
+    const addConnectionButton = page.getByRole("button", { name: /Add Connection/i }).first();
     await addConnectionButton.click();
     await page.waitForTimeout(500);
 
