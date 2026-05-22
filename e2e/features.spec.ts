@@ -7,7 +7,7 @@ test.describe("Connection Management", () => {
   });
 
   test("should open Connection Manager from header button", async ({ page }) => {
-    const addConnectionButton = page.getByRole("button", { name: /Add Connection/i });
+    const addConnectionButton = page.getByRole("button", { name: /Add Connection/i }).first();
     await addConnectionButton.click();
     await page.waitForTimeout(500);
 
@@ -22,7 +22,7 @@ test.describe("Connection Management", () => {
   });
 
   test("should fill and submit connection form", async ({ page }) => {
-    const addConnectionButton = page.getByRole("button", { name: /Add Connection/i });
+    const addConnectionButton = page.getByRole("button", { name: /Add Connection/i }).first();
     await addConnectionButton.click();
     await page.waitForTimeout(500);
 
@@ -44,7 +44,7 @@ test.describe("Connection Management", () => {
 
   test("should close Connection Manager with Cancel button", async ({ page }) => {
     // Open Connection Manager using button
-    const addConnectionButton = page.getByRole("button", { name: /Add Connection/i });
+    const addConnectionButton = page.getByRole("button", { name: /Add Connection/i }).first();
     await addConnectionButton.click();
     await page.waitForTimeout(500);
 
@@ -100,12 +100,44 @@ test.describe("Key Browser", () => {
 test.describe("Page Navigation", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
+    // Inject connection + tab so sidebar page groups are visible
+    await page.evaluate(() => {
+      const connState = {
+        state: {
+          connections: [{
+            id: "test-conn-1",
+            name: "Test Redis",
+            host: "localhost",
+            port: 6379,
+            tls: false,
+          }],
+          activeConnectionId: "test-conn-1",
+        },
+        version: 0,
+      };
+      localStorage.setItem("redust-connections", JSON.stringify(connState));
+
+      const tabState = {
+        state: {
+          tabs: [{
+            id: "tab-test-1",
+            connectionId: "test-conn-1",
+            pageId: "dashboard",
+            title: "Keys",
+          }],
+          activeTabId: "tab-test-1",
+        },
+        version: 0,
+      };
+      localStorage.setItem("redust-tabs", JSON.stringify(tabState));
+    });
+    await page.reload();
     await page.waitForLoadState("networkidle");
   });
 
   test("should navigate to Monitoring page via sidebar", async ({ page }) => {
     // Expand Monitor group in sidebar
-    const monitorGroupButton = page.locator('button').filter({ hasText: "📈Monitor" });
+    const monitorGroupButton = page.locator("button").filter({ hasText: /^Monitor$/ });
     await monitorGroupButton.click();
     await page.waitForTimeout(300);
 
@@ -120,7 +152,7 @@ test.describe("Page Navigation", () => {
 
   test("should navigate to Vector Search page via sidebar", async ({ page }) => {
     // Expand AI group
-    const aiGroupButton = page.locator('button').filter({ hasText: "🧠AI" });
+    const aiGroupButton = page.locator("button").filter({ hasText: /^AI$/ });
     await aiGroupButton.click();
     await page.waitForTimeout(300);
 
