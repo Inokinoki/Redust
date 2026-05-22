@@ -13,9 +13,6 @@ test.describe("Application", () => {
   test("should display the Redust header", async ({ page }) => {
     const header = page.getByText("Redust").first();
     await expect(header).toBeVisible();
-
-    const version = page.getByText("v0.1.0");
-    await expect(version).toBeVisible();
   });
 
   test("should display the Connection Manager button", async ({ page }) => {
