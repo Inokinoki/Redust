@@ -35,8 +35,36 @@ const CONNECTION_STATE = {
 type PageId = "dashboard" | "vectorSearch" | "embeddingCache" | "clusterVis" | "llmChat" | "queryOptimizer" | "monitoring" | "cluster" | "pubsub";
 
 function buildPageState(pageId: PageId) {
-  return { state: { currentPage: pageId, leftSidebarCollapsed: false }, version: 0 };
+  return {
+    // tabStore: open a tab for the requested page
+    tabs: {
+      state: {
+        tabs: [{
+          id: `tab-${pageId}`,
+          connectionId: "conn-local-redis",
+          pageId,
+          title: PAGE_LABELS[pageId],
+        }],
+        activeTabId: `tab-${pageId}`,
+      },
+      version: 0,
+    },
+    // dashboardStore: sidebar state
+    layout: { state: { leftSidebarCollapsed: false }, version: 0 },
+  };
 }
+
+const PAGE_LABELS: Record<PageId, string> = {
+  dashboard: "Keys",
+  vectorSearch: "Vector Search",
+  embeddingCache: "Embedding Cache",
+  clusterVis: "Clusters",
+  llmChat: "AI Chat",
+  queryOptimizer: "Query Optimizer",
+  monitoring: "Monitoring",
+  cluster: "Cluster Topology",
+  pubsub: "Pub/Sub",
+};
 
 /** Unique suffix for screenshot filenames to bust CDN caches */
 const RUN_ID = Date.now().toString(36);
@@ -157,11 +185,12 @@ async function main() {
   /** Navigate to a specific page by setting localStorage and reloading */
   async function openPage(pageId: PageId) {
     const page = await context.newPage();
-    const layout = buildPageState(pageId);
+    const state = buildPageState(pageId);
     await page.goto("http://localhost:4174", { waitUntil: "networkidle" });
     await page.evaluate((s) => {
-      localStorage.setItem("redust-dashboard-layout", JSON.stringify(s));
-    }, layout);
+      localStorage.setItem("redust-tabs", JSON.stringify(s.tabs));
+      localStorage.setItem("redust-dashboard-layout", JSON.stringify(s.layout));
+    }, state);
     await page.reload({ waitUntil: "networkidle" });
     await page.waitForTimeout(2500);
     return page;
@@ -262,7 +291,7 @@ async function main() {
 
   // 9. Connection Manager modal
   page = await openPage("dashboard");
-  const addBtn = page.getByRole("button", { name: /Add Connection/i });
+  const addBtn = page.getByRole("button", { name: /Add Connection/i }).first();
   await addBtn.click();
   await page.waitForTimeout(800);
   await page.screenshot({ path: path.join(SCREENSHOTS_DIR, `09-connection-manager-${RUN_ID}.png`) });
