@@ -43,7 +43,7 @@ const PAGE_GROUPS = [
 export function Sidebar({ collapsed, onToggle, onAddConnection }: SidebarProps) {
   const [openGroup, setOpenGroup] = useState<string>("main");
   const connections = useConnectionStore((s) => s.connections);
-  const activeTab = useTabStore((s) => s.getActiveTab());
+  const activeTab = useTabStore((s) => s.tabs.find(t => t.id === s.activeTabId));
   const openTab = useTabStore((s) => s.openTab);
 
   const toggleGroup = (group: string) => {

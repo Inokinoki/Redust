@@ -170,7 +170,7 @@ export function VectorSearch({ variant = "modal", isOpen = true, onClose }: Vect
             if (fieldValue === undefined) return true;
 
             const filterValue = parseFloat(filter.value);
-            const fieldValueNum = typeof fieldValue === "number" ? fieldValue : parseFloat(fieldValue);
+            const fieldValueNum = typeof fieldValue === "number" ? fieldValue : parseFloat(fieldValue ?? "0");
 
             switch (filter.operator) {
               case "eq":

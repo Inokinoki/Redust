@@ -43,7 +43,7 @@ function PageContent({ page }: { page: PageId }) {
 
 export function DashboardLayout({ children, onAddConnection }: DashboardLayoutProps) {
   const { leftSidebarCollapsed, toggleLeftSidebar } = useDashboardStore();
-  const activeTab = useTabStore((s) => s.getActiveTab());
+  const activeTab = useTabStore((s) => s.tabs.find(t => t.id === s.activeTabId));
 
   const currentPage = activeTab?.pageId || "dashboard";
 

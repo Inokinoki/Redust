@@ -46,6 +46,10 @@ export const useConnectionStore = create<ConnectionStore>()(
     }),
     {
       name: "redust-connections",
+      partialize: (state) => ({
+        connections: state.connections.map(({ password: _, ...rest }) => rest),
+        activeConnectionId: state.activeConnectionId,
+      }),
     }
   )
 );

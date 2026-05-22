@@ -390,7 +390,7 @@ export interface VectorSearchRequestApi {
 export interface VectorSearchResult {
   key: string;
   score: number;
-  fields?: Record<string, string>;
+  fields?: Record<string, string | number | null>;
 }
 
 export async function vectorSearchApi(
