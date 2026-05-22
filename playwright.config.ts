@@ -13,6 +13,14 @@ export default defineConfig({
     actionTimeout: 10000,
     navigationTimeout: 30000,
   },
+  // In CI, the workflow starts the preview server, so don't start another one
+  webServer: process.env.CI ? undefined : {
+    command: "npm run dev",
+    url: "http://localhost:1420",
+    reuseExistingServer: true,
+    stdout: "pipe",
+    stderr: "pipe",
+  },
   projects: [
     {
       name: "chromium",

@@ -90,7 +90,7 @@ export function ConnectionManager({ isOpen, onClose }: ConnectionManagerProps) {
                 min={1}
                 max={65535}
                 value={port}
-                onChange={(e) => setPort(parseInt(e.target.value))}
+                onChange={(e) => setPort(parseInt(e.target.value, 10) || 6379)}
                 required
               />
             </div>
@@ -115,7 +115,7 @@ export function ConnectionManager({ isOpen, onClose }: ConnectionManagerProps) {
               min={0}
               max={15}
               value={database}
-              onChange={(e) => setDatabase(parseInt(e.target.value))}
+              onChange={(e) => setDatabase(parseInt(e.target.value, 10) || 0)}
             />
           </div>
 

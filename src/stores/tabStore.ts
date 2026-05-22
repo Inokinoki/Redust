@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { PageId } from "./dashboardStore";
+import { getPageLabel, PAGE_LABELS } from "../constants/pageLabels";
 
 export type { PageId };
 
@@ -22,23 +23,7 @@ interface TabStore {
   updateTabTitle: (tabId: string, title: string) => void;
 }
 
-let nextTabId = 0;
-
-const PAGE_LABELS: Record<PageId, string> = {
-  dashboard: "Keys",
-  vectorSearch: "Vector Search",
-  embeddingCache: "Embedding Cache",
-  clusterVis: "Clusters",
-  llmChat: "AI Chat",
-  queryOptimizer: "Query Optimizer",
-  monitoring: "Monitoring",
-  cluster: "Cluster Topology",
-  pubsub: "Pub/Sub",
-};
-
-export function getPageLabel(pageId: PageId): string {
-  return PAGE_LABELS[pageId];
-}
+export { getPageLabel };
 
 export const useTabStore = create<TabStore>()(
   persist(
@@ -57,7 +42,7 @@ export const useTabStore = create<TabStore>()(
           return existing.id;
         }
 
-        const id = `tab-${nextTabId++}`;
+        const id = `tab-${crypto.randomUUID()}`;
         const newTab: Tab = {
           id,
           connectionId,

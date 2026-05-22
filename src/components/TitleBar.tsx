@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useDashboardStore, type PageId } from "../stores/dashboardStore";
 import { useConnectionStore } from "../stores/connectionStore";
+import { getPageLabel } from "../constants/pageLabels";
 import type { ConnectionConfig } from "../types";
 
 // Lazy-load Tauri API with fallback for browser/dev environments
@@ -12,27 +13,39 @@ let appWindow: {
   close: () => Promise<void>;
   onFocusChanged: (cb: (e: { payload: boolean }) => void) => Promise<() => void>;
 } | null = null;
+let isTauriReady = false;
+let tauriReadyListeners: Array<() => void> = [];
 
 // Init asynchronously — avoids top-level await which breaks esbuild
 import("@tauri-apps/api/window")
   .then(({ getCurrentWindow }) => {
     appWindow = getCurrentWindow();
+    isTauriReady = true;
+    tauriReadyListeners.forEach((fn) => fn());
+    tauriReadyListeners = [];
   })
   .catch(() => {
     // Not running in Tauri — window controls will be hidden
+    isTauriReady = true;
+    tauriReadyListeners.forEach((fn) => fn());
+    tauriReadyListeners = [];
   });
 
-const PAGE_LABELS: Record<PageId, string> = {
-  dashboard: "Keys",
-  vectorSearch: "Vector Search",
-  embeddingCache: "Embedding Cache",
-  clusterVis: "Clusters",
-  llmChat: "AI Chat",
-  queryOptimizer: "Query Optimizer",
-  monitoring: "Monitoring",
-  cluster: "Cluster Topology",
-  pubsub: "Pub/Sub",
-};
+export function useTauriReady() {
+  const [ready, setReady] = useState(isTauriReady);
+
+  useEffect(() => {
+    if (isTauriReady) return;
+    const listener = () => setReady(true);
+    tauriReadyListeners.push(listener);
+    return () => {
+      const idx = tauriReadyListeners.indexOf(listener);
+      if (idx !== -1) tauriReadyListeners.splice(idx, 1);
+    };
+  }, []);
+
+  return ready;
+}
 
 interface TitleBarProps {
   onOpenCommandPalette?: () => void;
@@ -89,8 +102,9 @@ export function TitleBar({ onOpenCommandPalette, onAddConnection }: TitleBarProp
   const [maximized, setMaximized] = useState(false);
   const [isFocused, setIsFocused] = useState(true);
   const currentPage = useDashboardStore((s) => s.currentPage);
+  const tauriReady = useTauriReady();
 
-  const isTauri = !!appWindow;
+  const isTauri = tauriReady && !!appWindow;
 
   useEffect(() => {
     if (!appWindow) return;
@@ -136,7 +150,7 @@ export function TitleBar({ onOpenCommandPalette, onAddConnection }: TitleBarProp
         <div className="ml-2 flex items-center gap-1.5" data-tauri-drag-region>
           <span className="text-[10px] text-zinc-400">/</span>
           <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
-            {PAGE_LABELS[currentPage]}
+            {getPageLabel(currentPage)}
           </span>
         </div>
       )}
