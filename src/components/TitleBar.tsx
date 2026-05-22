@@ -3,6 +3,7 @@ import { useDashboardStore } from "../stores/dashboardStore";
 import { useConnectionStore } from "../stores/connectionStore";
 import { getPageLabel } from "../constants/pageLabels";
 import { useTauriReady, appWindow } from "../hooks/useTauriReady";
+import { ThemeToggle } from "./ThemeToggle";
 import type { ConnectionConfig } from "../types";
 
 interface TitleBarProps {
@@ -121,6 +122,11 @@ export function TitleBar({ onOpenCommandPalette, onAddConnection }: TitleBarProp
 
       {/* Right actions (non-draggable) */}
       <div className="flex items-center gap-1 pr-1">
+        {/* Theme toggle */}
+        <div className="px-1">
+          <ThemeToggle />
+        </div>
+
         {/* Add connection */}
         {onAddConnection && (
           <button
