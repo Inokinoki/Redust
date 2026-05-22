@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useDashboardStore, type PageId } from "../stores/dashboardStore";
+import { useDashboardStore } from "../stores/dashboardStore";
 import { useConnectionStore } from "../stores/connectionStore";
 import { getPageLabel } from "../constants/pageLabels";
 import type { ConnectionConfig } from "../types";
